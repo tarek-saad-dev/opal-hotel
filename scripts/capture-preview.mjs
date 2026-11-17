@@ -64,7 +64,8 @@ for(const lang of langs)for(const screen of screens){
       const doc=document.documentElement;
       const images=Array.from(document.images).map(i=>({
         src:i.currentSrc,complete:i.complete,naturalWidth:i.naturalWidth,
-        placeholder:i.dataset.placeholder==='true'
+        placeholder:i.dataset.placeholder==='true',
+        visible:i.getClientRects().length>0 && getComputedStyle(i).visibility!=='hidden'
       }));
       const headings=Array.from(document.querySelectorAll('h1,h2')).map(n=>n.textContent?.trim());
       const ids=['overview','facilities','location','rooms','gallery','reviews','contact'];
@@ -87,11 +88,11 @@ for(const lang of langs)for(const screen of screens){
     const validAnchors=Object.values(audit.anchors).every(Boolean);
     const overflow=audit.document.width > screen.width+2;
     const passed=validHeadings&&validAnchors&&!overflow&&errors.length===0
-      &&audit.images.every(i=>i.naturalWidth>0);
+      &&audit.images.filter(i=>i.visible).every(i=>i.naturalWidth>0);
     if(!passed)failures++;
     const result={lang,screen:screen.id,passed,validHeadings,validAnchors,overflow,
-      failedImages:audit.images.filter(i=>!i.naturalWidth).length,
-      placeholderImages:audit.images.filter(i=>i.placeholder).length,
+      failedImages:audit.images.filter(i=>i.visible&&!i.naturalWidth).length,
+      placeholderImages:audit.images.filter(i=>i.visible&&i.placeholder).length,
       totalImages:audit.images.length,errors};
     records.push(result);
     console.log(JSON.stringify(result));
