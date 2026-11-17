@@ -32,15 +32,18 @@ fi
 if [[ -e "$VHOST" ]] && ! grep -Fq "Managed by Opal Hotel" "$VHOST"; then
   die "opal-hotel.conf exists and is managed elsewhere."
 fi
-if [[ ! -e "$VHOST" ]] && nginx -T 2>/dev/null | grep -Fq "server_name $DOMAIN"; then
+if [[ -e "$VHOST" ]] && ! grep -Fq "server_name $DOMAIN;" "$VHOST"; then
+  die "Existing Opal host is configured for another domain; refusing silent overwrite."
+fi
+if [[ ! -e "$VHOST" ]] && nginx -T 2>/dev/null | grep -F "server_name $DOMAIN" >/dev/null; then
   die "Domain $DOMAIN already configured in another Nginx site."
 fi
-if [[ ! -e "$UNIT" ]] && ss -Hltn "sport = :$PORT" | grep -q .; then
+if [[ ! -e "$UNIT" ]] && ss -Hltn "sport = :$PORT" | grep . >/dev/null; then
   die "Internal port $PORT is already occupied. Choose a free port in the script."
 fi
 
 if ! id "$APP_USER" >/dev/null 2>&1; then
-  useradd --system --create-home --home-dir "$APP_DIR" --shell /usr/sbin/nologin "$APP_USER"
+  useradd --system --no-create-home --home-dir "$APP_DIR" --shell /usr/sbin/nologin "$APP_USER"
 fi
 install -d -o "$APP_USER" -g "$APP_USER" -m 0755 "$APP_DIR"
 if [[ ! -d "$APP_DIR/.git" ]]; then
@@ -70,7 +73,7 @@ Group=opalhotel
 WorkingDirectory=/var/www/opal-hotel
 Environment=NODE_ENV=production
 Environment=NEXT_TELEMETRY_DISABLED=1
-ExecStart=/usr/bin/npm run start -- -H 127.0.0.1 -p 3418
+ExecStart=/usr/bin/env npm run start -- -H 127.0.0.1 -p 3418
 Restart=on-failure
 RestartSec=3
 NoNewPrivileges=true
