@@ -77,7 +77,7 @@ export function PremiumReviews({locale,content:c}:Props) {
       <form className="opal-end-form" onSubmit={submit} aria-label={c.labels.reviewsTitle}>
         <div className="opal-end-score-row">
           <span>{t.score}</span>
-          <strong aria-live="polite"><span>{String(rating).padStart(2,"0")}</span> / 10</strong>
+          <strong aria-live="polite" dir="ltr"><span>{String(rating).padStart(2,"0")}</span> / 10</strong>
         </div>
         <fieldset className="opal-end-rating" aria-label={t.score}>
           <legend className="opal-sr-only">{t.score}</legend>
