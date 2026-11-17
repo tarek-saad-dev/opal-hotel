@@ -50,6 +50,24 @@ export function HotelExperience({locale,content:c}:Props) {
   const [rating,setRating]=useState("8");
   const [today,setToday]=useState("");
 
+  useEffect(() => {
+    // SSR images may fail before React hydration attaches onError handlers.
+    // Catch those missed failures to prevent broken-image icons in any viewport.
+    const swapFailedImages = () => {
+      document.querySelectorAll<HTMLImageElement>('.hero-gallery img,.gallery-grid img,.lightbox-body img')
+        .forEach(img => {
+          if(img.complete && img.naturalWidth===0 && img.dataset.placeholder!=="true") {
+            img.dataset.placeholder="true";
+            img.src="/media/photo-placeholder.svg";
+          }
+        });
+    };
+    swapFailedImages();
+    const watcher = new MutationObserver(swapFailedImages);
+    watcher.observe(document.body,{childList:true,subtree:true});
+    return () => watcher.disconnect();
+  }, []);
+
   useEffect(()=> {
     const initial=tomorrow();
     setToday(isoDate(new Date()));
