@@ -99,7 +99,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
       const focusables = [
         ...links,
         menuTriggerRef.current,
-      ].filter((el): el is HTMLElement => Boolean(el));
+      ].filter((el): el is HTMLAnchorElement | HTMLButtonElement => el !== null);
       if (!focusables.length) return;
       const current = focusables.indexOf(document.activeElement as HTMLElement);
       if (current === -1) {
