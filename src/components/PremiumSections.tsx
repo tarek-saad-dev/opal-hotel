@@ -14,6 +14,7 @@ function demoImageError(event: SyntheticEvent<HTMLImageElement>) {
   const img = event.currentTarget;
   if (img.dataset.placeholder === "true") return;
   img.dataset.placeholder = "true";
+  img.removeAttribute("srcset");
   img.src = "/media/photo-placeholder.svg";
 }
 function PreviewImage({ index, eager = false }: { index: number; eager?: boolean }) {
