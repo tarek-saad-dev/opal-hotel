@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import type { SyntheticEvent } from "react";
-import Link from "next/link";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
 import { galleryImages } from "@/lib/gallery";
 import { PremiumMasthead } from "@/components/PremiumMasthead";
+import { PremiumStory, PremiumFacilities, PremiumLocation, PremiumRooms, PremiumGallery } from "@/components/PremiumSections";
 
 type Props={locale:Locale;content:HotelContent};
 function handleImageError(event:SyntheticEvent<HTMLImageElement>) {
@@ -39,7 +39,7 @@ export function HotelExperience({locale,content:c}:Props) {
     // SSR images may fail before React hydration attaches onError handlers.
     // Catch those missed failures to prevent broken-image icons in any viewport.
     const swapFailedImages = () => {
-      document.querySelectorAll<HTMLImageElement>('.hero-gallery img,.gallery-grid img,.lightbox-body img')
+      document.querySelectorAll<HTMLImageElement>('.opal-story-media img,.opal-gallery-mosaic img,.opal-room-photo img,.lightbox-body img')
         .forEach(img => {
           if(img.complete && img.naturalWidth===0 && img.dataset.placeholder!=="true") {
             img.dataset.placeholder="true";
@@ -81,62 +81,21 @@ export function HotelExperience({locale,content:c}:Props) {
         }}
       />
       <main>
-        <section className="content-section container" id="overview" aria-labelledby="overview-heading">
-          <h2 id="overview-heading">{c.labels.overviewTitle}</h2>
-          <div className="quick-facilities">
-            {c.quick.map((item,index)=><div className="quick-item" key={item}>
-              <span className="quick-dot" aria-hidden="true">{["⌁","◷","↗","♞","✈","◌","♧","♿"][index]}</span>{item}
-            </div>)}
-          </div>
-          <div className="overview-copy">{c.overview.map(p=><p key={p}>{p}</p>)}</div>
+        <section className="opal-stage-section opal-stage-story" id="overview" aria-label={c.labels.overviewTitle}>
+          <PremiumStory locale={locale} content={c} onOpenPhoto={setPhoto}/>
         </section>
-
-        <section className="content-section muted-section" id="facilities" aria-labelledby="facilities-heading">
-          <div className="container">
-            <h2 id="facilities-heading">{c.labels.facilitiesTitle}</h2>
-            <div className="facility-grid">
-              {c.facilities.map(group=><div key={group.title} className="facility-group">
-                <h3>{group.title}</h3><ul>{group.items.map(item=><li key={item}>{item}</li>)}</ul>
-              </div>)}
-            </div>
-            <div className="policies"><h3>{c.labels.important}</h3><p>{c.labels.checkinPolicy}</p><p>{c.labels.checkoutPolicy}</p></div>
-          </div>
+        <section className="opal-stage-section opal-stage-facilities" id="facilities" aria-label={c.labels.facilitiesTitle}>
+          <PremiumFacilities locale={locale} content={c}/>
         </section>
-
-        <section className="content-section container" id="location" aria-labelledby="location-heading">
-          <h2 id="location-heading">{c.labels.locationTitle}</h2>
-          <div className="location-grid">
-            <div className="location-map">
-              <iframe title={c.labels.locationTitle} loading="lazy" referrerPolicy="no-referrer-when-downgrade"
-                src="https://www.google.com/maps?q=Opal%20Legacy%20Luxor%20Hotel&output=embed"/>
-              <a target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=Opal+Legacy+Luxor+Hotel">{c.labels.map} ↗</a>
-            </div>
-            <div className="attractions"><h3>{c.labels.nearby}</h3><ul>
-              {c.attractions.map(a=><li key={a.name}><span>{a.name}</span><strong>{a.distance}</strong></li>)}
-            </ul></div>
-          </div>
+        <section className="opal-stage-section opal-stage-location" id="location" aria-label={c.labels.locationTitle}>
+          <PremiumLocation locale={locale} content={c}/>
         </section>
-
-        <section className="content-section muted-section" id="rooms" aria-labelledby="rooms-heading">
-          <div className="container">
-            <h2 id="rooms-heading">{c.labels.roomsTitle}</h2>
-            <div className="rooms-empty">
-              <Icon name="calendar"/>
-              <p>{attemptedBooking?c.labels.noBooking:c.labels.noDates}</p>
-              {attemptedBooking&&<p className="selected-dates" dir="ltr">{checkin} — {checkout}</p>}
-            </div>
-          </div>
+        <section className="opal-stage-section opal-stage-rooms" id="rooms" aria-label={c.labels.roomsTitle}>
+          <PremiumRooms locale={locale} content={c} onOpenPhoto={setPhoto}
+            attemptedBooking={attemptedBooking} checkin={checkin} checkout={checkout}/>
         </section>
-
-        <section className="content-section container" id="gallery" aria-labelledby="gallery-heading">
-          <h2 id="gallery-heading">{c.nav.gallery}</h2>
-          <div className="gallery-grid">
-            {galleryImages.map((img,index)=><button type="button" className="gallery-tile" key={img.src}
-              onClick={()=>setPhoto(index)} aria-label={`${c.labels.galleryView} ${index+1}`}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.src} alt={img.alt} loading="lazy" onError={handleImageError}/>
-            </button>)}
-          </div>
+        <section className="opal-stage-section opal-stage-gallery" id="gallery" aria-label={c.nav.gallery}>
+          <PremiumGallery locale={locale} content={c} onOpenPhoto={setPhoto}/>
         </section>
 
         <section className="content-section muted-section" id="reviews" aria-labelledby="reviews-heading">

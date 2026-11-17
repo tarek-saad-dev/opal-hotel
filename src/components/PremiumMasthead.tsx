@@ -206,7 +206,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
         <div className="premium-hero-layout">
           <div className="premium-hero-copy">
             <p className="premium-eyebrow"><span className="premium-eyebrow-line" />{t.kicker}</p>
-            <h1 id="hotel-name"><span>{t.first}</span><em>{t.second}</em></h1>
+            <h1 id="hotel-name"><span className="opal-visually-hidden">{c.hotelName}: </span><span>{t.first}</span><em>{t.second}</em></h1>
             <p className="premium-hero-description">{t.description}</p>
             <div className="premium-hero-actions">
               <a href="#overview" className="premium-hero-button">{t.discover}<Glyph name="arrow" /></a>

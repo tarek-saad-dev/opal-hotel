@@ -64,3 +64,11 @@ Branch `feat/premium-editorial-frontend` introduces:
 - Clearly labelled illustrative photo placeholders and a resilient architectural fallback.
 
 Quality gate: GitHub Actions build/typecheck/tests + EN/AR desktop/tablet/mobile screenshots before merging. Production assets and booking are still pending.
+
+
+## Premium UI phase 2 — 2026-11-17
+- Built a new editorial storytelling layout, compact amenities highlights with expandable full lists, refined location, concept-only rooms and an interactive filtered gallery.
+- Continued EN/AR RTL support, responsive layouts at 1440/768/390 and full-photo/section screenshot QA.
+- Room concepts and photographs are **illustrative only** and are not actual Opal Legacy inventory. No prices or booking confirmation.
+- This update has no backend, payment, inquiry delivery or deployment changes. It must be built and redeployed on the VPS after merge if the production URL is already active.
+- Outstanding: official property photos and logo, full content verification, final visual refinements and production web integration.

@@ -9,7 +9,7 @@ export const galleryImages: HotelImage[] = [
   {src:"https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1400&q=80",alt:"Illustrative boutique hotel exterior (design preview, not Opal Legacy)",origin:"design-demo"},
   {src:"https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1400&q=80",alt:"Illustrative landscaped hotel pool (design preview)",origin:"design-demo"},
   {src:"https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=1200&q=80",alt:"Illustrative guest bedroom (design preview)",origin:"design-demo"},
-  {src:"https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80",alt:"Illustrative hotel terrace (design preview)",origin:"design-demo"},
+  {src:"https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80",alt:"Illustrative hotel guest bedroom (design preview)",origin:"design-demo"},
   {src:"https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1200&q=80",alt:"Illustrative resort architecture (design preview)",origin:"design-demo"},
   {src:"https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80",alt:"Illustrative hotel suite (design preview)",origin:"design-demo"},
 ];
