@@ -3,6 +3,7 @@ import "./globals.css";
 import "./premium.css";
 import "./premium-sections.css";
 import "./premium-closing.css";
+import "./visual-polish.css";
 
 export const metadata: Metadata = {
   title: { default: "Opal Legacy Luxor Hotel", template: "%s | Opal Legacy" },
@@ -11,5 +12,9 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html suppressHydrationWarning><body>{children}</body></html>;
+  return <html lang="en" suppressHydrationWarning><head>
+    <link rel="preconnect" href="https://images.unsplash.com"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous"/>
+  </head><body>{children}</body></html>;
 }
