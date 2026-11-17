@@ -23,6 +23,10 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Source integrity tests
         run: npm test
+      - name: Reference validator tests
+        run: node --test docs/reference-lock/capture/validate-reference.test.mjs
+      - name: Capture syntax check
+        run: node --check docs/reference-lock/capture/opal-capture.mjs
       - name: TypeScript
         run: npm run typecheck
       - name: Build
