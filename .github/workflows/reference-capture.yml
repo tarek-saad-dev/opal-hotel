@@ -1,11 +1,6 @@
 name: Reference Capture
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/reference-capture.yml"
-      - "docs/reference-lock/capture/**"
   workflow_dispatch:
 
 permissions:
@@ -29,7 +24,13 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
+      - name: Check capture script syntax
+        run: node --check opal-capture.mjs
+      - name: Test capture validity guard
+        run: node --test validate-reference.test.mjs
       - name: Capture EN/AR reference
+        env:
+          CAPTURE_MODE: smoke
         run: npm run capture
       - name: Save screenshots and computed-style audit
         if: always()
@@ -39,3 +40,11 @@ jobs:
           path: docs/reference-lock/capture/output/
           if-no-files-found: warn
           retention-days: 14
+      - name: Show capture summary
+        if: always()
+        run: |
+          if [ -f output/summary.json ]; then
+            cat output/summary.json
+          else
+            echo "Capture summary not generated"
+          fi
