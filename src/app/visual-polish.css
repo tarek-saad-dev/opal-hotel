@@ -1,0 +1,87 @@
+/* Opal Legacy — Visual Polish v4
+   Progressive enhancements only. All existing sections remain readable when
+   JS, motion or remote images are unavailable.
+ */
+:root{
+  --opal-focus:#d4b587;
+  --opal-ease:cubic-bezier(.22,1,.36,1);
+  --opal-safe-bottom:env(safe-area-inset-bottom,0px);
+}
+::selection{background:#e0cba7;color:#203a30}
+html{scroll-behavior:smooth;scroll-padding-top:104px}
+.opal-stage-section{scroll-margin-top:75px}
+.opal-skip-link{
+  position:fixed;top:12px;inset-inline-start:14px;z-index:150;
+  display:inline-flex;align-items:center;min-height:42px;
+  background:#f9f5eb;color:#1e3b2c;border:2px solid #a98f65;
+  padding:8px 18px;font:600 13px var(--premium-sans,Arial,sans-serif);
+  transform:translateY(-180%);opacity:0;transition:transform .2s,opacity .2s;
+  box-shadow:0 8px 20px #111b153b;
+}
+.opal-skip-link:focus-visible{transform:translateY(0);opacity:1}
+.premium-mark-official{
+  height:52px;width:auto;max-width:118px;object-fit:contain;flex-shrink:0;
+}
+.opal-end-brand-official{
+  width:auto;height:58px;max-width:150px;object-fit:contain;margin-bottom:19px;
+}
+.premium-desktop-nav a{position:relative;display:inline-flex;align-items:center;height:44px}
+.premium-desktop-nav a::after{
+  content:"";position:absolute;bottom:4px;inset-inline-start:0;inset-inline-end:0;
+  background:#d4b587;height:1px;transform:scaleX(0);transform-origin:center;
+  transition:transform .35s var(--opal-ease);opacity:.9;
+}
+.premium-desktop-nav a:hover::after,
+.premium-desktop-nav a[aria-current="location"]::after{transform:scaleX(1)}
+.premium-desktop-nav a[aria-current="location"]{color:#f2dfc2;opacity:1}
+.premium-menu-surface nav a[aria-current="location"]{color:#ebd2aa}
+.premium-menu-surface nav a[aria-current="location"] .premium-menu-number{color:#f1d5ae}
+.premium-header.is-scrolled{border-bottom:1px solid #ffffff18}
+.premium-hero-photo{background:#2a473a;will-change:auto}
+.premium-hero-button,
+.premium-booking-submit,
+.opal-end-contact-submit,
+.opal-end-form-submit button{transition:transform .28s var(--opal-ease),background .28s ease}
+.premium-hero-button:active,
+.premium-booking-submit:active,
+.opal-end-contact-submit:active,
+.opal-end-form-submit button:active{transform:translateY(1px) scale(.992)}
+.opal-stay-dock{display:none}
+@media(max-width:800px){
+  .premium-header-inner{will-change:auto}
+  .premium-menu-surface{overscroll-behavior:contain}
+  .premium-menu-surface nav a{min-height:68px}
+  .premium-mark-official{height:44px;max-width:95px}
+  .opal-stay-dock{
+    position:fixed;inset-inline:14px;bottom:calc(13px + var(--opal-safe-bottom));
+    z-index:80;min-height:56px;
+    display:flex;align-items:center;justify-content:space-between;gap:18px;
+    padding:0 20px;background:#f8f3e8;color:#233e30;border:1px solid #c2ae8e;
+    box-shadow:0 12px 38px #15291f47,0 0 0 5px #f4f0e818;
+    font-size:12px;letter-spacing:.045em;font-weight:700;
+    opacity:0;visibility:hidden;pointer-events:none;transform:translateY(18px);
+    transition:opacity .32s var(--opal-ease),transform .32s var(--opal-ease),visibility .32s;
+  }
+  .opal-stay-dock.is-visible{
+    opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0);
+  }
+  .opal-stay-dock svg{width:20px;height:20px;flex-shrink:0}
+  [dir="rtl"] .opal-stay-dock svg{transform:rotate(180deg)}
+  .premium-hero-photo{object-position:center center}
+}
+@media(max-width:540px){
+  html{scroll-padding-top:79px}
+  .premium-header.is-scrolled{background:#1d322bf7}
+  .premium-mark-official{height:37px;max-width:82px}
+  .premium-menu-surface nav a{min-height:64px}
+  .opal-stay-dock{inset-inline:12px;bottom:calc(11px + var(--opal-safe-bottom));min-height:54px}
+  .opal-stage-section{scroll-margin-top:66px}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .opal-skip-link,.premium-desktop-nav a::after,.opal-stay-dock{transition:none!important}
+  .premium-hero-photo{animation:none!important}
+}
+@media(prefers-reduced-data:reduce){
+  .premium-hero-photo{animation:none!important}
+}
