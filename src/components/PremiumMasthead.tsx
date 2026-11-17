@@ -101,7 +101,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
         menuTriggerRef.current,
       ].filter((el): el is HTMLAnchorElement | HTMLButtonElement => el !== null);
       if (!focusables.length) return;
-      const current = focusables.indexOf(document.activeElement as HTMLElement);
+      const current = focusables.findIndex(el => el === document.activeElement);
       if (current === -1) {
         event.preventDefault();
         focusables[0].focus();
