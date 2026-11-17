@@ -55,7 +55,9 @@ npx playwright install chromium
 npm run capture
 ```
 
-Inspect `docs/reference-lock/capture/output/` (ignored by Git) and review screenshots/DOM measurements before approving a pixel-perfect style baseline.
+The remote reference site rate-limited the GitHub runner on 2026-11-17. Capture is **manual-only** to avoid repeated requests. The validator rejects rate-limited screenshots; prefer owner-supplied screenshots or authorized browser capture.
+
+Inspect `docs/reference-lock/capture/output/` (ignored by Git) and review valid screenshots/DOM measurements before approving a pixel-perfect style baseline.
 
 ## Workflow
 Document each visual decision; do not redesign the approved reference without explicit approval.
