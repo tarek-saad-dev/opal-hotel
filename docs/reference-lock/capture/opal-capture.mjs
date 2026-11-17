@@ -9,6 +9,7 @@
 import { chromium } from 'playwright';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { validateCapture } from './validate-reference.mjs';
 
 const base = 'https://opal-legacy.luxor-hotels-eg.com';
 const out = path.resolve('output');
@@ -40,7 +41,7 @@ async function captureFragment(page, locator, file){
 }
 
 async function loadPage(page, url){
-  await page.goto(url,{waitUntil:'domcontentloaded',timeout:45000});
+  const response=await page.goto(url,{waitUntil:'domcontentloaded',timeout:45000});
   await page.waitForTimeout(1300);
   try { await page.evaluate(async() => { await Promise.race([
     document.fonts?.ready ?? Promise.resolve(),
@@ -54,6 +55,7 @@ async function loadPage(page, url){
     window.scrollTo(0,0);
   });
   await page.waitForTimeout(850);
+  return response?.status() ?? null;
 }
 
 async function auditDom(page){
@@ -93,7 +95,8 @@ async function auditDom(page){
       }
     }
     return {
-      url:location.href,title:document.title,htmlLang:document.documentElement.lang,
+      url:location.href,title:document.title,bodyTextSnippet:(document.body?.innerText||'').slice(0,600),
+      htmlLang:document.documentElement.lang,
       htmlDir:document.documentElement.dir,viewport:{width:innerWidth,height:innerHeight},
       body:{scrollWidth:document.body.scrollWidth,scrollHeight:document.body.scrollHeight},
       document:{scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight},
@@ -123,10 +126,10 @@ for(const lang of locales){
     const target=`${base}/${lang}/`;
     try {
       console.log(`CAPTURE ${lang} ${vp.name} ${target}`);
-      await loadPage(page,target);
+      const httpStatus=await loadPage(page,target);
       // Always preserve DOM data even if a full-page screenshot cannot be captured.
       const audit=await auditDom(page);
-      await writeJson(path.join(folder,'dom-audit.json'),audit);
+      await writeJson(path.join(folder,'dom-audit.json'),{...audit,httpStatus});
       let screenshot=true;
       try {
         await page.screenshot({path:path.join(folder,'full.png'),fullPage:true,timeout:60000,animations:'disabled'});
@@ -136,6 +139,12 @@ for(const lang of locales){
         // Viewport image provides at least one visual artifact if full capture fails.
         try { await page.screenshot({path:path.join(folder,'viewport.png'),fullPage:false,timeout:12000}); }
         catch(err2) { errors.push({kind:'viewportScreenshot',message:String(err2.message).slice(0,250)}); }
+      }
+      // A screenshot of a block/429 response is not a successful design capture.
+      const validation=validateCapture({...audit,httpStatus});
+      if(!validation.valid) {
+        errors.push({kind:'referenceValidation',message:validation.reason,httpStatus});
+        throw new Error(`Reference page rejected: ${validation.reason}, HTTP ${httpStatus}, title=${audit.title||'(empty)'}`);
       }
       await captureFragment(page,page.locator('header'),path.join(folder,'header.png'));
       await captureFragment(page,page.locator('h1'),path.join(folder,'hotel-title.png'));
@@ -174,6 +183,7 @@ for(const lang of locales){
       await writeJson(path.join(folder,'capture-status.json'),{success:false,lang,viewport:vp,target,
         error:String(err.stack||err).slice(0,1400),errors});
       summary.push({lang,viewport:vp.name,success:false,error:String(err.message).slice(0,190)});
+      console.warn(`REFERENCE FAILURE ${lang} ${vp.name}: ${String(err.message).slice(0,220)}`);
       console.error(`FAILED ${lang} ${vp.name}: ${err.message}`);
     }finally {await context.close();}
   }
