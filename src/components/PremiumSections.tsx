@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import type { SyntheticEvent } from "react";
+import type { ReactNode, SyntheticEvent } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
 import { galleryImages } from "@/lib/gallery";
 
 type SharedProps = { locale: Locale; content: HotelContent };
 type StoryProps = SharedProps & { onOpenPhoto: (index: number) => void };
 type RoomsProps = StoryProps & { attemptedBooking: boolean; checkin: string; checkout: string };
-const A = ({ children }: { children: React.ReactNode }) => <span className="opal-index">{children}</span>;
+const A = ({ children }: { children: ReactNode }) => <span className="opal-index">{children}</span>;
 
 function demoImageError(event: SyntheticEvent<HTMLImageElement>) {
   const img = event.currentTarget;
