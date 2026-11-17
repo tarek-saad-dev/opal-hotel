@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { FormEvent, SyntheticEvent } from "react";
+import type { SyntheticEvent } from "react";
 import Link from "next/link";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
 import { galleryImages } from "@/lib/gallery";
+import { PremiumMasthead } from "@/components/PremiumMasthead";
 
 type Props={locale:Locale;content:HotelContent};
 function handleImageError(event:SyntheticEvent<HTMLImageElement>) {
@@ -13,19 +14,6 @@ function handleImageError(event:SyntheticEvent<HTMLImageElement>) {
   // Don't show the browser broken-image glyph while the hotel's approved assets are pending.
   img.dataset.placeholder="true";
   img.src="/media/photo-placeholder.svg";
-}
-const anchors=["overview","facilities","location","rooms","gallery","reviews","contact"] as const;
-type Anchor=(typeof anchors)[number];
-
-function isoDate(d:Date) {
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-}
-function tomorrow() {
-  const d=new Date();d.setDate(d.getDate()+1);return isoDate(d);
-}
-function nextDay(value:string) {
-  const [y,m,d]=value.split("-").map(Number);
-  const v=new Date(y,m-1,d);v.setDate(v.getDate()+1);return isoDate(v);
 }
 function Icon({name}:{name:"map"|"arrow"|"close"|"menu"|"calendar"|"image"}) {
   const icons={
@@ -40,15 +28,12 @@ function Icon({name}:{name:"map"|"arrow"|"close"|"menu"|"calendar"|"image"}) {
 }
 
 export function HotelExperience({locale,content:c}:Props) {
-  const [menuOpen,setMenuOpen]=useState(false);
   const [photo,setPhoto]=useState<number|null>(null);
   const [checkin,setCheckin]=useState("");
   const [checkout,setCheckout]=useState("");
-  const [dateWarning,setDateWarning]=useState(false);
   const [attemptedBooking,setAttemptedBooking]=useState(false);
   const [formStatus,setFormStatus]=useState<""|"contact"|"review">("");
   const [rating,setRating]=useState("8");
-  const [today,setToday]=useState("");
 
   useEffect(() => {
     // SSR images may fail before React hydration attaches onError handlers.
@@ -68,13 +53,6 @@ export function HotelExperience({locale,content:c}:Props) {
     return () => watcher.disconnect();
   }, []);
 
-  useEffect(()=> {
-    const initial=tomorrow();
-    setToday(isoDate(new Date()));
-    setCheckin(v=>v||initial);
-    setCheckout(v=>v||nextDay(initial));
-  },[]);
-
   useEffect(()=>{
     if(photo===null)return;
     const handler=(e:KeyboardEvent)=>{
@@ -87,87 +65,18 @@ export function HotelExperience({locale,content:c}:Props) {
     return()=>{window.removeEventListener("keydown",handler);document.body.style.overflow=old;};
   },[photo]);
 
-  const search=(e:FormEvent<HTMLFormElement>)=>{
-    e.preventDefault();
-    setDateWarning(!checkin||!checkout||checkout<=checkin);
-    setAttemptedBooking(Boolean(checkin&&checkout&&checkout>checkin));
-    if(checkin&&checkout&&checkout>checkin)document.getElementById("rooms")?.scrollIntoView({behavior:"smooth"});
-  };
-
-  const navEntries=anchors.map(id=>({id,label:c.nav[id]}));
-  const booking=<form className="booking-form" onSubmit={search}>
-    <div className="date-field">
-      <label htmlFor="arrival">{c.labels.checkin}</label>
-      <div className="date-input-wrap"><Icon name="calendar"/>
-        <input required id="arrival" type="date" min={today||undefined} value={checkin} onChange={e=>{
-          const value=e.target.value;setCheckin(value);setDateWarning(false);setAttemptedBooking(false);
-          if(checkout&&checkout<=value)setCheckout(nextDay(value));
-        }}/>
-      </div>
-    </div>
-    <div className="date-field">
-      <label htmlFor="departure">{c.labels.checkout}</label>
-      <div className="date-input-wrap"><Icon name="calendar"/>
-        <input required id="departure" type="date" min={checkin?nextDay(checkin):today||undefined} value={checkout}
-          onChange={e=>{setCheckout(e.target.value);setDateWarning(false);setAttemptedBooking(false);}}/>
-      </div>
-    </div>
-    <button className="primary-button" type="submit">{c.labels.availability}<Icon name="arrow"/></button>
-    {dateWarning&&<p className="form-warning" role="alert">{c.labels.dateError}</p>}
-  </form>;
 
   return (
     <>
-      <header className="site-header" id="top">
-        <div className="header-inner container">
-          <Link href={`/${locale}`} className="wordmark" aria-label="Opal Legacy Hotel home">
-            <span className="wordmark-small">HOTEL</span><span>OPAL LEGACY</span>
-          </Link>
-          <div className="header-actions">
-            <nav className="desktop-nav" aria-label={c.labels.menu}>
-              {navEntries.slice(0,5).map(n=><a key={n.id} href={`#${n.id}`}>{n.label}</a>)}
-            </nav>
-            <span className="currency" title="Currency selection available after booking integration">GBP</span>
-            <Link className="language-toggle" href={locale==="en"?"/ar":"/en"} lang={locale==="en"?"ar":"en"} hrefLang={locale==="en"?"ar":"en"}>{locale==="en"?"العربية":"English"}</Link>
-            <button type="button" aria-label={menuOpen?c.labels.close:c.labels.menu} aria-expanded={menuOpen}
-              aria-controls="mobile-navigation" className="menu-button" onClick={()=>setMenuOpen(v=>!v)}>
-              <Icon name={menuOpen?"close":"menu"}/><span>{menuOpen?c.labels.close:c.labels.menu}</span>
-            </button>
-          </div>
-        </div>
-        {menuOpen&&<nav className="mobile-navigation" id="mobile-navigation" aria-label={c.labels.menu}>
-          {navEntries.map(n=><a href={`#${n.id}`} key={n.id} onClick={()=>setMenuOpen(false)}>{n.label}</a>)}
-        </nav>}
-      </header>
-
-      <main>
-        <section className="hotel-intro container" aria-labelledby="hotel-name">
-          <div className="hotel-heading">
-            <div><p className="eyebrow">{locale==="ar"?"الأقصر، مصر":"LUXOR · EGYPT"}</p>
-              <h1 id="hotel-name">{c.hotelName}</h1>
-              <p className="address"><Icon name="map"/>{c.address}
-                <a target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=Opal+Legacy+Luxor+Hotel">{c.labels.map}</a></p>
-            </div>
-          </div>
-
-          <div className="hero-gallery" aria-label={c.nav.gallery}>
-            {galleryImages.slice(0,5).map((img,index)=><button type="button" key={img.src}
-              className={index===0?"hero-image hero-main":"hero-image"}
-              aria-label={`${c.labels.galleryView} ${index+1}`} onClick={()=>setPhoto(index)}>
-              {/* External reference photos must be replaced with approved hotel-owned assets before production. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.src} alt={img.alt} loading={index===0?"eager":"lazy"} onError={handleImageError}/>
-              {index===4&&<span className="image-count">{c.labels.viewAll} · {galleryImages.length}</span>}
-            </button>)}
-          </div>
-        </section>
-
-        <section className="booking-band" aria-labelledby="booking-heading">
-          <div className="container">
-            <h2 id="booking-heading" className="booking-heading">{c.labels.bookingTitle}</h2>
-            {booking}
-          </div>
-        </section>
+      <PremiumMasthead locale={locale} content={c}
+        onOpenGallery={() => setPhoto(0)}
+        onAvailability={({checkin,checkout}) => {
+          setCheckin(checkin);
+          setCheckout(checkout);
+          setAttemptedBooking(true);
+          document.getElementById("rooms")?.scrollIntoView({behavior:"smooth"});
+        }}
+      />
 
         <section className="content-section container" id="overview" aria-labelledby="overview-heading">
           <h2 id="overview-heading">{c.labels.overviewTitle}</h2>
