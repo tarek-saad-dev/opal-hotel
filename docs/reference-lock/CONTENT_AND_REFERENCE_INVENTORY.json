@@ -1,0 +1,296 @@
+{
+  "reference_lock_version": "1.0",
+  "date": "2026-11-17",
+  "status": {
+    "structure": "documented",
+    "pixel_reference": "pending screenshot capture",
+    "live_browser_css": "not accessible from current environment",
+    "interactive_reservation": "not tested"
+  },
+  "sources": {
+    "en": "https://opal-legacy.luxor-hotels-eg.com/en/",
+    "ar": "https://opal-legacy.luxor-hotels-eg.com/ar/",
+    "original_photo_verified": "https://opal-legacy.luxor-hotels-eg.com/data/Photos/OriginalPhoto/17490/1749064/1749064282/luxor-opal-legacy-luxor-photo-22.JPEG"
+  },
+  "hotel": {
+    "name_en": "Hotel Opal Legacy Luxor",
+    "name_ar": "فندق Opal Legacy Luxor",
+    "address_en": "Rd Lead To Esna, Luxor, Egypt",
+    "address_ar": "Rd Lead To Esna، الأقصر، مصر",
+    "rooms_count_claimed": 40,
+    "rooms_count_verified_by_hotel": false,
+    "checkin_policy_claimed": "from 08:00 until 12:00",
+    "checkout_policy_claimed": "until 10:00",
+    "policy_verified_by_hotel": false
+  },
+  "sections": [
+    {
+      "id": "site_header",
+      "component": "SiteHeader",
+      "source_description": "network header, navigation, languages, currency, menu",
+      "confidence": "confirmed",
+      "order": 1
+    },
+    {
+      "id": "hotel_identity",
+      "component": "HotelIdentity",
+      "source_description": "hotel name, address, map",
+      "confidence": "confirmed",
+      "order": 2
+    },
+    {
+      "id": "primary_gallery",
+      "component": "PrimaryGallery",
+      "source_description": "image links before booking",
+      "confidence": "confirmed-structure-visual-pending",
+      "order": 3
+    },
+    {
+      "id": "online_reservation",
+      "component": "BookingSearch",
+      "source_description": "date range + check availability",
+      "confidence": "confirmed-structure-function-pending",
+      "order": 4
+    },
+    {
+      "id": "overview",
+      "component": "HotelOverview",
+      "source_description": "feature list and hotel description",
+      "confidence": "confirmed",
+      "order": 5
+    },
+    {
+      "id": "facilities",
+      "component": "HotelFacilities",
+      "source_description": "five facility categories",
+      "confidence": "confirmed",
+      "order": 6
+    },
+    {
+      "id": "important_information",
+      "component": "ImportantInformation",
+      "source_description": "check in/out policies",
+      "confidence": "confirmed-copy-owner-pending",
+      "order": 7
+    },
+    {
+      "id": "location",
+      "component": "HotelLocation",
+      "source_description": "map/location and distances",
+      "confidence": "confirmed-copy-owner-pending",
+      "order": 8
+    },
+    {
+      "id": "rooms_availability",
+      "component": "RoomsAvailability",
+      "source_description": "empty/loading/searching states",
+      "confidence": "confirmed-structure-function-pending",
+      "order": 9
+    },
+    {
+      "id": "gallery",
+      "component": "FullGallery",
+      "source_description": "additional large image list",
+      "confidence": "confirmed-structure-visual-pending",
+      "order": 10
+    },
+    {
+      "id": "review",
+      "component": "ReviewForm",
+      "source_description": "guest details, rating 1–10, pros/cons",
+      "confidence": "confirmed",
+      "order": 11
+    },
+    {
+      "id": "contact",
+      "component": "ContactForm",
+      "source_description": "name, email, subject, message",
+      "confidence": "confirmed",
+      "order": 12
+    },
+    {
+      "id": "footer",
+      "component": "SiteFooter",
+      "source_description": "navigation, address, network legal and cross-links",
+      "confidence": "confirmed",
+      "order": 13
+    }
+  ],
+  "facility_groups": [
+    {
+      "id": "general",
+      "title_en": "General",
+      "count": 19,
+      "items_en": [
+        "No smoking on site",
+        "Wi-Fi",
+        "Parking",
+        "Safe deposit box",
+        "24-hour reception",
+        "VIP check-in/-out",
+        "Express check-in/-out",
+        "Pets allowed",
+        "Rooms/Facilities for disabled",
+        "Wheelchair access",
+        "24-hour security",
+        "Luggage storage",
+        "Allergy-free rooms",
+        "Currency exchange",
+        "Coffee shop",
+        "Fireplace",
+        "Smoke detectors",
+        "Toilet for disabled",
+        "Fire extinguishers"
+      ],
+      "owner_verified": false
+    },
+    {
+      "id": "dining",
+      "title_en": "Dining",
+      "count": 10,
+      "items_en": [
+        "Electric kettle",
+        "In-room breakfast",
+        "Restaurant",
+        "Snack bar",
+        "Bar/Lounge area",
+        "Outdoor dining area",
+        "Picnic area/Tables",
+        "Dinner",
+        "Packed lunches",
+        "Special diet menus"
+      ],
+      "owner_verified": false
+    },
+    {
+      "id": "leisure_and_sports",
+      "title_en": "Leisure & Sports",
+      "count": 11,
+      "items_en": [
+        "Sun loungers",
+        "Live entertainment",
+        "Night club",
+        "Sun terrace",
+        "Garden area",
+        "BBQ facilities",
+        "Leisure/TV room",
+        "Horseback riding",
+        "Cycling",
+        "Fishing",
+        "Public Bath"
+      ],
+      "owner_verified": false
+    },
+    {
+      "id": "services",
+      "title_en": "Services",
+      "count": 11,
+      "items_en": [
+        "Airport shuttle",
+        "Room service",
+        "Housekeeping",
+        "Car hire",
+        "Laundry",
+        "Dry cleaning",
+        "Tours/Ticket assistance",
+        "Grocery shopping service",
+        "Meeting/Banquet facilities",
+        "Fax/Photocopying",
+        "Happy hour"
+      ],
+      "owner_verified": false
+    },
+    {
+      "id": "room_amenities",
+      "title_en": "Room Amenities",
+      "count": 19,
+      "items_en": [
+        "Air conditioning",
+        "Heating",
+        "Mini-bar",
+        "Soundproofed rooms",
+        "Sitting area",
+        "Patio",
+        "Terrace",
+        "Garden furniture",
+        "Tea and coffee facilities",
+        "Dining table",
+        "Ironing facilities",
+        "Free toiletries",
+        "Flat-screen TV",
+        "AM/FM alarm clock",
+        "Cots",
+        "Babysitting/Child services",
+        "Baby pushchair",
+        "Children's buffet",
+        "Children's play area"
+      ],
+      "owner_verified": false
+    }
+  ],
+  "booking": {
+    "observed_labels": [
+      "Online Reservation",
+      "Check-in date:",
+      "Check-out date:",
+      "Check availability"
+    ],
+    "observed_snapshot_dates": [
+      "2026-11-18",
+      "2026-11-19"
+    ],
+    "note": "Dates were dynamic snapshot, NOT fixed defaults. No live booking submitted.",
+    "results_ui_verified": false,
+    "backend_verified": false
+  },
+  "review": {
+    "fields": [
+      "Name",
+      "Email",
+      "Travel month/year selectors",
+      "Rating (1–10)",
+      "Pros",
+      "Cons"
+    ],
+    "submit_result_verified": false
+  },
+  "contact": {
+    "fields": [
+      "Name",
+      "Email",
+      "Subject",
+      "Message"
+    ],
+    "group_booking_note": "If you need more than 2 rooms, please request group booking.",
+    "submit_result_verified": false
+  },
+  "photo_links": {
+    "hero_image_link_range_in_indexed_text": "15..114",
+    "count_of_link_occurrences": 100,
+    "unique_assets_verified": false,
+    "actual_page_css_grid_verified": false,
+    "full_gallery_has_many_image_entries": true
+  },
+  "issues_for_owner_review": [
+    "Check-in/out times",
+    "40 rooms stated",
+    "Facilities authenticity",
+    "Airport: description 5km vs Location 14km",
+    "Rail: description 4.3km vs Location 4.5km",
+    "Differences between AR and EN attraction lists",
+    "Gallery asset licensing",
+    "Official brand/logo",
+    "Source site contains third-party network cross-links"
+  ],
+  "visual_measurements": {
+    "colors": null,
+    "typography": null,
+    "spacing": null,
+    "grid_breakpoints": null,
+    "header_height": null,
+    "image_crop": null,
+    "lightbox_behavior": null,
+    "mobile_menu_behavior": null
+  },
+  "sources_citation_note": "Observed from web indexed page on 2026-11-17; not extracted DOM. See FRONTEND_MASTER_SPEC_AR.md for certainty levels."
+}
