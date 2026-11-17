@@ -84,6 +84,9 @@ for(const lang of langs)for(const screen of screens){
     if(await header.count())await header.screenshot({path:path.join(dir,'header.png'),timeout:12000});
     const hero=page.locator('.premium-hero');
     if(await hero.count())await hero.screenshot({path:path.join(dir,'hero.png'),timeout:12000});
+    // Sticky header is still visible in the full-page screenshot above. Hide it
+    // only for section crops, so headings aren't covered by screenshot scrolling.
+    if(await header.count()) await header.evaluate(element => element.style.visibility='hidden');
     // Section-level images make the design review actionable, not just pass/fail.
     for (const key of ['overview','facilities','location','rooms','gallery']) {
       const section=page.locator('#'+key);
@@ -93,6 +96,7 @@ for(const lang of langs)for(const screen of screens){
         });
       }
     }
+    if(await header.count()) await header.evaluate(element => element.style.visibility='');
     // Exercise actual UI interactions after the pristine visual screenshots.
     const interactions={slides:false,guests:false,menu:false,booking:false,
       amenities:false,galleryFilter:false,galleryLightbox:false,rooms:false};
