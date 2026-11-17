@@ -48,7 +48,17 @@ for(const lang of langs)for(const screen of screens){
   const url=`${origin}/${lang}`;
   try{
     await load(page,url);
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(900);
+    // Exercise lazily loaded image elements before measuring fallback status.
+    await page.evaluate(async()=>{
+      const doc=document.documentElement;
+      for(let y=0;y<doc.scrollHeight;y+=650){
+        scrollTo(0,y);
+        await new Promise(resolve=>setTimeout(resolve,55));
+      }
+      scrollTo(0,0);
+    });
+    await page.waitForTimeout(650);
     // Collect DOM state before any screenshot failure.
     const audit=await page.evaluate(()=>{
       const doc=document.documentElement;
