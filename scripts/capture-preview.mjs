@@ -84,8 +84,18 @@ for(const lang of langs)for(const screen of screens){
     if(await header.count())await header.screenshot({path:path.join(dir,'header.png'),timeout:12000});
     const hero=page.locator('.premium-hero');
     if(await hero.count())await hero.screenshot({path:path.join(dir,'hero.png'),timeout:12000});
+    // Section-level images make the design review actionable, not just pass/fail.
+    for (const key of ['overview','facilities','location','rooms','gallery']) {
+      const section=page.locator('#'+key);
+      if(await section.count()) {
+        await section.screenshot({
+          path:path.join(dir,key+'.png'),timeout:30000,animations:'disabled'
+        });
+      }
+    }
     // Exercise actual UI interactions after the pristine visual screenshots.
-    const interactions={slides:false,guests:false,menu:false,booking:false};
+    const interactions={slides:false,guests:false,menu:false,booking:false,
+      amenities:false,galleryFilter:false,galleryLightbox:false,rooms:false};
     try{
       const scene=page.locator('.premium-scene-number');
       const before=await scene.innerText();
@@ -109,6 +119,27 @@ for(const lang of langs)for(const screen of screens){
       await page.locator('.premium-booking-submit').click();
       const rooms=await page.locator('#rooms').innerText();
       interactions.booking=/not connected|غير متصل|لم يُربط|لم يتم إرسال/.test(rooms);
+
+      interactions.rooms=(await page.locator('.opal-room-card').count())===3;
+      const detail=page.locator('.opal-amenity-details').first();
+      await detail.locator('summary').click();
+      interactions.amenities=(await detail.getAttribute('open'))!==null
+        &&(await detail.locator('li').count())>0;
+      await detail.locator('summary').click();
+
+      const galleryTabs=page.locator('.opal-gallery-tabs button');
+      await galleryTabs.nth(1).click();
+      const spacesCount=await page.locator('.opal-gallery-item').count();
+      await galleryTabs.nth(2).click();
+      const momentsCount=await page.locator('.opal-gallery-item').count();
+      await galleryTabs.nth(0).click();
+      const allCount=await page.locator('.opal-gallery-item').count();
+      interactions.galleryFilter=spacesCount===4&&momentsCount===2&&allCount===6;
+      await page.locator('.opal-gallery-item').first().click();
+      await page.locator('.lightbox').waitFor({state:'visible',timeout:3000});
+      await page.keyboard.press('Escape');
+      await page.locator('.lightbox').waitFor({state:'detached',timeout:3000});
+      interactions.galleryLightbox=true;
     }catch(e){
       errors.push({type:'interaction',message:String(e.message).slice(0,320)});
     }
