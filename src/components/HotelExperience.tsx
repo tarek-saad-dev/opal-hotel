@@ -1,12 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { FormEvent } from "react";
+import type { FormEvent, SyntheticEvent } from "react";
 import Link from "next/link";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
 import { galleryImages } from "@/lib/gallery";
 
 type Props={locale:Locale;content:HotelContent};
+function handleImageError(event:SyntheticEvent<HTMLImageElement>) {
+  const img=event.currentTarget;
+  if(img.dataset.placeholder==="true") return;
+  // Don't show the browser broken-image glyph while the hotel's approved assets are pending.
+  img.dataset.placeholder="true";
+  img.src="/media/photo-placeholder.svg";
+}
 const anchors=["overview","facilities","location","rooms","gallery","reviews","contact"] as const;
 type Anchor=(typeof anchors)[number];
 
@@ -131,7 +138,7 @@ export function HotelExperience({locale,content:c}:Props) {
               aria-label={`${c.labels.galleryView} ${index+1}`} onClick={()=>setPhoto(index)}>
               {/* External reference photos must be replaced with approved hotel-owned assets before production. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.src} alt={img.alt} loading={index===0?"eager":"lazy"}/>
+              <img src={img.src} alt={img.alt} loading={index===0?"eager":"lazy"} onError={handleImageError}/>
               {index===4&&<span className="image-count">{c.labels.viewAll} · {galleryImages.length}</span>}
             </button>)}
           </div>
@@ -197,7 +204,7 @@ export function HotelExperience({locale,content:c}:Props) {
             {galleryImages.map((img,index)=><button type="button" className="gallery-tile" key={img.src}
               onClick={()=>setPhoto(index)} aria-label={`${c.labels.galleryView} ${index+1}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.src} alt={img.alt} loading="lazy"/>
+              <img src={img.src} alt={img.alt} loading="lazy" onError={handleImageError}/>
             </button>)}
           </div>
         </section>
@@ -252,7 +259,7 @@ export function HotelExperience({locale,content:c}:Props) {
         <button type="button" className="lightbox-prev" onClick={e=>{e.stopPropagation();setPhoto((photo-1+galleryImages.length)%galleryImages.length)}} aria-label={c.labels.previous}>‹</button>
         <div className="lightbox-body" onClick={e=>e.stopPropagation()}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={galleryImages[photo].src} alt={galleryImages[photo].alt}/>
+          <img src={galleryImages[photo].src} alt={galleryImages[photo].alt} onError={handleImageError}/>
           <p className="lightbox-counter" dir="ltr">{photo+1} / {galleryImages.length}</p>
         </div>
         <button type="button" className="lightbox-next" onClick={e=>{e.stopPropagation();setPhoto((photo+1)%galleryImages.length)}} aria-label={c.labels.next}>›</button>
