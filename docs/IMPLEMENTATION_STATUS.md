@@ -45,3 +45,10 @@ Review output for failed captures, layout differences and image licensing before
 - No real reservation booking is activated.
 - Do not copy third-party network identity/ownership details into hotel branding.
 - Confirm actual review policies, opening times and distances with management.
+
+## QA evidence (2026-11-17)
+- GitHub PR #1 Frontend CI passed source tests, TypeScript and Next.js production build on commit `04f0cd7888935405f121c2b15157e5af3697e399`.
+- Reference Capture ran but **returned a rate-limit response** from the third-party hotel site (body: `Rate limit exceeded`; 0 images, 0 headings). Its original green status was a false positive.
+- Validity checks have been added to prevent blocked pages from being recorded as reference screenshots.
+- Automatic requests to the restricted reference site have been disabled. Reference capture is now manual-only and defaults to smoke mode; do not repeatedly request this origin.
+- Pixel-accurate alignment remains blocked until owner-supplied screenshots or authorized capture is available.
