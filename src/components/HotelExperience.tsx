@@ -122,11 +122,11 @@ export function HotelExperience({locale,content:c}:Props) {
           <PremiumLocation locale={locale} content={c}/>
         </section>
         <section className="opal-stage-section opal-stage-rooms" id="rooms" aria-label={c.labels.roomsTitle}>
-          <PremiumRooms locale={locale} content={c} onOpenPhoto={setPhoto}
+          <PremiumRooms locale={locale} content={c} onOpenPhoto={openPhoto}
             attemptedBooking={attemptedBooking} checkin={checkin} checkout={checkout}/>
         </section>
         <section className="opal-stage-section opal-stage-gallery" id="gallery" aria-label={c.nav.gallery}>
-          <PremiumGallery locale={locale} content={c} onOpenPhoto={setPhoto}/>
+          <PremiumGallery locale={locale} content={c} onOpenPhoto={openPhoto}/>
         </section>
 
         <section className="opal-stage-section opal-stage-reviews" id="reviews" aria-labelledby="reviews-heading">
