@@ -12,7 +12,11 @@ import path from 'node:path';
 
 const base = 'https://opal-legacy.luxor-hotels-eg.com';
 const out = path.resolve('output');
-const views = [
+const isSmoke = process.env.CAPTURE_MODE === 'smoke';
+const views = isSmoke ? [
+  {name:'desktop-1440', width:1440, height:900},
+  {name:'mobile-390', width:390, height:844},
+] : [
   {name:'desktop-1440', width:1440, height:900},
   {name:'desktop-1280', width:1280, height:800},
   {name:'tablet-768', width:768, height:1024},
@@ -120,9 +124,19 @@ for(const lang of locales){
     try {
       console.log(`CAPTURE ${lang} ${vp.name} ${target}`);
       await loadPage(page,target);
-      await page.screenshot({path:path.join(folder,'full.png'),fullPage:true,timeout:45000,animations:'disabled'});
+      // Always preserve DOM data even if a full-page screenshot cannot be captured.
       const audit=await auditDom(page);
       await writeJson(path.join(folder,'dom-audit.json'),audit);
+      let screenshot=true;
+      try {
+        await page.screenshot({path:path.join(folder,'full.png'),fullPage:true,timeout:60000,animations:'disabled'});
+      } catch(err) {
+        screenshot=false;
+        errors.push({kind:'fullScreenshot',message:String(err.message).slice(0,400)});
+        // Viewport image provides at least one visual artifact if full capture fails.
+        try { await page.screenshot({path:path.join(folder,'viewport.png'),fullPage:false,timeout:12000}); }
+        catch(err2) { errors.push({kind:'viewportScreenshot',message:String(err2.message).slice(0,250)}); }
+      }
       await captureFragment(page,page.locator('header'),path.join(folder,'header.png'));
       await captureFragment(page,page.locator('h1'),path.join(folder,'hotel-title.png'));
       // These screenshots capture the heading block, NOT assumed entire sections.
@@ -152,9 +166,9 @@ for(const lang of locales){
           await page.keyboard.press('Escape');
         }
       }catch(err){errors.push({kind:'dateCapture',message:err.message.slice(0,200)});}
-      await writeJson(path.join(folder,'capture-status.json'),{success:true,lang,viewport:vp,target,errors,screenshot:true,measured:true,
+      await writeJson(path.join(folder,'capture-status.json'),{success:true,lang,viewport:vp,target,errors,screenshot,measured:true,
         notice:'Menu/date screenshots are opportunistic; examine and verify their real UI state. Forms were not submitted.'});
-      summary.push({lang,viewport:vp.name,success:true,imageCount:audit.images.length,headingCount:audit.headings.length,errors:errors.length});
+      summary.push({lang,viewport:vp.name,success:true,screenshot,imageCount:audit.images.length,headingCount:audit.headings.length,errors:errors.length});
     }catch(err){
       failed++;
       await writeJson(path.join(folder,'capture-status.json'),{success:false,lang,viewport:vp,target,
@@ -166,6 +180,6 @@ for(const lang of locales){
 }
 await browser.close();
 await fs.mkdir(out,{recursive:true});
-await writeJson(path.join(out,'summary.json'),{capturedAt:new Date().toISOString(),results:summary,failed});
+await writeJson(path.join(out,'summary.json'),{capturedAt:new Date().toISOString(),mode:isSmoke?'smoke':'full',results:summary,failed});
 console.log(JSON.stringify({failed,results:summary},null,2));
 if(failed)process.exitCode=1;
