@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-labelledby="title desc">
+<title id="title">Hotel image not available</title>
+<desc id="desc">Neutral architectural photo placeholder; replace with hotel-approved photography.</desc>
+<rect width="900" height="600" fill="#e8eae8"/>
+<g fill="none" stroke="#bdc8c4" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+<rect x="140" y="125" width="620" height="350" rx="9"/>
+<path d="M140 400l160-146 106 92 130-121 224 195"/>
+<circle cx="640" cy="212" r="38"/>
+</g>
+<g font-family="Arial,sans-serif" fill="#7a8681" text-anchor="middle"><text x="450" y="521" font-size="24">OPAL LEGACY</text><text x="450" y="553" font-size="16">Hotel photography pending</text></g>
+</svg>
