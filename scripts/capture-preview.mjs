@@ -40,6 +40,8 @@ for(const lang of langs)for(const screen of screens){
     isMobile:screen.isMobile,hasTouch:screen.isMobile,
     reducedMotion:'reduce',deviceScaleFactor:1,locale:lang==='ar'?'ar-EG':'en-US'
   });
+  // This job tests our frontend; do not repeatedly request the rate-limited reference host.
+  await ctx.route('https://opal-legacy.luxor-hotels-eg.com/**', route=>route.abort('blockedbyclient'));
   const page=await ctx.newPage();
   const errors=[];
   page.on('pageerror',err=>errors.push({type:'pageerror',message:String(err.message).slice(0,200)}));
@@ -50,7 +52,10 @@ for(const lang of langs)for(const screen of screens){
     // Collect DOM state before any screenshot failure.
     const audit=await page.evaluate(()=>{
       const doc=document.documentElement;
-      const images=Array.from(document.images).map(i=>({src:i.currentSrc,complete:i.complete,naturalWidth:i.naturalWidth}));
+      const images=Array.from(document.images).map(i=>({
+        src:i.currentSrc,complete:i.complete,naturalWidth:i.naturalWidth,
+        placeholder:i.dataset.placeholder==='true'
+      }));
       const headings=Array.from(document.querySelectorAll('h1,h2')).map(n=>n.textContent?.trim());
       const ids=['overview','facilities','location','rooms','gallery','reviews','contact'];
       return {
@@ -71,10 +76,12 @@ for(const lang of langs)for(const screen of screens){
     const validHeadings=audit.headings.some(h=>/opal legacy/i.test(h||''));
     const validAnchors=Object.values(audit.anchors).every(Boolean);
     const overflow=audit.document.width > screen.width+2;
-    const passed=validHeadings&&validAnchors&&!overflow&&errors.length===0;
+    const passed=validHeadings&&validAnchors&&!overflow&&errors.length===0
+      &&audit.images.every(i=>i.naturalWidth>0);
     if(!passed)failures++;
     const result={lang,screen:screen.id,passed,validHeadings,validAnchors,overflow,
       failedImages:audit.images.filter(i=>!i.naturalWidth).length,
+      placeholderImages:audit.images.filter(i=>i.placeholder).length,
       totalImages:audit.images.length,errors};
     records.push(result);
     console.log(JSON.stringify(result));
