@@ -111,7 +111,7 @@ export function HotelExperience({locale,content:c}:Props) {
       </footer>
 
       {photo!==null&&<div className="lightbox" role="dialog" aria-modal="true" aria-label={c.nav.gallery} onClick={()=>setPhoto(null)}>
-        <button type="button" className="lightbox-close" autoFocus onClick={()=>setPhoto(null)} aria-label={c.labels.close}><Icon name="close"/></button>
+        <button type="button" className="lightbox-close" autoFocus onClick={()=>setPhoto(null)} aria-label={c.labels.close}><span aria-hidden="true">×</span></button>
         <button type="button" className="lightbox-prev" onClick={e=>{e.stopPropagation();setPhoto((photo-1+galleryImages.length)%galleryImages.length)}} aria-label={c.labels.previous}>‹</button>
         <div className="lightbox-body" onClick={e=>e.stopPropagation()}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
