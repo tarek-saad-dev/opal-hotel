@@ -285,7 +285,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
 
       </header>
       {menuOpen && typeof document !== "undefined" && createPortal(
-        <div className="premium-menu-surface" id="premium-mobile-menu"
+        <div className="premium-menu-surface" id="premium-mobile-menu" dir={ar ? "rtl" : "ltr"} lang={locale}
           role="dialog" aria-modal="true" aria-label={t.menuTitle} ref={menuRef}>
           <div className="premium-menu-top">
             <span className="premium-menu-brand" aria-label={hotelBrand.wordmark}>
