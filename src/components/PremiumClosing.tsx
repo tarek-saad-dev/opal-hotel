@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
+import { hotelBrand } from "@/lib/gallery";
 
 type Props = { locale: Locale; content: HotelContent };
 const mapUrl = "https://www.google.com/maps/search/?api=1&query=Opal+Legacy+Luxor+Hotel";
@@ -228,7 +229,9 @@ export function PremiumFooter({locale,content:c}:Props) {
     </div>
     <div className="opal-end-footer-columns">
       <div className="opal-end-footer-brand">
-        <span className="opal-end-brand-emblem" aria-hidden="true">O</span>
+        {hotelBrand.officialLogoSrc
+          ? <img src={hotelBrand.officialLogoSrc} className="opal-end-brand-official" alt="" width={54} height={54} loading="lazy"/>
+          : <span className="opal-end-brand-emblem" aria-hidden="true">O</span>}
         <strong>OPAL LEGACY</strong>
         <span>L U X O R &nbsp; · &nbsp; E G Y P T</span>
         <p>{c.address}</p>
