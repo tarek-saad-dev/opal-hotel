@@ -1,10 +1,10 @@
 # Opal Legacy Hotel — Frontend
 
-A reference-led Next.js frontend for Opal Legacy Luxor Hotel.
+A premium, visual-first Next.js frontend concept for Opal Legacy Luxor Hotel.
 
-> **Approved design direction:** high-fidelity replication of the current hotel listing with only small professional improvements. This is an early prototype, not a verified pixel match or a live booking system.
+> **Approved design direction (updated 2026-11-17):** Heritage Luxury × Modern Editorial, inspired by the original hotel's atmosphere, with substantial UI refinement. This is a frontend concept, not a live booking system.
 
-## Reference
+## Approved creative direction\n- [Premium UI art direction, tokens and scope](docs/PREMIUM_UI_DIRECTION.md)\n\n## Historic reference
 - English: https://opal-legacy.luxor-hotels-eg.com/en/
 - Arabic: https://opal-legacy.luxor-hotels-eg.com/ar/
 - [Reference Lock documents](docs/reference-lock/README.md)
@@ -40,7 +40,7 @@ GitHub Actions runs the checks on `main` and pull requests. Build results must b
 
 ## Important: not live / not production ready
 - **Bookings, prices, room availability, contacts and review submissions are not connected to a server.**
-- **Reference photos are remote temporary URLs from a third-party listing**; replace with owner-authorized, locally hosted images before production.
+- **Current design photos are illustrative Unsplash placeholders, not Opal Legacy's actual photographs.** Replace with owner-authorized, locally hosted hotel photos before production.
 - Photos, hotel facts, currency support, services and check-in policies need hotel verification.
 - Current CSS values are **provisional**; complete visual lock requires real browser capture.
 - Search-engine indexing is disabled in this prototype.
