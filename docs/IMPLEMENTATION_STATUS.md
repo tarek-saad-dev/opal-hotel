@@ -72,3 +72,14 @@ Quality gate: GitHub Actions build/typecheck/tests + EN/AR desktop/tablet/mobile
 - Room concepts and photographs are **illustrative only** and are not actual Opal Legacy inventory. No prices or booking confirmation.
 - This update has no backend, payment, inquiry delivery or deployment changes. It must be built and redeployed on the VPS after merge if the production URL is already active.
 - Outstanding: official property photos and logo, full content verification, final visual refinements and production web integration.
+
+
+## Premium UI phase 3 — guest journal, contact and footer (2026-11-17)
+- Redesigned the bottom of the one-page website to match the established Heritage Luxury × Modern Editorial styling.
+- Replaced generic review/contact forms with bilingual, keyboard-friendly, deliberately non-sending **visual previews**.
+- Review preview provides a real interactive 1–10 rating control, visitor name, visit month and memory note; it does not store or publish reviews.
+- Contact preview offers basic fields, visible non-delivery explanation, known location and a map link; no messages are delivered and no contact database was introduced.
+- New deep-green editorial footer with clear section navigation, language switch, map and back-to-top action.
+- One-time, subtle IntersectionObserver entrance motion for closing sections. Content remains visible with JS disabled; animations are disabled for reduced-motion preferences.
+- Extend Playwright screenshots for reviews/contact/footer and verify rating, forms and footer interactions in EN/AR across 1440/768/390.
+- Real hotel photos, logo, verified contact details and functional integrations remain open; frontend-only update is not an automatic VPS deployment.
