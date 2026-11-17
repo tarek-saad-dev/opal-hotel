@@ -93,3 +93,12 @@ Quality gate: GitHub Actions build/typecheck/tests + EN/AR desktop/tablet/mobile
 - Expanded visual smoke QA to 320/390/768/1440px in both languages, with mobile menu/keyboard focus, lightbox focus return, responsive images and booking dock checks.
 - The user-approved site images and official logo are **not available yet**. Exact owner-asset handoff and release checks are in `docs/HOTEL_MEDIA_HANDOFF.md`. Do not remove the preview disclaimer until official photos and verified content are approved.
 - Production site update is NOT automatic after merge; run the existing VPS script manually from the server.
+
+## Mobile Navigation reliability — 2026-11-17
+- Found a concrete full-screen menu layout hazard: the fixed navigation panel was nested inside the sticky header, which acquires `backdrop-filter` whenever the menu opens. A filtered ancestor establishes a containing block for fixed descendants, so the mobile drawer may be clipped to header dimensions and fail to cover the screen on some browsers.
+- Moved the menu to a React portal mounted directly under `document.body` with an explicit viewport-sized design (`100dvh`), dedicated close button, and separate scrollable content.
+- Added an iOS-friendly background scroll lock that restores previous scroll position when closed; menu supports safe-area insets and landscape/short-height screens.
+- Preserved active-section styling and improved Arabic RTL semantics in the portaled overlay, including readable typography and back/forward navigation.
+- Verified target behavior includes open/close/ESC, restored focus, menu navigation to an actual section, booking-preview link, no behind-menu scrolling, and full viewport geometry at 320/390/768 px.
+- Automated visual workflow now captures open-menu screenshots and explicitly checks portal position/geometry rather than merely checking the modal is visible.
+- Frontend-only; no production deployment or backend changes. User updates production VPS via the existing `ops/deploy-vps.sh` command after merge.
