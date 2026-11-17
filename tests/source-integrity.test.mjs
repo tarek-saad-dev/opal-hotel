@@ -17,7 +17,8 @@ test("Reference order and booking integration gate are preserved",()=>{
   assert.ok(positions.every((x,i)=>i===0||x>positions[i-1]),"reference sections must preserve order");
   const sections=read("src/components/PremiumSections.tsx");
   assert.ok(sections.includes("c.labels.noBooking"));
-  assert.ok(p.includes("c.labels.noBackend"));
+  const closing=read("src/components/PremiumClosing.tsx");
+  assert.ok(closing.includes("c.labels.noBackend"),"review/contact forms must report unsent state");
   assert.doesNotMatch(p,/booking confirmed/i);
 });
 test("Legacy photos are labelled temporary reference sources",()=>{

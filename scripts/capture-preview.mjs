@@ -88,7 +88,7 @@ for(const lang of langs)for(const screen of screens){
     // only for section crops, so headings aren't covered by screenshot scrolling.
     if(await header.count()) await header.evaluate(element => element.style.visibility='hidden');
     // Section-level images make the design review actionable, not just pass/fail.
-    for (const key of ['overview','facilities','location','rooms','gallery']) {
+    for (const key of ['overview','facilities','location','rooms','gallery','reviews','contact']) {
       const section=page.locator('#'+key);
       if(await section.count()) {
         await section.screenshot({
@@ -96,10 +96,13 @@ for(const lang of langs)for(const screen of screens){
         });
       }
     }
+    const footer=page.locator('.opal-end-footer');
+    if(await footer.count()) await footer.screenshot({path:path.join(dir,'footer.png'),timeout:30000,animations:'disabled'});
     if(await header.count()) await header.evaluate(element => element.style.visibility='');
     // Exercise actual UI interactions after the pristine visual screenshots.
     const interactions={slides:false,guests:false,menu:false,booking:false,
-      amenities:false,galleryFilter:false,galleryLightbox:false,rooms:false};
+      amenities:false,galleryFilter:false,galleryLightbox:false,rooms:false,
+      review:false,contact:false,footer:false};
     try{
       const scene=page.locator('.premium-scene-number');
       const before=await scene.innerText();
@@ -144,6 +147,24 @@ for(const lang of langs)for(const screen of screens){
       await page.keyboard.press('Escape');
       await page.locator('.lightbox').waitFor({state:'detached',timeout:3000});
       interactions.galleryLightbox=true;
+
+      await page.locator('.opal-end-rating input[value="9"]').check();
+      await page.locator('input[name="reviewName"]').fill('Preview Guest');
+      await page.locator('textarea[name="reviewStory"]').fill('Sample UI-only review. Nothing is sent.');
+      await page.locator('.opal-end-review-paper button[type="submit"]').click();
+      interactions.review=(await page.locator('.opal-end-review-paper [role="status"]').count())===1
+        && (await page.locator('.opal-end-score-row strong').innerText()).includes('09');
+
+      await page.locator('input[name="contactName"]').fill('Preview Guest');
+      await page.locator('input[name="contactEmail"]').fill('preview@example.org');
+      await page.locator('input[name="contactSubject"]').fill('UI preview');
+      await page.locator('textarea[name="contactMessage"]').fill('Design preview only; do not send.');
+      await page.locator('.opal-end-contact-submit').click();
+      interactions.contact=(await page.locator('.opal-end-contact-paper [role="status"]').count())===1;
+
+      interactions.footer=(await page.locator('.opal-end-footer nav a').count())===7
+        &&(await page.locator('.opal-end-backtop').getAttribute('href'))==='#top'
+        &&(await page.locator('.opal-end-footer a[hreflang]').count())===1;
     }catch(e){
       errors.push({type:'interaction',message:String(e.message).slice(0,320)});
     }
