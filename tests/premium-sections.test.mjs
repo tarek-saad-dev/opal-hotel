@@ -11,7 +11,7 @@ test("Premium phases are integrated in the correct visual narrative", () => {
   assert.ok(order.every((x,i)=>x>=0 && (i===0||x>order[i-1])));
   assert.ok(shell.includes('id="gallery"'));
   assert.ok(shell.includes('id="rooms"'));
-  assert.ok(shell.includes("onOpenPhoto={setPhoto}"));
+  assert.ok(shell.includes("onOpenPhoto={openPhoto}"));
 });
 
 test("Rooms are clearly concepts, with no fake inventory or rates", () => {

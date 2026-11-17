@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { ReactNode, SyntheticEvent } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
-import { galleryImages } from "@/lib/gallery";
+import { galleryImages, responsivePhotoSrcSet } from "@/lib/gallery";
 
 type SharedProps = { locale: Locale; content: HotelContent };
 type StoryProps = SharedProps & { onOpenPhoto: (index: number) => void };
@@ -14,6 +14,7 @@ function demoImageError(event: SyntheticEvent<HTMLImageElement>) {
   const img = event.currentTarget;
   if (img.dataset.placeholder === "true") return;
   img.dataset.placeholder = "true";
+  img.removeAttribute("srcset");
   img.src = "/media/photo-placeholder.svg";
 }
 function PreviewImage({ index, eager = false }: { index: number; eager?: boolean }) {
@@ -21,7 +22,8 @@ function PreviewImage({ index, eager = false }: { index: number; eager?: boolean
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img className="opal-editorial-photo" src={img.src} alt={img.alt}
-      loading={eager ? "eager" : "lazy"} onError={demoImageError}/>
+      srcSet={responsivePhotoSrcSet(img.src)} sizes="(max-width: 600px) 100vw, (max-width: 900px) 65vw, 42vw"
+      width={1200} height={900} decoding="async" loading={eager ? "eager" : "lazy"} onError={demoImageError}/>
   );
 }
 function Header({ number, kicker, title, italic, note }: {

@@ -12,6 +12,7 @@ const out = path.resolve('artifacts/frontend-preview');
 const screens = [
   {id:'desktop-1440',width:1440,height:900,isMobile:false},
   {id:'mobile-390',width:390,height:844,isMobile:true},
+  {id:'small-mobile-320',width:320,height:740,isMobile:true},
   {id:'tablet-768',width:768,height:1024,isMobile:false},
 ];
 const langs = ['en','ar'];
@@ -63,7 +64,7 @@ for(const lang of langs)for(const screen of screens){
     const audit=await page.evaluate(()=>{
       const doc=document.documentElement;
       const images=Array.from(document.images).map(i=>({
-        src:i.currentSrc,complete:i.complete,naturalWidth:i.naturalWidth,
+        src:i.currentSrc,srcSet:!!i.getAttribute('srcset'),complete:i.complete,naturalWidth:i.naturalWidth,
         placeholder:i.dataset.placeholder==='true',
         visible:i.getClientRects().length>0 && getComputedStyle(i).visibility!=='hidden'
       }));
@@ -102,7 +103,8 @@ for(const lang of langs)for(const screen of screens){
     // Exercise actual UI interactions after the pristine visual screenshots.
     const interactions={slides:false,guests:false,menu:false,booking:false,
       amenities:false,galleryFilter:false,galleryLightbox:false,rooms:false,
-      review:false,contact:false,footer:false};
+      review:false,contact:false,footer:false,
+      responsiveMedia:false,dock:false,lightboxFocus:false,menuFocus:false};
     try{
       const scene=page.locator('.premium-scene-number');
       const before=await scene.innerText();
@@ -119,9 +121,19 @@ for(const lang of langs)for(const screen of screens){
       if(screen.width<=1040){
         await page.locator('.premium-hamburger').click();
         interactions.menu=await page.locator('.premium-menu-surface').isVisible();
+        const firstLink=page.locator('.premium-menu-surface nav a').first();
+        interactions.menuFocus=await firstLink.evaluate(el=>el===document.activeElement);
+        await page.keyboard.press('Shift+Tab');
+        interactions.menuFocus=interactions.menuFocus
+          &&await page.locator('.premium-hamburger').evaluate(el=>el===document.activeElement);
         await page.keyboard.press('Escape');
         interactions.menu=interactions.menu && (await page.locator('.premium-menu-surface').count())===0;
-      } else interactions.menu=true;
+        interactions.menuFocus=interactions.menuFocus
+          &&await page.locator('.premium-hamburger').evaluate(el=>el===document.activeElement);
+      } else {
+        interactions.menu=true;
+        interactions.menuFocus=true;
+      }
 
       await page.locator('.premium-booking-submit').click();
       const rooms=await page.locator('#rooms').innerText();
@@ -147,6 +159,7 @@ for(const lang of langs)for(const screen of screens){
       await page.keyboard.press('Escape');
       await page.locator('.lightbox').waitFor({state:'detached',timeout:3000});
       interactions.galleryLightbox=true;
+      interactions.lightboxFocus=await page.locator('.opal-gallery-item').first().evaluate(el=>el===document.activeElement);
 
       await page.locator('.opal-end-rating input[value="9"]').check();
       await page.locator('input[name="reviewName"]').fill('Preview Guest');
@@ -165,6 +178,21 @@ for(const lang of langs)for(const screen of screens){
       interactions.footer=(await page.locator('.opal-end-footer nav a').count())===7
         &&(await page.locator('.opal-end-backtop').getAttribute('href'))==='#top'
         &&(await page.locator('.opal-end-footer a[hreflang]').count())===1;
+
+      interactions.responsiveMedia=(await page.locator('img[srcset]').count())>=8;
+
+      if(screen.width<=800){
+        await page.locator('#rooms').scrollIntoViewIfNeeded();
+        await page.waitForTimeout(150);
+        interactions.dock=await page.locator('.opal-stay-dock.is-visible').isVisible();
+        if(interactions.dock){
+          await page.locator('.opal-stay-dock.is-visible').screenshot({
+            path:path.join(dir,'mobile-stay-dock.png'),timeout:12000
+          });
+        }
+      }else{
+        interactions.dock=!(await page.locator('.opal-stay-dock').isVisible());
+      }
     }catch(e){
       errors.push({type:'interaction',message:String(e.message).slice(0,320)});
     }

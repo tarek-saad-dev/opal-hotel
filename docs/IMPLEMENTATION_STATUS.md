@@ -83,3 +83,13 @@ Quality gate: GitHub Actions build/typecheck/tests + EN/AR desktop/tablet/mobile
 - One-time, subtle IntersectionObserver entrance motion for closing sections. Content remains visible with JS disabled; animations are disabled for reduced-motion preferences.
 - Extend Playwright screenshots for reviews/contact/footer and verify rating, forms and footer interactions in EN/AR across 1440/768/390.
 - Real hotel photos, logo, verified contact details and functional integrations remain open; frontend-only update is not an automatic VPS deployment.
+
+
+## Final Visual Polish & Asset Handoff — 2026-11-17
+- Consolidated hero scenes and the full gallery into one reference manifest in `src/lib/gallery.ts`; official logo path is optional (currently unset; temporary typographic O remains).
+- Added responsive `srcSet` downloads for concept photography and preconnect hints, without guessing optimized file names for future owner-supplied photos.
+- Improved accessible navigation: skip-to-content, visible current-section marker, focus handling for the full-screen mobile menu and gallery lightbox, and focus return on close.
+- Added a small mobile-only booking-preview shortcut while scrolling, hidden at the actual booking panel and footer. Booking remains **UI-only**.
+- Expanded visual smoke QA to 320/390/768/1440px in both languages, with mobile menu/keyboard focus, lightbox focus return, responsive images and booking dock checks.
+- The user-approved site images and official logo are **not available yet**. Exact owner-asset handoff and release checks are in `docs/HOTEL_MEDIA_HANDOFF.md`. Do not remove the preview disclaimer until official photos and verified content are approved.
+- Production site update is NOT automatic after merge; run the existing VPS script manually from the server.

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SyntheticEvent } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
-import { galleryImages } from "@/lib/gallery";
+import { galleryImages, responsivePhotoSrcSet } from "@/lib/gallery";
 import { PremiumMasthead } from "@/components/PremiumMasthead";
 import { PremiumStory, PremiumFacilities, PremiumLocation, PremiumRooms, PremiumGallery } from "@/components/PremiumSections";
 import { PremiumReviews, PremiumContact, PremiumFooter } from "@/components/PremiumClosing";
@@ -14,6 +14,7 @@ function handleImageError(event:SyntheticEvent<HTMLImageElement>) {
   if(img.dataset.placeholder==="true") return;
   // Don't show the browser broken-image glyph while the hotel's approved assets are pending.
   img.dataset.placeholder="true";
+  img.removeAttribute("srcset");
   img.src="/media/photo-placeholder.svg";
 }
 export function HotelExperience({locale,content:c}:Props) {
@@ -21,6 +22,13 @@ export function HotelExperience({locale,content:c}:Props) {
   const [checkin,setCheckin]=useState("");
   const [checkout,setCheckout]=useState("");
   const [attemptedBooking,setAttemptedBooking]=useState(false);
+  const focusBeforePhoto=useRef<HTMLElement|null>(null);
+  const photoWasOpen=useRef(false);
+  const lightboxRef=useRef<HTMLDivElement>(null);
+  const openPhoto=(index:number)=>{
+    focusBeforePhoto.current=document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setPhoto(index);
+  };
 
   useEffect(() => {
     // SSR images may fail before React hydration attaches onError handlers.
@@ -30,6 +38,7 @@ export function HotelExperience({locale,content:c}:Props) {
         .forEach(img => {
           if(img.complete && img.naturalWidth===0 && img.dataset.placeholder!=="true") {
             img.dataset.placeholder="true";
+            img.removeAttribute("srcset");
             img.src="/media/photo-placeholder.svg";
           }
         });
@@ -57,9 +66,31 @@ export function HotelExperience({locale,content:c}:Props) {
   }, []);
 
   useEffect(()=>{
+    if (photo===null && photoWasOpen.current) {
+      focusBeforePhoto.current?.focus({preventScroll:true});
+      photoWasOpen.current=false;
+    } else if(photo!==null) {
+      photoWasOpen.current=true;
+    }
+  },[photo]);
+
+  useEffect(()=>{
     if(photo===null)return;
     const handler=(e:KeyboardEvent)=>{
       if(e.key==="Escape")setPhoto(null);
+      else if(e.key==="Tab"){
+        const buttons=Array.from(lightboxRef.current?.querySelectorAll<HTMLButtonElement>("button") || []);
+        const current=buttons.indexOf(document.activeElement as HTMLButtonElement);
+        if (buttons.length>0) {
+          if (e.shiftKey && (current===0 || current===-1)){
+            e.preventDefault();
+            buttons[buttons.length-1].focus();
+          }else if (!e.shiftKey && current===buttons.length-1){
+            e.preventDefault();
+            buttons[0].focus();
+          }
+        }
+      }
       else if(e.key==="ArrowRight")setPhoto(v=>v===null?null:(v+1)%galleryImages.length);
       else if(e.key==="ArrowLeft")setPhoto(v=>v===null?null:(v-1+galleryImages.length)%galleryImages.length);
     };
@@ -72,7 +103,7 @@ export function HotelExperience({locale,content:c}:Props) {
   return (
     <>
       <PremiumMasthead locale={locale} content={c}
-        onOpenGallery={() => setPhoto(0)}
+        onOpenGallery={() => openPhoto(0)}
         onAvailability={({checkin,checkout}) => {
           setCheckin(checkin);
           setCheckout(checkout);
@@ -82,7 +113,7 @@ export function HotelExperience({locale,content:c}:Props) {
       />
       <main>
         <section className="opal-stage-section opal-stage-story" id="overview" aria-label={c.labels.overviewTitle}>
-          <PremiumStory locale={locale} content={c} onOpenPhoto={setPhoto}/>
+          <PremiumStory locale={locale} content={c} onOpenPhoto={openPhoto}/>
         </section>
         <section className="opal-stage-section opal-stage-facilities" id="facilities" aria-label={c.labels.facilitiesTitle}>
           <PremiumFacilities locale={locale} content={c}/>
@@ -91,11 +122,11 @@ export function HotelExperience({locale,content:c}:Props) {
           <PremiumLocation locale={locale} content={c}/>
         </section>
         <section className="opal-stage-section opal-stage-rooms" id="rooms" aria-label={c.labels.roomsTitle}>
-          <PremiumRooms locale={locale} content={c} onOpenPhoto={setPhoto}
+          <PremiumRooms locale={locale} content={c} onOpenPhoto={openPhoto}
             attemptedBooking={attemptedBooking} checkin={checkin} checkout={checkout}/>
         </section>
         <section className="opal-stage-section opal-stage-gallery" id="gallery" aria-label={c.nav.gallery}>
-          <PremiumGallery locale={locale} content={c} onOpenPhoto={setPhoto}/>
+          <PremiumGallery locale={locale} content={c} onOpenPhoto={openPhoto}/>
         </section>
 
         <section className="opal-stage-section opal-stage-reviews" id="reviews" aria-labelledby="reviews-heading">
@@ -110,12 +141,14 @@ export function HotelExperience({locale,content:c}:Props) {
         <PremiumFooter locale={locale} content={c}/>
       </footer>
 
-      {photo!==null&&<div className="lightbox" role="dialog" aria-modal="true" aria-label={c.nav.gallery} onClick={()=>setPhoto(null)}>
+      {photo!==null&&<div className="lightbox" ref={lightboxRef} role="dialog" aria-modal="true" aria-label={c.nav.gallery} onClick={()=>setPhoto(null)}>
         <button type="button" className="lightbox-close" autoFocus onClick={()=>setPhoto(null)} aria-label={c.labels.close}><span aria-hidden="true">×</span></button>
         <button type="button" className="lightbox-prev" onClick={e=>{e.stopPropagation();setPhoto((photo-1+galleryImages.length)%galleryImages.length)}} aria-label={c.labels.previous}>‹</button>
         <div className="lightbox-body" onClick={e=>e.stopPropagation()}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={galleryImages[photo].src} alt={galleryImages[photo].alt} onError={handleImageError}/>
+          <img src={galleryImages[photo].src} srcSet={responsivePhotoSrcSet(galleryImages[photo].src)}
+            sizes="100vw" width={1200} height={900} decoding="async"
+            alt={galleryImages[photo].alt} onError={handleImageError}/>
           <p className="lightbox-counter" dir="ltr">{photo+1} / {galleryImages.length}</p>
         </div>
         <button type="button" className="lightbox-next" onClick={e=>{e.stopPropagation();setPhoto((photo+1)%galleryImages.length)}} aria-label={c.labels.next}>›</button>

@@ -65,3 +65,12 @@ Inspect `docs/reference-lock/capture/output/` (ignored by Git) and review valid 
 
 ## Workflow
 Document each visual decision; do not redesign the approved reference without explicit approval.
+
+
+## Visual polish and hotel assets
+
+- [Official photo/logo handoff checklist](docs/HOTEL_MEDIA_HANDOFF.md) — images are still illustrative; the hotel must approve authentic media.
+- The Hero, gallery and footer/nav branding share the centralized manifest in `src/lib/gallery.ts`.
+- Accessibility refinements include skip-to-content, keyboard-friendly overlays, an active-section nav indicator and a mobile stay-preview shortcut.
+- Full visual QA checks 320, 390, 768 and 1440 px in English and Arabic, including interactive controls.
+- After each merge, production on the VPS must be updated by running `ops/deploy-vps.sh` from the VPS shell. GitHub changes do not automatically restart the server.

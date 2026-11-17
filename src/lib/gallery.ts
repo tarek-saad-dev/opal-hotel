@@ -15,6 +15,40 @@ export const galleryImages: HotelImage[] = [
 ];
 
 /**
+ * SINGLE PHOTO HANDOFF POINT
+ * Replace each galleryImages[i].src with its approved, locally-hosted
+ * /media/hotel/....webp path. Hero scenes and section images read from this
+ * manifest, so replacing a source updates the site consistently.
+ *
+ * The temporary "O" emblem is deliberately NOT represented as the official
+ * hotel logo. After receiving the real logo, set officialLogoSrc below.
+ */
+export const hotelBrand = {
+  officialLogoSrc: null as string | null,
+  wordmark: "OPAL LEGACY",
+  tagline: "LUXOR · EGYPT",
+};
+
+export const heroScenes = [
+  { src: galleryImages[0].src, alt: galleryImages[0].alt, label: "01" },
+  { src: galleryImages[1].src, alt: galleryImages[1].alt, label: "02" },
+  { src: galleryImages[2].src, alt: galleryImages[2].alt, label: "03" },
+] as const;
+
+/**
+ * Use smaller responsive downloads for our clearly illustrative Unsplash
+ * concepts. Locally-hosted, approved hotel photos remain untouched; they
+ * should be pre-sized before upload (see docs/HOTEL_MEDIA_HANDOFF.md).
+ */
+export function responsivePhotoSrcSet(src: string): string | undefined {
+  if (!src.startsWith("https://images.unsplash.com/")) return undefined;
+  const image = src.split("?")[0];
+  return [420, 800, 1200, 1800, 2200]
+    .map(width => `${image}?auto=format&fit=crop&w=${width}&q=77 ${width}w`)
+    .join(", ");
+}
+
+/**
  * Old external image URLs are retained as source references only. They are not
  * used in this design preview; rights and availability must be verified.
  */
