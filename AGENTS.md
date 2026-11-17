@@ -1,27 +1,24 @@
-# Opal Legacy — Repository Rules
+# Opal Legacy — Repository Instructions
 
-## Approved direction (2026-11-17)
-Build a high-fidelity replication of the existing Opal Legacy hotel website with **small, approved professional improvements only**. Never substitute an unrelated design or rearrange reference sections without approval.
+## CURRENT APPROVED DESIGN DIRECTION (updated 2026-11-17)
+The owner has approved **Premium Frontend First**: a luxury/boutique hotel website inspired by Opal Legacy's original visuals, **not a literal replica**. Implement **Heritage Luxury × Modern Editorial**; add restrained premium refinements while retaining the hotel's character and recognizable reference content. Heavy content, real booking and backend features are deferred.
 
-## Reference documentation
-- `docs/reference-lock/README.md`
-- `docs/reference-lock/FRONTEND_MASTER_SPEC_AR.md`
-- `docs/reference-lock/CONTENT_AND_REFERENCE_INVENTORY.json`
-- `docs/reference-lock/VISUAL_QA_CHECKLIST.md`
-- `docs/IMPLEMENTATION_STATUS.md`
+Read `docs/PREMIUM_UI_DIRECTION.md` for tokens, component scope and acceptance.
 
-## Non-negotiables
-- Preserve the page sequence: identity, gallery, reservation, overview, facilities, location, availability, full gallery, reviews, contact, footer.
-- The current CSS is provisional. Verify computed styles and visual reference shots before claiming exact fidelity.
-- Real inventory, payment, contact delivery, and review submission are **not implemented**. Never simulate success.
-- Ensure accessible keyboard/touch interactions and EN/AR language support.
-- Do not publish fabricated prices, availability, reviews, policies, business details or unauthorized images/branding.
-- Replace external reference photos with hotel-authorized local assets before publication.
-- No production launch or SEO indexing before approved content, domain, and real booking backend are ready.
+## Design and code rules
+- Optimize first for excellent visual craft on desktop, tablet and mobile (EN + AR RTL).
+- The previous `docs/reference-lock` inventory remains a *historical reference*, not the binding visual mandate after this new decision.
+- Avoid heavy external UI libraries, repetitive card designs, generic gradients and flashy animation.
+- Make photography the centerpiece; use clearly labelled illustrative imagery until the hotel owner supplies licensed photos and official logo. Never claim demo photos depict Opal Legacy.
+- Treat CSS values as proposed design tokens, not measurements from the former website.
+- Preserve functional accessibility (keyboard, aria labels, reduced motion, readable contrast).
+- Booking selects dates and party size for visual demonstration only: **no live rates, inventory, confirmation or payments**. Contact/review forms must never claim messages were sent.
+- Do not deploy or enable search indexing until authorized site assets, real details and integration are approved.
 
-## Process
-1. Audit reference browser output for desktop/mobile/RTL.
-2. Make one scoped visual/component change at a time and compare against approved screenshots.
-3. Run `npm test`, `npm run typecheck`, `npm run build` (and browser tests when tooling is available).
-4. Record any unverified facts or incomplete integrations in `docs/IMPLEMENTATION_STATUS.md`.
-5. Ask for explicit approval before any material redesign or booking activation.
+## Quality
+Before merging changes, run or verify GitHub CI: `npm test`, `npm run typecheck`, `npm run build`, and `Frontend Visual Preview`. Inspect EN/AR 1440/768/390 screenshots for overflow and obvious defects; fix failures and report any unresolved limitations.
+
+## Documents
+- `docs/PREMIUM_UI_DIRECTION.md` — current creative direction and scope.
+- `docs/IMPLEMENTATION_STATUS.md` — current implementation status.
+- `docs/reference-lock/` — archived original website evidence (not exact design constraint).
