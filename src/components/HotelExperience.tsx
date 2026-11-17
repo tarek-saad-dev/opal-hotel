@@ -66,6 +66,9 @@ export function HotelExperience({locale,content:c}:Props) {
   },[photo]);
 
 
+  const navEntries = (["overview","facilities","location","rooms","gallery","reviews","contact"] as const)
+    .map(id => ({ id, label: c.nav[id] }));
+
   return (
     <>
       <PremiumMasthead locale={locale} content={c}
@@ -77,7 +80,7 @@ export function HotelExperience({locale,content:c}:Props) {
           document.getElementById("rooms")?.scrollIntoView({behavior:"smooth"});
         }}
       />
-
+      <main>
         <section className="content-section container" id="overview" aria-labelledby="overview-heading">
           <h2 id="overview-heading">{c.labels.overviewTitle}</h2>
           <div className="quick-facilities">
