@@ -1,33 +1,61 @@
 # Opal Legacy Hotel — Frontend
 
-Official project repository for the new Opal Legacy Hotel website.
+A reference-led Next.js frontend for Opal Legacy Luxor Hotel.
 
-## Approved direction
-**High-fidelity replication** of the existing website, with small professional improvements only. Keep the reference layout, section order, content hierarchy, galleries, and booking presentation. Do not redesign without explicit approval.
+> **Approved design direction:** high-fidelity replication of the current hotel listing with only small professional improvements. This is an early prototype, not a verified pixel match or a live booking system.
 
-- Reference (EN): https://opal-legacy.luxor-hotels-eg.com/en/
-- Reference (AR): https://opal-legacy.luxor-hotels-eg.com/ar/
+## Reference
+- English: https://opal-legacy.luxor-hotels-eg.com/en/
+- Arabic: https://opal-legacy.luxor-hotels-eg.com/ar/
+- [Reference Lock documents](docs/reference-lock/README.md)
+- [Frontend Master Specification](docs/reference-lock/FRONTEND_MASTER_SPEC_AR.md)
+- [Current implementation status and limitations](docs/IMPLEMENTATION_STATUS.md)
 
-## Project documentation
-The foundational files live in [docs/reference-lock](docs/reference-lock/README.md):
+## Run locally
 
-- [Frontend Master Specification (Arabic)](docs/reference-lock/FRONTEND_MASTER_SPEC_AR.md)
-- [Content & Reference Inventory](docs/reference-lock/CONTENT_AND_REFERENCE_INVENTORY.json)
-- [Visual Reference & QA Checklist](docs/reference-lock/VISUAL_QA_CHECKLIST.md)
-- [Source Links](docs/reference-lock/reference/REFERENCE_LINKS.md)
-- [Playwright capture utility](docs/reference-lock/capture/opal-capture.mjs)
+Prerequisite: Node.js 22+ and npm.
 
-## Status (2026-11-17)
-- Reference structure and content inventory: **documented**.
-- Visual/pixel-accurate lock: **pending live screenshot and CSS capture**.
-- Booking integration, production frontend and deployment: **not yet implemented**.
-- Hotel-owned content and permissions: **pending confirmation**.
+```bash
+npm install
+npm run dev
+# http://localhost:3000/en
+# http://localhost:3000/ar
+```
+
+## Checks
+
+```bash
+npm test
+npm run typecheck
+npm run build
+```
+
+GitHub Actions runs the checks on `main` and pull requests. Build results must be confirmed before merging new features.
+
+## Implemented in prototype
+- EN/AR pages, LTR/RTL wrapper and responsive layout.
+- Hotel identity, menu, temporary gallery/lightbox, booking date validation.
+- Overview, grouped facilities, location/map reference, rooms empty state.
+- Reviews and contact form UI with explicit unsent/error state.
+
+## Important: not live / not production ready
+- **Bookings, prices, room availability, contacts and review submissions are not connected to a server.**
+- **Reference photos are remote temporary URLs from a third-party listing**; replace with owner-authorized, locally hosted images before production.
+- Photos, hotel facts, currency support, services and check-in policies need hotel verification.
+- Current CSS values are **provisional**; complete visual lock requires real browser capture.
+- Search-engine indexing is disabled in this prototype.
+- No preview deployment configured.
+
+## Browser reference capture
+
+```bash
+cd docs/reference-lock/capture
+npm install
+npx playwright install chromium
+npm run capture
+```
+
+Inspect `docs/reference-lock/capture/output/` (ignored by Git) and review screenshots/DOM measurements before approving a pixel-perfect style baseline.
 
 ## Workflow
-1. Capture the reference on desktop/mobile and in English/Arabic.
-2. Approve the precise visual baseline before changing visual-critical components.
-3. Implement components against the approved spec; retain source/design decisions.
-4. Run visual regression, functional and accessibility checks.
-5. Add only approved improvements.
-
-**No production booking or hotel data is implied by this documentation.**
+Document each visual decision; do not redesign the approved reference without explicit approval.
