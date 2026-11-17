@@ -6,6 +6,7 @@ import type { HotelContent, Locale } from "@/lib/hotel-content";
 import { galleryImages } from "@/lib/gallery";
 import { PremiumMasthead } from "@/components/PremiumMasthead";
 import { PremiumStory, PremiumFacilities, PremiumLocation, PremiumRooms, PremiumGallery } from "@/components/PremiumSections";
+import { PremiumReviews, PremiumContact, PremiumFooter } from "@/components/PremiumClosing";
 
 type Props={locale:Locale;content:HotelContent};
 function handleImageError(event:SyntheticEvent<HTMLImageElement>) {
@@ -15,25 +16,11 @@ function handleImageError(event:SyntheticEvent<HTMLImageElement>) {
   img.dataset.placeholder="true";
   img.src="/media/photo-placeholder.svg";
 }
-function Icon({name}:{name:"map"|"arrow"|"close"|"menu"|"calendar"|"image"}) {
-  const icons={
-    map:<><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></>,
-    arrow:<><path d="m5 12 14 0m-6-6 6 6-6 6"/></>,
-    close:<><path d="M5 5 19 19M19 5 5 19"/></>,
-    menu:<><path d="M3 6h18M3 12h18M3 18h18"/></>,
-    calendar:<><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/></>,
-    image:<><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="1"/><path d="m3 17 6-6 4 4 3-3 5 5"/></>
-  };
-  return <svg width="19" height="19" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" fill="none" aria-hidden="true">{icons[name]}</svg>;
-}
-
 export function HotelExperience({locale,content:c}:Props) {
   const [photo,setPhoto]=useState<number|null>(null);
   const [checkin,setCheckin]=useState("");
   const [checkout,setCheckout]=useState("");
   const [attemptedBooking,setAttemptedBooking]=useState(false);
-  const [formStatus,setFormStatus]=useState<""|"contact"|"review">("");
-  const [rating,setRating]=useState("8");
 
   useEffect(() => {
     // SSR images may fail before React hydration attaches onError handlers.
@@ -53,6 +40,22 @@ export function HotelExperience({locale,content:c}:Props) {
     return () => watcher.disconnect();
   }, []);
 
+  useEffect(() => {
+    // Progressive enhancement: without JS every section remains fully visible.
+    // Observe for subtle, one-time entrance effects. No hidden default state.
+    if (typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      }
+    }, { threshold: 0.08 });
+    document.querySelectorAll(".opal-reveal").forEach(el => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(()=>{
     if(photo===null)return;
     const handler=(e:KeyboardEvent)=>{
@@ -65,9 +68,6 @@ export function HotelExperience({locale,content:c}:Props) {
     return()=>{window.removeEventListener("keydown",handler);document.body.style.overflow=old;};
   },[photo]);
 
-
-  const navEntries = (["overview","facilities","location","rooms","gallery","reviews","contact"] as const)
-    .map(id => ({ id, label: c.nav[id] }));
 
   return (
     <>
@@ -98,49 +98,16 @@ export function HotelExperience({locale,content:c}:Props) {
           <PremiumGallery locale={locale} content={c} onOpenPhoto={setPhoto}/>
         </section>
 
-        <section className="content-section muted-section" id="reviews" aria-labelledby="reviews-heading">
-          <div className="container form-section">
-            <h2 id="reviews-heading">{c.labels.reviewsTitle}</h2>
-            <form className="simple-form" onSubmit={e=>{e.preventDefault();setFormStatus("review");}}>
-              <div className="form-row">
-                <label>{c.labels.name}<input required name="guestName" autoComplete="name"/></label>
-                <label>{c.labels.email}<input required type="email" name="guestEmail" autoComplete="email"/></label>
-              </div>
-              <div className="form-row">
-                <label>{c.labels.visit}<input type="month" name="visitedAt"/></label>
-                <label>{c.labels.rating}<select value={rating} onChange={e=>setRating(e.target.value)} name="rating">
-                  {Array.from({length:10},(_,i)=>i+1).map(n=><option value={n} key={n}>{n}/10</option>)}
-                </select></label>
-              </div>
-              <label>{c.labels.pros}<textarea name="pros" rows={3}/></label>
-              <label>{c.labels.cons}<textarea name="cons" rows={3}/></label>
-              <button type="submit" className="outline-button">{c.labels.submitReview}</button>
-              {formStatus==="review"&&<p role="status" className="form-warning">{c.labels.noBackend}</p>}
-            </form>
-          </div>
+        <section className="opal-stage-section opal-stage-reviews" id="reviews" aria-labelledby="reviews-heading">
+          <PremiumReviews locale={locale} content={c}/>
         </section>
-
-        <section className="content-section container form-section" id="contact" aria-labelledby="contact-heading">
-          <h2 id="contact-heading">{c.labels.contactTitle}</h2>
-          <form className="simple-form" onSubmit={e=>{e.preventDefault();setFormStatus("contact");}}>
-            <div className="form-row">
-              <label>{c.labels.name}<input required name="name" autoComplete="name"/></label>
-              <label>{c.labels.email}<input required type="email" name="email" autoComplete="email"/></label>
-            </div>
-            <label>{c.labels.subject}<input required name="subject"/></label>
-            <label>{c.labels.message}<textarea required name="message" rows={5}/></label>
-            <button type="submit" className="primary-button">{c.labels.send}<Icon name="arrow"/></button>
-            {formStatus==="contact"&&<p role="status" className="form-warning">{c.labels.noBackend}</p>}
-          </form>
+        <section className="opal-stage-section opal-stage-contact" id="contact" aria-labelledby="contact-heading">
+          <PremiumContact locale={locale} content={c}/>
         </section>
       </main>
 
-      <footer className="site-footer">
-        <div className="container footer-inner">
-          <div><p className="footer-logo">OPAL LEGACY</p><p>{c.address}</p>
-            <p className="footer-disclaimer">{c.labels.footerNote}</p></div>
-          <nav aria-label="Footer navigation">{navEntries.map(n=><a key={n.id} href={`#${n.id}`}>{n.label}</a>)}</nav>
-        </div>
+      <footer className="opal-end-footer">
+        <PremiumFooter locale={locale} content={c}/>
       </footer>
 
       {photo!==null&&<div className="lightbox" role="dialog" aria-modal="true" aria-label={c.nav.gallery} onClick={()=>setPhoto(null)}>
