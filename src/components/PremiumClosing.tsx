@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { FormEvent } from "react";
+import type { FormEvent, ReactNode } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
 
 type Props = { locale: Locale; content: HotelContent };
@@ -15,7 +15,7 @@ function Arrow({ diagonal = false }: { diagonal?: boolean }) {
   </svg>;
 }
 
-function Eyebrow({number,children}: {number:string;children:React.ReactNode}) {
+function Eyebrow({number,children}: {number:string;children:ReactNode}) {
   return <p className="opal-end-eyebrow"><span>{number}</span>{children}</p>;
 }
 
