@@ -52,3 +52,15 @@ Review output for failed captures, layout differences and image licensing before
 - Validity checks have been added to prevent blocked pages from being recorded as reference screenshots.
 - Automatic requests to the restricted reference site have been disabled. Reference capture is now manual-only and defaults to smoke mode; do not repeatedly request this origin.
 - Pixel-accurate alignment remains blocked until owner-supplied screenshots or authorized capture is available.
+
+
+## Premium frontend direction — approved 2026-11-17
+Owner updated visual scope: **professional boutique luxury site inspired by, but not constrained to, the original UI**. All heavy business data and backend functionality deferred.
+
+Branch `feat/premium-editorial-frontend` introduces:
+- New bilingual premium navigation, immersive editorial hero, calm photo transitions and responsive mobile menu;
+- Refined type/cream/forest/sand design tokens and more polished underlying sections;
+- Floating reservation panel with UI date validation + demo guest selector (no server bookings);
+- Clearly labelled illustrative photo placeholders and a resilient architectural fallback.
+
+Quality gate: GitHub Actions build/typecheck/tests + EN/AR desktop/tablet/mobile screenshots before merging. Production assets and booking are still pending.
