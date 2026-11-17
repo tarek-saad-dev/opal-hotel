@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, SVGProps } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
+import { heroScenes, hotelBrand, responsivePhotoSrcSet } from "@/lib/gallery";
 
 type Props = {
   locale: Locale;
@@ -32,24 +33,6 @@ function Glyph({ name, ...props }: SVGProps<SVGSVGElement> & { name: GlyphName }
     strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" aria-hidden="true" {...props}>{drawings[name]}</svg>;
 }
 
-const scenes = [
-  {
-    src: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=2200&q=84",
-    alt: "Illustrative boutique hotel exterior, not Opal Legacy",
-    label: "01",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=2200&q=84",
-    alt: "Illustrative hotel garden and pool, not Opal Legacy",
-    label: "02",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=2200&q=84",
-    alt: "Illustrative boutique hotel suite, not Opal Legacy",
-    label: "03",
-  },
-];
-
 const navItems = ["overview", "rooms", "facilities", "gallery", "location", "reviews", "contact"] as const;
 
 function dateStamp(date: Date) {
@@ -75,7 +58,12 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
   const [children, setChildren] = useState(0);
   const [guestsOpen, setGuestsOpen] = useState(false);
   const [error, setError] = useState("");
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [dockVisible, setDockVisible] = useState(false);
   const guestRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  const restoreMenuFocus = useRef(false);
 
   useEffect(() => {
     const now = dateStamp(new Date());
@@ -91,6 +79,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        restoreMenuFocus.current = true;
         setMenuOpen(false);
         setGuestsOpen(false);
       }
@@ -103,7 +92,34 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
     if (!menuOpen) return;
     const original = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = original; };
+    const links = Array.from(menuRef.current?.querySelectorAll<HTMLAnchorElement>("nav a") || []);
+    links[0]?.focus({ preventScroll: true });
+    const trapFocus = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return;
+      const focusables = [
+        ...links,
+        menuTriggerRef.current,
+      ].filter((el): el is HTMLElement => Boolean(el));
+      if (!focusables.length) return;
+      const current = focusables.indexOf(document.activeElement as HTMLElement);
+      if (current === -1) {
+        event.preventDefault();
+        focusables[0].focus();
+      } else if (event.shiftKey && current === 0) {
+        event.preventDefault();
+        focusables[focusables.length - 1].focus();
+      } else if (!event.shiftKey && current === focusables.length - 1) {
+        event.preventDefault();
+        focusables[0].focus();
+      }
+    };
+    document.addEventListener("keydown", trapFocus);
+    return () => {
+      document.body.style.overflow = original;
+      document.removeEventListener("keydown", trapFocus);
+      if (restoreMenuFocus.current) menuTriggerRef.current?.focus({ preventScroll: true });
+      restoreMenuFocus.current = false;
+    };
   }, [menuOpen]);
 
   useEffect(() => {
@@ -115,9 +131,39 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
     return () => document.removeEventListener("pointerdown", closeOutside);
   }, [guestsOpen]);
 
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    const targets = navItems.map(id => document.getElementById(id)).filter((el): el is HTMLElement => Boolean(el));
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) setActiveSection(entry.target.id);
+      }
+    }, { rootMargin: "-25% 0px -58% 0px", threshold: 0 });
+    targets.forEach(el => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    // Small-screen booking shortcut while exploring. Never cover the footer.
+    const updateDock = () => {
+      const booking = document.getElementById("booking");
+      const footer = document.querySelector(".opal-end-footer");
+      const pastBooking = booking ? booking.getBoundingClientRect().bottom < 0 : false;
+      const beforeFooter = footer ? footer.getBoundingClientRect().top > innerHeight : true;
+      setDockVisible(innerWidth <= 800 && scrollY > 550 && pastBooking && beforeFooter);
+    };
+    updateDock();
+    window.addEventListener("scroll", updateDock, { passive: true });
+    window.addEventListener("resize", updateDock);
+    return () => {
+      window.removeEventListener("scroll", updateDock);
+      window.removeEventListener("resize", updateDock);
+    };
+  }, []);
+
   function moveSlide(delta: number) {
     setImageFailed(false);
-    setSlide(current => (current + delta + scenes.length) % scenes.length);
+    setSlide(current => (current + delta + heroScenes.length) % heroScenes.length);
   }
 
   function submit(e: FormEvent<HTMLFormElement>) {
@@ -155,15 +201,18 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
 
   return (
     <>
+      <a className="opal-skip-link" href="#overview">{ar ? "انتقل إلى المحتوى" : "Skip to main content"}</a>
       <header className={`premium-header${scrolled || menuOpen ? " is-scrolled" : ""}`} id="top">
         <div className="premium-header-inner">
           <Link className="premium-mark" href={`/${locale}`} aria-label={t.home}>
-            <span className="premium-mark-symbol" aria-hidden="true">O</span>
-            <span className="premium-mark-words"><strong>OPAL LEGACY</strong><small>L U X O R&nbsp; · &nbsp;E G Y P T</small></span>
+            {hotelBrand.officialLogoSrc
+              ? <img className="premium-mark-official" src={hotelBrand.officialLogoSrc} alt="" width={56} height={56} />
+              : <span className="premium-mark-symbol" aria-hidden="true">O</span>}
+            <span className="premium-mark-words"><strong>{hotelBrand.wordmark}</strong><small>L U X O R&nbsp; · &nbsp;E G Y P T</small></span>
           </Link>
           <nav className="premium-desktop-nav" aria-label={c.labels.menu}>
             {navItems.slice(0, 5).map(id =>
-              <a key={id} href={`#${id}`}>{c.nav[id]}</a>
+              <a key={id} href={`#${id}`} aria-current={activeSection===id?"location":undefined}>{c.nav[id]}</a>
             )}
           </nav>
           <div className="premium-header-controls">
@@ -171,7 +220,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
               {ar ? "EN" : "عربي"}
             </Link>
             <a className="premium-header-cta" href="#booking">{t.reserve}<Glyph name="arrow" /></a>
-            <button className="premium-hamburger" type="button"
+            <button className="premium-hamburger" type="button" ref={menuTriggerRef}
               aria-controls="premium-mobile-menu" aria-expanded={menuOpen}
               aria-label={menuOpen ? c.labels.close : c.labels.menu}
               onClick={() => setMenuOpen(v => !v)}>
@@ -179,11 +228,12 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
             </button>
           </div>
         </div>
-        {menuOpen && <div className="premium-menu-surface" id="premium-mobile-menu">
+        {menuOpen && <div className="premium-menu-surface" id="premium-mobile-menu" role="dialog" aria-modal="true" aria-label={t.menuTitle} ref={menuRef}>
           <p className="premium-menu-eyebrow">{t.menuTitle}</p>
           <nav aria-label={c.labels.menu}>
             {navItems.map((id, i) =>
-              <a href={`#${id}`} key={id} onClick={() => setMenuOpen(false)}>
+              <a href={`#${id}`} key={id} aria-current={activeSection===id?"location":undefined}
+                onClick={() => { restoreMenuFocus.current = false; setMenuOpen(false); }}>
                 <span className="premium-menu-number">{String(i + 1).padStart(2, "0")}</span>{c.nav[id]}
                 <Glyph name="arrow" />
               </a>
@@ -196,8 +246,10 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
       <section className="premium-hero" aria-labelledby="hotel-name">
         <div className="premium-hero-visual">
           {!imageFailed
-            ? <img key={slide} className="premium-hero-photo" src={scenes[slide].src}
-              alt={scenes[slide].alt} onError={() => setImageFailed(true)} />
+            ? <img key={slide} className="premium-hero-photo" src={heroScenes[slide].src}
+              srcSet={responsivePhotoSrcSet(heroScenes[slide].src)} sizes="100vw"
+              width={1920} height={1080} loading="eager" decoding="async" fetchPriority={slide===0?"high":"auto"}
+              alt={heroScenes[slide].alt} onError={() => setImageFailed(true)} />
             : <div className="premium-hero-fallback" role="img" aria-label="Decorative boutique architecture illustration">
                 <span className="arch arch-one"/><span className="arch arch-two"/><span className="arch arch-three"/>
               </div>}
@@ -225,8 +277,8 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
             <span className="premium-scroll-mark" /><span>{t.scroll}</span>
           </a>
           <div className="premium-hero-scene-navigation">
-            <span className="premium-scene-number" aria-label={`Slide ${slide + 1} of ${scenes.length}`}>
-              {scenes[slide].label} <i/> 0{scenes.length}
+            <span className="premium-scene-number" aria-label={ar ? `الصورة ${slide+1} من ${heroScenes.length}` : `Image ${slide + 1} of ${heroScenes.length}`}>
+              {heroScenes[slide].label} <i/> 0{heroScenes.length}
             </span>
             <button type="button" aria-label={c.labels.previous} onClick={() => moveSlide(-1)}><Glyph name="arrow" /></button>
             <button type="button" aria-label={c.labels.next} onClick={() => moveSlide(1)}><Glyph name="arrow" /></button>
@@ -295,6 +347,11 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
           <p className="premium-booking-note">{t.helper}</p>
         </div>
       </section>
+      <a className={`opal-stay-dock${dockVisible&&!menuOpen?" is-visible":""}`}
+        href="#booking" aria-hidden={!dockVisible||menuOpen}
+        tabIndex={dockVisible&&!menuOpen?0:-1}>
+        <span>{t.reserve}</span><Glyph name="arrow"/>
+      </a>
     </>
   );
 }
