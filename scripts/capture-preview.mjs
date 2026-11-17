@@ -80,17 +80,46 @@ for(const lang of langs)for(const screen of screens){
     });
     await fs.writeFile(path.join(dir,'audit.json'),JSON.stringify(audit,null,2));
     await page.screenshot({path:path.join(dir,'full.png'),fullPage:true,timeout:60000,animations:'disabled'});
-    const header=page.locator('.site-header');
+    const header=page.locator('.premium-header');
     if(await header.count())await header.screenshot({path:path.join(dir,'header.png'),timeout:12000});
-    const hero=page.locator('.hero-gallery');
+    const hero=page.locator('.premium-hero');
     if(await hero.count())await hero.screenshot({path:path.join(dir,'hero.png'),timeout:12000});
+    // Exercise actual UI interactions after the pristine visual screenshots.
+    const interactions={slides:false,guests:false,menu:false,booking:false};
+    try{
+      const scene=page.locator('.premium-scene-number');
+      const before=await scene.innerText();
+      await page.locator('.premium-hero-scene-navigation button').last().click();
+      interactions.slides=(await scene.innerText())!==before;
+
+      await page.locator('.premium-guest-trigger').click();
+      const counter=page.locator('.premium-guest-row').first().locator('output');
+      const initial=Number(await counter.innerText());
+      await page.locator('.premium-guest-row').first().locator('button').last().click();
+      interactions.guests=Number(await counter.innerText())===initial+1;
+      await page.keyboard.press('Escape');
+
+      if(screen.width<=1040){
+        await page.locator('.premium-hamburger').click();
+        interactions.menu=await page.locator('.premium-menu-surface').isVisible();
+        await page.keyboard.press('Escape');
+        interactions.menu=interactions.menu && (await page.locator('.premium-menu-surface').count())===0;
+      } else interactions.menu=true;
+
+      await page.locator('.premium-booking-submit').click();
+      const rooms=await page.locator('#rooms').innerText();
+      interactions.booking=/not connected|غير متصل|لم يُربط|لم يتم إرسال/.test(rooms);
+    }catch(e){
+      errors.push({type:'interaction',message:String(e.message).slice(0,320)});
+    }
     const validHeadings=audit.headings.some(h=>/opal legacy/i.test(h||''));
     const validAnchors=Object.values(audit.anchors).every(Boolean);
     const overflow=audit.document.width > screen.width+2;
     const passed=validHeadings&&validAnchors&&!overflow&&errors.length===0
+      &&Object.values(interactions).every(Boolean)
       &&audit.images.filter(i=>i.visible).every(i=>i.naturalWidth>0);
     if(!passed)failures++;
-    const result={lang,screen:screen.id,passed,validHeadings,validAnchors,overflow,
+    const result={lang,screen:screen.id,passed,validHeadings,validAnchors,overflow,interactions,
       failedImages:audit.images.filter(i=>i.visible&&!i.naturalWidth).length,
       placeholderImages:audit.images.filter(i=>i.visible&&i.placeholder).length,
       totalImages:audit.images.length,errors};
