@@ -27,6 +27,8 @@ jobs:
         run: node --test docs/reference-lock/capture/validate-reference.test.mjs
       - name: Capture syntax check
         run: node --check docs/reference-lock/capture/opal-capture.mjs
+      - name: VPS deploy shell syntax
+        run: bash -n ops/deploy-vps.sh
       - name: TypeScript
         run: npm run typecheck
       - name: Build

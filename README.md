@@ -11,6 +11,10 @@ A premium, visual-first Next.js frontend concept for Opal Legacy Luxor Hotel.
 - [Frontend Master Specification](docs/reference-lock/FRONTEND_MASTER_SPEC_AR.md)
 - [Current implementation status and limitations](docs/IMPLEMENTATION_STATUS.md)
 
+## Direct production hosting on VPS
+
+The project can be served from the existing Ubuntu VPS as a **single isolated production deployment**: Next.js + systemd + Nginx, no staging environment and no database. See [one-command deployment instructions](ops/README.md). A real owned domain and access to the VPS root shell are required; GitHub source changes alone do not publish the site.
+
 ## Run locally
 
 Prerequisite: Node.js 22+ and npm.
@@ -44,7 +48,7 @@ GitHub Actions runs the checks on `main` and pull requests. Build results must b
 - Photos, hotel facts, currency support, services and check-in policies need hotel verification.
 - Current CSS values are **provisional**; complete visual lock requires real browser capture.
 - Search-engine indexing is disabled in this prototype.
-- No preview deployment configured.
+- The production-hosting installer is prepared, but the app is not live until run on the VPS with the intended domain and HTTPS configured.
 
 ## Browser reference capture
 
