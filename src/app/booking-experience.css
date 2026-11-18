@@ -174,6 +174,20 @@
 .opal-book-footer a{color:#f4ecdd;display:flex;align-items:center;gap:12px;white-space:nowrap}
 .opal-book-footer a span{font-size:20px}
 
+/* Editorial variation: the final concept gets a full-width horizontal story
+   instead of leaving an orphaned half-row on desktop/tablet. */
+@media(min-width:601px){
+  .opal-book-room:last-child{grid-column:1/-1}
+  .opal-book-room:last-child .opal-book-room-select{
+    display:grid;grid-template-columns:minmax(0,.94fr) minmax(0,1.06fr);
+    align-items:stretch;
+  }
+  .opal-book-room:last-child .opal-book-room-media{height:230px}
+  .opal-book-room:last-child .opal-book-room-text{
+    display:flex;justify-content:center;align-items:flex-start;
+    padding:23px clamp(18px,3vw,33px);
+  }
+}
 [dir="rtl"] .opal-book-page h1,[dir="rtl"] .opal-book-page h2,[dir="rtl"] .opal-book-page h3{
   font-family:"Cairo",Tahoma,sans-serif!important;font-weight:650;letter-spacing:0;line-height:1.6
 }
