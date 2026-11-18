@@ -71,7 +71,7 @@ for(const lang of langs)for(const screen of screens){
       const headings=Array.from(document.querySelectorAll('h1,h2')).map(n=>n.textContent?.trim());
       const ids=['overview','facilities','location','rooms','gallery','reviews','contact'];
       return {
-        title:document.title,lang:doc.lang,dir:document.querySelector('[dir]')?.getAttribute('dir'),
+        title:document.title,lang:doc.lang,dir:doc.dir,
         viewport:{width:innerWidth,height:innerHeight},document:{width:doc.scrollWidth,height:doc.scrollHeight},
         body:{width:document.body.scrollWidth,height:document.body.scrollHeight},
         headings,anchors:Object.fromEntries(ids.map(id=>[id,Boolean(document.getElementById(id))])),
@@ -387,18 +387,46 @@ for(const lang of langs)for(const screen of screens){
     }catch(err){
       errors.push({type:'booking-v2',message:String(err.message).slice(0,320)});
     }
+    const routeQA={language:false,missing:false,recovery:false,noOverflow:false};
+    try {
+      // Verify the top-level HTML language/direction, not just a nested RTL
+      // container. This matters for screen readers and browser translation.
+      await load(page,`${origin}/${lang}/rooms`);
+      await page.waitForFunction((loc)=>document.documentElement.lang===loc
+        &&document.documentElement.dir===(loc==='ar'?'rtl':'ltr'),
+        lang,{timeout:5000});
+      routeQA.language=await page.evaluate(loc=>
+        document.documentElement.lang===loc
+        &&document.documentElement.dir===(loc==='ar'?'rtl':'ltr'),lang);
+
+      // An unknown concept must return an actual 404 and expose localized,
+      // keyboard-accessible recovery actions rather than a broken room page.
+      const response=await page.goto(`${origin}/${lang}/rooms/not-an-opal-room`,
+        {waitUntil:'domcontentloaded',timeout:12000});
+      await page.locator('.opal-recovery').waitFor({state:'visible',timeout:5000});
+      routeQA.missing=response?.status()===404
+        &&(await page.locator('.opal-recovery h1').count())===1;
+      routeQA.recovery=(await page.locator('.opal-recovery-actions a').count())===2
+        &&(await page.locator('.opal-recovery-actions a').first().getAttribute('href'))===`/${lang}`;
+      routeQA.noOverflow=await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2);
+      await page.screenshot({path:path.join(dir,'not-found-recovery.png'),
+        fullPage:true,animations:'disabled',timeout:30000});
+    } catch(err) {
+      errors.push({type:'route-recovery',message:String(err.message).slice(0,320)});
+    }
     const validHeadings=audit.headings.some(h=>/opal legacy/i.test(h||''));
     const validAnchors=Object.values(audit.anchors).every(Boolean);
     const overflow=audit.document.width > screen.width+2;
     const passed=validHeadings&&validAnchors&&!overflow&&errors.length===0
+      &&audit.lang===lang&&audit.dir===(lang==='ar'?'rtl':'ltr')
       &&Object.values(interactions).every(Boolean)&&Object.values(roomsQA).every(Boolean)
-      &&Object.values(bookingQA).every(Boolean)
+      &&Object.values(bookingQA).every(Boolean)&&Object.values(routeQA).every(Boolean)
       &&audit.images.filter(i=>i.visible).every(i=>i.naturalWidth>0);
     if(!passed)failures++;
     const result={lang,screen:screen.id,passed,validHeadings,validAnchors,overflow,interactions,
       failedImages:audit.images.filter(i=>i.visible&&!i.naturalWidth).length,
       placeholderImages:audit.images.filter(i=>i.visible&&i.placeholder).length,
-      totalImages:audit.images.length,roomsQA,bookingQA,errors};
+      totalImages:audit.images.length,roomsQA,bookingQA,routeQA,errors};
     records.push(result);
     console.log(JSON.stringify(result));
   }catch(err){
