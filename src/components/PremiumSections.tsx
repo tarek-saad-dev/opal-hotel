@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import type { ReactNode, SyntheticEvent } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
-import { galleryImages, responsivePhotoSrcSet } from "@/lib/gallery";
+import { galleryImages, officialMediaActive, photoAlt, responsivePhotoSrcSet } from "@/lib/gallery";
 import { roomConcepts } from "@/lib/room-concepts";
 
 type SharedProps = { locale: Locale; content: HotelContent };
@@ -19,11 +19,11 @@ function demoImageError(event: SyntheticEvent<HTMLImageElement>) {
   img.removeAttribute("srcset");
   img.src = "/media/photo-placeholder.svg";
 }
-function PreviewImage({ index, eager = false }: { index: number; eager?: boolean }) {
+function PreviewImage({ index, locale, eager = false }: { index: number; locale: Locale; eager?: boolean }) {
   const img = galleryImages[index];
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img className="opal-editorial-photo" src={img.src} alt={img.alt}
+    <img className="opal-editorial-photo" src={img.src} alt={photoAlt(index,locale)}
       srcSet={responsivePhotoSrcSet(img.src)} sizes="(max-width: 600px) 100vw, (max-width: 900px) 65vw, 42vw"
       width={1200} height={900} decoding="async" loading={eager ? "eager" : "lazy"} onError={demoImageError}/>
   );
@@ -44,13 +44,13 @@ export function PremiumStory({ locale, content: c, onOpenPhoto }: StoryProps) {
     lead: "هنا تلتقي تفاصيل المكان بروح الأقصر؛ وتتحوّل أبسط اللحظات إلى ذكريات تستحق البقاء.",
     slow: "مساحة للإحساس بالمكان", secondary: "تجربة تكتشفها على مهل",
     photo: "استكشف الصور", line: "اكتشف التفاصيل",
-    art: "صور توضيحية · سيتم استبدالها بصور الفندق المعتمدة",
+    art: officialMediaActive ? "صور حقيقية معتمدة من إدارة الفندق" : "صور توضيحية · سيتم استبدالها بصور الفندق المعتمدة",
   } : {
     kicker: "THE OPAL EXPERIENCE", top: "Beyond a stay,", italic: "a feeling.",
     lead: "A place to discover more slowly. Inspired by the textures, light and timeless atmosphere of Luxor.",
     slow: "THE BEAUTY OF SLOWING DOWN", secondary: "STORIES IN EVERY DETAIL",
     photo: "Explore the images", line: "DISCOVER THE DETAILS",
-    art: "Illustrative imagery · not photos of Opal Legacy",
+    art: officialMediaActive ? "Hotel-approved property photography" : "Illustrative imagery · not photos of Opal Legacy",
   };
   return <div className="opal-story-wrap">
     <div className="opal-story-copy">
@@ -63,12 +63,12 @@ export function PremiumStory({ locale, content: c, onOpenPhoto }: StoryProps) {
     </div>
     <div className="opal-story-media">
       <button className="opal-story-main-photo" type="button" onClick={() => onOpenPhoto(4)} aria-label={t.photo}>
-        <PreviewImage index={4} eager/>
+        <PreviewImage locale={locale} index={4} eager/>
         <span className="opal-media-hover" aria-hidden="true">↗</span>
       </button>
       <div className="opal-story-inset">
         <button type="button" className="opal-story-small-photo" onClick={() => onOpenPhoto(1)} aria-label={t.photo}>
-          <PreviewImage index={1} />
+          <PreviewImage locale={locale} index={1} />
         </button>
         <span className="opal-story-side-note">{t.secondary}</span>
       </div>
@@ -174,7 +174,7 @@ export function PremiumRooms({ locale, content: c, onOpenPhoto, attemptedBooking
   const ar = locale === "ar";
   const t = ar ? {
     kicker:"مساحات للإلهام", title:"أماكن تهدأ فيها.", italic:"وتستمتع بكل لحظة.",
-    note:"معاينة لأسلوب عرض الغرف في الموقع الجديد؛ الصور والأوصاف توضيحية وليست أنواع غرف مؤكدة.",
+    note:officialMediaActive ? "صور الفندق معتمدة، لكن تصورات الغرف والأوصاف ليست أنواعًا مؤكدة أو متاحة للحجز." : "معاينة لأسلوب عرض الغرف في الموقع الجديد؛ الصور والأوصاف توضيحية وليست أنواع غرف مؤكدة.",
     stories:[
       {label:"فكرة تصميمية 01",name:"نور وهدوء",text:"مساحات هادئة وخامات دافئة."},
       {label:"فكرة تصميمية 02",name:"تفاصيل مريحة",text:"تصميم يجعل الراحة جزءًا من التجربة."},
@@ -185,13 +185,13 @@ export function PremiumRooms({ locale, content: c, onOpenPhoto, attemptedBooking
     details:"استكشف التفاصيل", allConcepts:"شوف كل التصورات",
   } : {
     kicker:"THE ART OF REST", title:"Rooms to slow down.", italic:"Moments to stay.",
-    note:"An editorial preview of how the room experience could look. Photography and concepts are illustrative, not confirmed hotel inventory.",
+    note:officialMediaActive ? "Approved hotel photography. Room concepts and descriptions remain illustrative, not confirmed inventory." : "An editorial preview of how the room experience could look. Photography and concepts are illustrative, not confirmed hotel inventory.",
     stories:[
       {label:"DESIGN STORY 01",name:"Light & stillness",text:"A softer rhythm and warm material details."},
       {label:"DESIGN STORY 02",name:"Quiet comforts",text:"The thoughtful details that make a stay feel personal."},
       {label:"DESIGN STORY 03",name:"Slow mornings",text:"Time to pause, breathe and feel at ease."},
     ],
-    view:"EXPLORE IMAGES", warning:"Concept room imagery only · Not actual room types or bookable inventory",
+    view:"EXPLORE IMAGES", warning:officialMediaActive ? "Hotel photography approved · Concepts are not actual room types or bookable inventory" : "Concept room imagery only · Not actual room types or bookable inventory",
     plan:"YOUR STAY PREVIEW", noDates:"Select your dates above to preview the booking journey.",
     details:"EXPLORE THE CONCEPT", allConcepts:"VIEW ALL ROOM STORIES",
   };
@@ -201,7 +201,7 @@ export function PremiumRooms({ locale, content: c, onOpenPhoto, attemptedBooking
       {t.stories.map((story, i) => <article className="opal-room-card" key={story.label}>
         <button type="button" className="opal-room-photo" onClick={() => onOpenPhoto(roomPhotos[i])}
           aria-label={`${t.view}: ${story.name}`}>
-          <PreviewImage index={roomPhotos[i]}/>
+          <PreviewImage locale={locale} index={roomPhotos[i]}/>
           <span className="opal-room-photo-arrow" aria-hidden="true">↗</span>
           <span className="opal-room-image-badge">{story.label}</span>
         </button>
@@ -240,15 +240,15 @@ export function PremiumGallery({ locale, onOpenPhoto }: GalleryProps) {
   const [filter,setFilter] = useState<Category>("all");
   const t = ar ? {
     kicker:"نظرة أقرب",title:"جمال التفاصيل.",italic:"من كل زاوية.",
-    note:"صور للإلهام البصري فقط؛ سيتم استبدالها بالصور الرسمية للفندق.",
+    note:officialMediaActive ? "صور الفندق الرسمية والمعتمدة من إدارة الفندق." : "صور للإلهام البصري فقط؛ سيتم استبدالها بالصور الرسمية للفندق.",
     filters:{all:"كل الصور",spaces:"المساحات",moments:"اللحظات"},
-    footer:"الصور المعروضة توضيحية ولا تمثل غرف أو مرافق فندق Opal Legacy.",
+    footer:officialMediaActive ? "الصور من الفندق ومعتمدة للاستخدام؛ تفاصيل الغرف والإتاحة تحتاج اعتماد منفصل." : "الصور المعروضة توضيحية ولا تمثل غرف أو مرافق فندق Opal Legacy.",
     photo:"افتح الصورة",count:"صور معروضة",
   } : {
     kicker:"VISUAL JOURNAL",title:"A closer look.",italic:"Every angle.",
-    note:"Explore the visual direction. These photographs are illustrative until approved hotel imagery is provided.",
+    note:officialMediaActive ? "Explore hotel-approved property photography." : "Explore the visual direction. These photographs are illustrative until approved hotel imagery is provided.",
     filters:{all:"All images",spaces:"Spaces",moments:"Moments"},
-    footer:"Illustrative photography for the UI concept. Not photographs of Opal Legacy Hotel.",
+    footer:officialMediaActive ? "Approved property photography. Room inventory and live booking remain unverified." : "Illustrative photography for the UI concept. Not photographs of Opal Legacy Hotel.",
     photo:"Open photo",count:"images on view",
   };
   const visible = galleryImages.map((img,i)=>({...img,index:i}))
@@ -265,7 +265,7 @@ export function PremiumGallery({ locale, onOpenPhoto }: GalleryProps) {
     <div className={`opal-gallery-mosaic ${filter==="all"?"opal-gallery-full":"opal-gallery-filtered"}`}>
       {visible.map((img,i)=><button type="button" className={`opal-gallery-item opal-gallery-item-${i}`} key={img.src}
         onClick={()=>onOpenPhoto(img.index)} aria-label={`${t.photo} ${img.index+1}`}>
-        <PreviewImage index={img.index}/>
+        <PreviewImage locale={locale} index={img.index}/>
         <span className="opal-gallery-hover" aria-hidden="true">↗</span>
         <span className="opal-gallery-item-number">{String(img.index+1).padStart(2,"0")}</span>
       </button>)}
