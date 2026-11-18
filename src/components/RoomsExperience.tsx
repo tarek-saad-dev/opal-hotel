@@ -41,7 +41,7 @@ function RoomHeader({locale,slug}:{locale:Locale;slug?:string}) {
       </Link>
       <nav className="room-exp-header-nav" aria-label={t.collection}>
         <Link href={`/${locale}/rooms`}>{t.all}</Link>
-        <Link href={`/${locale}#booking`} className="room-exp-header-cta">{t.book}<span aria-hidden="true">↗</span></Link>
+        <Link href={`/${locale}/booking${slug?"?room="+slug:""}`} className="room-exp-header-cta">{t.book}<span aria-hidden="true">↗</span></Link>
         <Link href={`/${locale==="ar"?"en":"ar"}/rooms${slug?"/"+slug:""}`} lang={locale==="ar"?"en":"ar"} hrefLang={locale==="ar"?"en":"ar"}
           className="room-exp-language">{t.language}</Link>
       </nav>
@@ -116,7 +116,7 @@ export function RoomCollection({locale}:ShellProps) {
       <div className="room-exp-truth-note" role="note">
         <span className="room-exp-note-index">✳</span>
         <div><h2>{t.noteHeading}</h2><p>{t.notice}</p></div>
-        <Link href={`/${locale}#booking`} className="room-exp-secondary-cta">{t.book} <span aria-hidden="true">↗</span></Link>
+        <Link href={`/${locale}/booking`} className="room-exp-secondary-cta">{t.book} <span aria-hidden="true">↗</span></Link>
       </div>
     </main>
     <RoomFooter locale={locale}/>
@@ -231,7 +231,7 @@ export function RoomDetail({locale,concept}:{locale:Locale;concept:RoomConcept})
       <section className="room-exp-truth-note" role="note" aria-label={t.noteHeading}>
         <span className="room-exp-note-index">✳</span>
         <div><h2>{t.noteHeading}</h2><p>{t.notice}</p><p>{t.bookNote}</p></div>
-        <Link href={`/${locale}#booking`} className="room-exp-secondary-cta">{t.book}<span aria-hidden="true">↗</span></Link>
+        <Link href={`/${locale}/booking?room=${concept.slug}`} className="room-exp-secondary-cta">{t.book}<span aria-hidden="true">↗</span></Link>
       </section>
       <section className="room-exp-related">
         <div className="room-exp-related-heading"><h2>{t.other}</h2><Link href={`/${locale}/rooms`}>{t.all} <span aria-hidden="true">↗</span></Link></div>
