@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { SyntheticEvent } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
-import { galleryImages, responsivePhotoSrcSet } from "@/lib/gallery";
+import { galleryImages, photoAlt, responsivePhotoSrcSet } from "@/lib/gallery";
 import { PremiumMasthead } from "@/components/PremiumMasthead";
 import { PremiumStory, PremiumFacilities, PremiumLocation, PremiumRooms, PremiumGallery } from "@/components/PremiumSections";
 import { PremiumReviews, PremiumContact, PremiumFooter } from "@/components/PremiumClosing";
@@ -153,7 +153,7 @@ export function HotelExperience({locale,content:c}:Props) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={galleryImages[photo].src} srcSet={responsivePhotoSrcSet(galleryImages[photo].src)}
             sizes="100vw" width={1200} height={900} decoding="async"
-            alt={galleryImages[photo].alt} onError={handleImageError}/>
+            alt={photoAlt(photo,locale)} onError={handleImageError}/>
           <p className="lightbox-counter" dir="ltr">{photo+1} / {galleryImages.length}</p>
         </div>
         <button type="button" className="lightbox-next" onClick={e=>{e.stopPropagation();setPhoto((photo+1)%galleryImages.length)}} aria-label={c.labels.next}>›</button>
