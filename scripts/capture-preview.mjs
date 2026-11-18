@@ -185,8 +185,15 @@ for(const lang of langs)for(const screen of screens){
       }
 
       await page.locator('.premium-booking-submit').click();
-      const rooms=await page.locator('#rooms').innerText();
-      interactions.booking=/not connected|غير متصل|لم يُربط|لم يتم إرسال/.test(rooms);
+      await page.waitForURL(`**/${lang}/booking?*`,{timeout:8000});
+      const homepageHandoff=new URL(page.url());
+      interactions.booking=homepageHandoff.pathname===`/${lang}/booking`
+        &&homepageHandoff.searchParams.has('checkin')
+        &&homepageHandoff.searchParams.has('checkout')
+        &&homepageHandoff.searchParams.has('adults')
+        &&(await page.locator('.opal-book-step.is-current').count())===1;
+      // Continue the existing homepage checks on a fresh page after handoff.
+      await load(page,url);
 
       interactions.rooms=(await page.locator('.opal-room-card').count())===3;
       const detail=page.locator('.opal-amenity-details').first();
@@ -321,17 +328,77 @@ for(const lang of langs)for(const screen of screens){
     }catch(err){
       errors.push({type:'rooms-v2',message:String(err.message).slice(0,320)});
     }
+    // Full client-side Booking UI V2 progression. This verifies no payment,
+    // booking confirmation or inventory claim is presented at any step.
+    const bookingQA={start:false,guests:false,dates:false,rooms:false,selection:false,
+      review:false,edit:false,locale:false,noReservation:false,noOverflow:false};
+    try{
+      await load(page,`${origin}/${lang}/booking`);
+      await page.waitForFunction(()=>
+        !!document.querySelector('input[name="checkin"]')?.value
+        &&!!document.querySelector('input[name="checkout"]')?.value,
+        null,{timeout:5000});
+      bookingQA.start=(await page.locator('.opal-book-step').count())===3
+        &&(await page.locator('.opal-book-step.is-current').count())===1
+        &&(await page.locator('.opal-book-preview-label').count())===1;
+      const initialAdults=Number(await page.locator('.opal-book-counter').first().locator('output').innerText());
+      await page.locator('.opal-book-counter').first().locator('button').last().click();
+      bookingQA.guests=Number(await page.locator('.opal-book-counter').first().locator('output').innerText())
+        ===initialAdults+1;
+      bookingQA.dates=(await page.locator('input[name="checkin"]').inputValue()).length===10
+        &&(await page.locator('input[name="checkout"]').inputValue()).length===10;
+      const initialBookingMetrics=await page.evaluate(()=>
+        ({width:document.documentElement.scrollWidth,viewport:innerWidth}));
+      bookingQA.noOverflow=initialBookingMetrics.width<=screen.width+2;
+      await page.screenshot({path:path.join(dir,'booking-step-1.png'),fullPage:true,
+        animations:'disabled',timeout:60000});
+      await page.locator('.opal-book-dates button[type="submit"]').click();
+      bookingQA.rooms=(await page.locator('.opal-book-room-select').count())===3
+        &&(await page.locator('.opal-book-step.is-current').count())===1;
+      await page.locator('.opal-book-room-select').nth(1).click();
+      bookingQA.selection=(await page.locator('.opal-book-room-select').nth(1)
+        .getAttribute('aria-pressed'))==='true';
+      // Required media is loaded before the screenshot is captured.
+      await page.evaluate(()=>document.querySelectorAll('.opal-book-page img').forEach(img=>{
+        img.loading='eager';
+      }));
+      await page.waitForFunction(()=>[...document.querySelectorAll('.opal-book-page img')]
+        .every(img=>img.complete&&img.naturalWidth>0),null,{timeout:16000});
+      await page.screenshot({path:path.join(dir,'booking-step-2.png'),fullPage:true,
+        animations:'disabled',timeout:60000});
+      await page.locator('.opal-book-choose .opal-book-primary').click();
+      bookingQA.review=(await page.locator('.opal-book-review').count())===1
+        &&(await page.locator('.opal-book-step.is-current').count())===1;
+      const reviewNote=await page.locator('.opal-book-final-note').innerText();
+      bookingQA.noReservation=lang==='ar'
+        ? reviewNote.includes('لم يتم إنشاء أو تأكيد أي حجز')
+        : reviewNote.includes('No reservation has been created or confirmed');
+      await page.screenshot({path:path.join(dir,'booking-step-3.png'),fullPage:true,
+        animations:'disabled',timeout:60000});
+      const otherLocale=lang==='en'?'ar':'en';
+      bookingQA.locale=(await page.locator('.opal-book-lang').getAttribute('href'))
+        .startsWith(`/${otherLocale}/booking?`);
+      const finalMetrics=await page.evaluate(()=>
+        ({width:document.documentElement.scrollWidth,viewport:innerWidth}));
+      bookingQA.noOverflow=bookingQA.noOverflow&&finalMetrics.width<=screen.width+2;
+      await page.locator('.opal-book-review-lines button').first().click();
+      bookingQA.edit=(await page.locator('input[name="checkin"]').count())===1
+        &&(await page.locator('.opal-book-step.is-current').count())===1;
+    }catch(err){
+      errors.push({type:'booking-v2',message:String(err.message).slice(0,320)});
+    }
     const validHeadings=audit.headings.some(h=>/opal legacy/i.test(h||''));
     const validAnchors=Object.values(audit.anchors).every(Boolean);
     const overflow=audit.document.width > screen.width+2;
     const passed=validHeadings&&validAnchors&&!overflow&&errors.length===0
       &&Object.values(interactions).every(Boolean)&&Object.values(roomsQA).every(Boolean)
+      &&Object.values(bookingQA).every(Boolean)
       &&audit.images.filter(i=>i.visible).every(i=>i.naturalWidth>0);
     if(!passed)failures++;
     const result={lang,screen:screen.id,passed,validHeadings,validAnchors,overflow,interactions,
       failedImages:audit.images.filter(i=>i.visible&&!i.naturalWidth).length,
       placeholderImages:audit.images.filter(i=>i.visible&&i.placeholder).length,
-      totalImages:audit.images.length,roomsQA,errors};
+      totalImages:audit.images.length,roomsQA,bookingQA,errors};
     records.push(result);
     console.log(JSON.stringify(result));
   }catch(err){
