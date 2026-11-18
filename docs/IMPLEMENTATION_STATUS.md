@@ -125,3 +125,12 @@ Quality gate: GitHub Actions build/typecheck/tests + EN/AR desktop/tablet/mobile
 - Browser QA covers homepage handoff, stage progression, guest counter, room selection, review, edit/back action, non-booking disclosure, no overflow, and real screenshots for each stage on 8 locale/device combinations.
 - Go-live gates: hotel-owned room photos, actual inventory and capacity, approved pricing and conditions, availability source, booking API, customer data consent/security, and payment/confirmation flows after separate approval. None are claimed in this phase.
 - No automatic VPS deployment. Merge only after CI + browser QA; user runs the existing VPS deploy script when ready.
+
+## Frontend Release Readiness V1 — 2026-11-18
+- Optimized App Router stylesheet loading: `rooms-experience.css` is now imported only by `/{locale}/rooms/**`; `booking-experience.css` only by `/{locale}/booking`. Shared homepage room-card link styles were moved into `premium-sections.css` to avoid homepage regressions.
+- Introduced a reduced-motion-safe route transition through `src/app/[locale]/template.tsx` and `src/app/route-polish.css`.
+- Added bilingual, luxury-themed route loading skeleton (`loading.tsx`), error retry fallback (`error.tsx`) and page-not-found recovery (`not-found.tsx`) for missing room concepts or invalid pages.
+- Added `LocaleDocumentSync`: sets top-level HTML `lang`/`dir` after hydration/cross-locale client navigation, while `[locale]/layout.tsx` still provides server-side localized wrapper semantics. The initial no-JS root HTML still declares English pending a separate root-layout refactor.
+- Extended browser QA across EN/AR at 320/390/768/1440 px to assert top-level document language/direction, actual 404 HTTP response, localized recovery actions and overflow-free fallback pages. Existing rooms/booking/hero functional QA remains intact.
+- No real booking, payment, availability or content assertions added. This is a reliability + UI performance pass; hotel-owned media and verified hotel details remain blockers to public indexed launch.
+- VPS is not automatically deployed by GitHub merge; deploy the approved main branch on the VPS using `ops/deploy-vps.sh`.
