@@ -134,3 +134,12 @@ Quality gate: GitHub Actions build/typecheck/tests + EN/AR desktop/tablet/mobile
 - Extended browser QA across EN/AR at 320/390/768/1440 px to assert top-level document language/direction, actual 404 HTTP response, localized recovery actions and overflow-free fallback pages. Existing rooms/booking/hero functional QA remains intact.
 - No real booking, payment, availability or content assertions added. This is a reliability + UI performance pass; hotel-owned media and verified hotel details remain blockers to public indexed launch.
 - VPS is not automatically deployed by GitHub merge; deploy the approved main branch on the VPS using `ops/deploy-vps.sh`.
+
+## Official Media and Brand Activation Gate — 2026-11-18
+
+- `src/config/hotel-media.json` is the single reviewable source of truth for the six owned property photographs, official logo, localized image descriptions, and documented rights/content approval. It defaults to `mode: preview`; no owner-supplied assets are assumed to exist.
+- The display manifest in `src/lib/gallery.ts` activates the actual official image set *atomically*, only after complete photo, logo, content and rights sign-offs. Partial uploads continue to display clearly labelled demo imagery; no mixture can silently appear.
+- Hero, story, gallery, room catalogue, room details and booking preview now use bilingual image alt text and verified-vs-design photo provenance markers, with labels that update only after full official activation.
+- `scripts/verify-official-media.mjs` checks safe local paths, file types, actual image headers, dimensions, size budget and approval fields; CI runs `npm run media:check`. The separate `npm run media:launch-check` intentionally blocks while photo/logo/license/content approval is pending.
+- Documentation lives in `docs/HOTEL_MEDIA_HANDOFF.md` and `public/media/hotel/README.md`, including privacy-safe instructions and handoff roles. No unauthorized hotel logo or property photograph has been created or uploaded.
+- All website robots remain noindex. Room inventory, rates, live availability, booking and contact delivery remain preview-only regardless of whether actual hotel imagery is eventually approved. A separate management go-live decision is still required.
