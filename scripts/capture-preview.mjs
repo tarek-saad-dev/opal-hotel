@@ -104,7 +104,8 @@ for(const lang of langs)for(const screen of screens){
     const interactions={slides:false,guests:false,menu:false,booking:false,
       amenities:false,galleryFilter:false,galleryLightbox:false,rooms:false,
       review:false,contact:false,footer:false,
-      responsiveMedia:false,dock:false,lightboxFocus:false,menuFocus:false};
+      responsiveMedia:false,dock:false,lightboxFocus:false,menuFocus:false,
+      menuGeometry:false,menuScrollLock:false,menuNavigate:false};
     try{
       const scene=page.locator('.premium-scene-number');
       const before=await scene.innerText();
@@ -119,20 +120,68 @@ for(const lang of langs)for(const screen of screens){
       await page.keyboard.press('Escape');
 
       if(screen.width<=1040){
+        // Regression: the old menu was fixed *inside* the blurred sticky header,
+        // which made it header-sized on Safari/Chrome while scrolled.
+        await page.locator('#gallery').scrollIntoViewIfNeeded();
         await page.locator('.premium-hamburger').click();
-        interactions.menu=await page.locator('.premium-menu-surface').isVisible();
-        const firstLink=page.locator('.premium-menu-surface nav a').first();
-        interactions.menuFocus=await firstLink.evaluate(el=>el===document.activeElement);
+        const surface=page.locator('.premium-menu-surface');
+        interactions.menu=await surface.isVisible();
+        const layout=await surface.evaluate(el => {
+          const rect=el.getBoundingClientRect();
+          const head=document.querySelector('.premium-header');
+          return {
+            left:rect.left,top:rect.top,width:rect.width,height:rect.height,
+            viewportWidth:innerWidth,viewportHeight:innerHeight,
+            portal:el.parentElement===document.body,
+            aboveHeader:Number(getComputedStyle(el).zIndex)>Number(getComputedStyle(head).zIndex),
+            direction:el.getAttribute('dir'),
+            locked:document.body.style.position==='fixed',
+          };
+        });
+        interactions.menuGeometry=layout.portal&&layout.aboveHeader
+          &&layout.top>=-1&&layout.top<=1&&layout.left>=-1&&layout.left<=1
+          &&layout.width>=layout.viewportWidth-2
+          &&layout.height>=layout.viewportHeight-2
+          &&layout.direction===(lang==='ar'?'rtl':'ltr');
+        interactions.menuScrollLock=layout.locked;
+        await page.screenshot({path:path.join(dir,'mobile-navigation-open.png'),animations:'disabled'});
+
+        interactions.menuFocus=await page.locator('.premium-menu-close')
+          .evaluate(el=>el===document.activeElement);
         await page.keyboard.press('Shift+Tab');
         interactions.menuFocus=interactions.menuFocus
-          &&await page.locator('.premium-hamburger').evaluate(el=>el===document.activeElement);
+          &&await page.locator('.premium-menu-lang').evaluate(el=>el===document.activeElement);
         await page.keyboard.press('Escape');
-        interactions.menu=interactions.menu && (await page.locator('.premium-menu-surface').count())===0;
+        await surface.waitFor({state:'detached',timeout:3000});
         interactions.menuFocus=interactions.menuFocus
           &&await page.locator('.premium-hamburger').evaluate(el=>el===document.activeElement);
+        interactions.menuScrollLock=interactions.menuScrollLock
+          &&await page.evaluate(()=>document.body.style.position!=='fixed');
+
+        // Verify long Arabic/English navigation scrolls and actually navigates.
+        await page.locator('.premium-hamburger').click();
+        await page.locator('.premium-menu-surface nav a').last().click();
+        await page.waitForFunction(
+          ()=>window.location.hash==='#contact'&&!document.querySelector('.premium-menu-surface'),
+          null,{timeout:3000}
+        );
+        interactions.menuNavigate=(await page.locator('#contact').count())===1;
+        await page.locator('.premium-hamburger').click();
+        await page.locator('.premium-menu-booking').click();
+        await page.waitForFunction(
+          ()=>window.location.hash==='#booking'&&!document.querySelector('.premium-menu-surface'),
+          null,{timeout:3000}
+        );
+        interactions.menuNavigate=interactions.menuNavigate
+          &&(await page.locator('#booking').count())===1;
+        interactions.menu=interactions.menu
+          &&(await page.locator('.premium-menu-surface').count())===0;
       } else {
         interactions.menu=true;
         interactions.menuFocus=true;
+        interactions.menuGeometry=true;
+        interactions.menuScrollLock=true;
+        interactions.menuNavigate=true;
       }
 
       await page.locator('.premium-booking-submit').click();

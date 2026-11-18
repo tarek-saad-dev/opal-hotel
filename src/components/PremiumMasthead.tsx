@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
-import type { FormEvent, SVGProps } from "react";
+import type { FormEvent, SVGProps, MouseEvent as ReactMouseEvent } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
 import { heroScenes, hotelBrand, responsivePhotoSrcSet } from "@/lib/gallery";
 
@@ -63,6 +64,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
   const guestRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  const menuCloseRef = useRef<HTMLButtonElement>(null);
   const restoreMenuFocus = useRef(false);
 
   useEffect(() => {
@@ -90,33 +92,69 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
 
   useEffect(() => {
     if (!menuOpen) return;
-    const original = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const links = Array.from(menuRef.current?.querySelectorAll<HTMLAnchorElement>("nav a") || []);
-    links[0]?.focus({ preventScroll: true });
+    // Full-screen mobile navigation lives in a body portal. A fixed child of
+    // the old blurred/sticky header was constrained by its backdrop-filter
+    // containing block, so the menu could be cut off or only 70px tall.
+    const body = document.body;
+    const root = document.documentElement;
+    const savedY = window.scrollY;
+    const previous = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overflow: body.style.overflow,
+      overscroll: root.style.overscrollBehavior,
+    };
+    // Lock the page behind the menu, including Safari/iOS rubber-band scroll.
+    body.style.position = "fixed";
+    body.style.top = `-${savedY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+    root.style.overscrollBehavior = "none";
+    menuCloseRef.current?.focus({ preventScroll: true });
+
     const trapFocus = (event: KeyboardEvent) => {
       if (event.key !== "Tab") return;
-      const focusables = [
-        ...links,
-        menuTriggerRef.current,
-      ].filter((el): el is HTMLAnchorElement | HTMLButtonElement => el !== null);
+      const focusables = Array.from(menuRef.current?.querySelectorAll<HTMLElement>(
+        'a[href]:not([aria-hidden="true"]), button:not([disabled])'
+      ) || []);
       if (!focusables.length) return;
-      const current = focusables.findIndex(el => el === document.activeElement);
-      if (current === -1) {
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
-        focusables[0].focus();
-      } else if (event.shiftKey && current === 0) {
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
         event.preventDefault();
-        focusables[focusables.length - 1].focus();
-      } else if (!event.shiftKey && current === focusables.length - 1) {
+        first.focus();
+      } else if (!menuRef.current?.contains(document.activeElement)) {
         event.preventDefault();
-        focusables[0].focus();
+        menuCloseRef.current?.focus();
+      }
+    };
+    const closeOnDesktop = () => {
+      if (window.innerWidth > 1040) {
+        restoreMenuFocus.current = false;
+        setMenuOpen(false);
       }
     };
     document.addEventListener("keydown", trapFocus);
+    window.addEventListener("resize", closeOnDesktop);
     return () => {
-      document.body.style.overflow = original;
+      body.style.position = previous.position;
+      body.style.top = previous.top;
+      body.style.left = previous.left;
+      body.style.right = previous.right;
+      body.style.width = previous.width;
+      body.style.overflow = previous.overflow;
+      root.style.overscrollBehavior = previous.overscroll;
       document.removeEventListener("keydown", trapFocus);
+      window.removeEventListener("resize", closeOnDesktop);
+      window.scrollTo({ top: savedY, left: 0, behavior: "instant" });
       if (restoreMenuFocus.current) menuTriggerRef.current?.focus({ preventScroll: true });
       restoreMenuFocus.current = false;
     };
@@ -160,6 +198,22 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
       window.removeEventListener("resize", updateDock);
     };
   }, []);
+
+  function navigateFromMenu(event: ReactMouseEvent<HTMLAnchorElement>, id: string) {
+    event.preventDefault();
+    restoreMenuFocus.current = false;
+    setMenuOpen(false);
+    // Wait until the body lock is released before scrolling to an anchor.
+    requestAnimationFrame(() => {
+      const target = document.getElementById(id);
+      if (!target) return;
+      window.history.pushState(null, "", `#${id}`);
+      target.scrollIntoView({
+        block: "start",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+      });
+    });
+  }
 
   function moveSlide(delta: number) {
     setImageFailed(false);
@@ -228,20 +282,50 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
             </button>
           </div>
         </div>
-        {menuOpen && <div className="premium-menu-surface" id="premium-mobile-menu" role="dialog" aria-modal="true" aria-label={t.menuTitle} ref={menuRef}>
-          <p className="premium-menu-eyebrow">{t.menuTitle}</p>
-          <nav aria-label={c.labels.menu}>
-            {navItems.map((id, i) =>
-              <a href={`#${id}`} key={id} aria-current={activeSection===id?"location":undefined}
-                onClick={() => { restoreMenuFocus.current = false; setMenuOpen(false); }}>
-                <span className="premium-menu-number">{String(i + 1).padStart(2, "0")}</span>{c.nav[id]}
-                <Glyph name="arrow" />
-              </a>
-            )}
-          </nav>
-          <div className="premium-menu-foot"><Glyph name="pin" />{c.address}</div>
-        </div>}
+
       </header>
+      {menuOpen && typeof document !== "undefined" && createPortal(
+        <div className="premium-menu-surface" id="premium-mobile-menu" dir={ar ? "rtl" : "ltr"} lang={locale}
+          role="dialog" aria-modal="true" aria-label={t.menuTitle} ref={menuRef}>
+          <div className="premium-menu-top">
+            <span className="premium-menu-brand" aria-label={hotelBrand.wordmark}>
+              {hotelBrand.officialLogoSrc
+                ? <img className="premium-mark-official" src={hotelBrand.officialLogoSrc} alt="" width={48} height={48}/>
+                : <span className="premium-menu-brand-symbol" aria-hidden="true">O</span>}
+              <span className="premium-menu-brand-wordmark"><strong>OPAL LEGACY</strong><small>LUXOR · EGYPT</small></span>
+            </span>
+            <div className="premium-menu-top-controls">
+              <Link href={ar ? "/en" : "/ar"} className="premium-menu-lang" lang={ar ? "en" : "ar"}
+                hrefLang={ar ? "en" : "ar"}>{ar ? "EN" : "عربي"}</Link>
+              <button type="button" className="premium-menu-close" ref={menuCloseRef}
+                onClick={() => { restoreMenuFocus.current = true; setMenuOpen(false); }}
+                aria-label={c.labels.close}><Glyph name="close"/></button>
+            </div>
+          </div>
+          <div className="premium-menu-content">
+            <p className="premium-menu-eyebrow">{t.menuTitle}</p>
+            <nav aria-label={c.labels.menu}>
+              {navItems.map((id, i) =>
+                <a href={`#${id}`} key={id} aria-current={activeSection===id?"location":undefined}
+                  onClick={event => navigateFromMenu(event, id)}>
+                  <span className="premium-menu-number">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="premium-menu-link-text">{c.nav[id]}</span>
+                  <Glyph name="arrow" />
+                </a>
+              )}
+            </nav>
+            <div className="premium-menu-bottom">
+              <div className="premium-menu-foot"><Glyph name="pin" />{c.address}</div>
+              <a className="premium-menu-booking" href="#booking"
+                onClick={event => navigateFromMenu(event,"booking")}>
+                <span>{t.reserve}</span><Glyph name="arrow"/>
+              </a>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
 
       <section className="premium-hero" aria-labelledby="hotel-name">
         <div className="premium-hero-visual">

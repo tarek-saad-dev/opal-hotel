@@ -4,6 +4,7 @@ import "./premium.css";
 import "./premium-sections.css";
 import "./premium-closing.css";
 import "./visual-polish.css";
+import "./mobile-navigation.css";
 
 export const metadata: Metadata = {
   title: { default: "Opal Legacy Luxor Hotel", template: "%s | Opal Legacy" },
