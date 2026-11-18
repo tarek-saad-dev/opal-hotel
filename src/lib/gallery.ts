@@ -26,12 +26,17 @@ type ApprovalManifest = {
 };
 const official = mediaApproval as ApprovalManifest;
 const photoOrder = ["exterior","garden","roomMain","roomSecondary","architecture","roomDetail"] as const;
+const mediaRoot="/media/hotel/";
 const safeLocalPath=(value:string|null):value is string=>
-  typeof value==="string" && /^\\/media\\/hotel\\/[a-z0-9][a-z0-9._/-]*\\.(webp|jpg|jpeg|png)$/.test(value)
-  && !value.includes("..");
+  typeof value==="string"
+  && value.startsWith(mediaRoot)
+  && /^[a-z0-9][a-z0-9._/-]*[.](webp|jpg|jpeg|png)$/.test(value.slice(mediaRoot.length))
+  && !value.includes("..") && !value.includes("//");
 const safeLogoPath=(value:string|null):value is string=>
-  typeof value==="string" && /^\\/media\\/hotel\\/[a-z0-9][a-z0-9._/-]*\\.(svg|webp|png)$/.test(value)
-  && !value.includes("..");
+  typeof value==="string"
+  && value.startsWith(mediaRoot)
+  && /^[a-z0-9][a-z0-9._/-]*[.](svg|webp|png)$/.test(value.slice(mediaRoot.length))
+  && !value.includes("..") && !value.includes("//");
 
 /**
  * OFFICIAL MEDIA RELEASE GATE
