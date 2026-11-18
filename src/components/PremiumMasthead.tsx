@@ -330,7 +330,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
       <section className="premium-hero" aria-labelledby="hotel-name">
         <div className="premium-hero-visual">
           {!imageFailed
-            ? <img key={slide} className="premium-hero-photo" src={heroScenes[slide].src}
+            ? <img key={slide} className="premium-hero-photo" data-media-origin={officialMediaActive?"hotel-approved":"design-demo"} src={heroScenes[slide].src}
               srcSet={responsivePhotoSrcSet(heroScenes[slide].src)} sizes="100vw"
               width={1920} height={1080} loading="eager" decoding="async" fetchPriority={slide===0?"high":"auto"}
               alt={ar ? heroScenes[slide].altAr : heroScenes[slide].alt} onError={() => setImageFailed(true)} />
