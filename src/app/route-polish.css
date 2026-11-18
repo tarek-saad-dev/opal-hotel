@@ -1,0 +1,135 @@
+/* Opal Legacy — Frontend release-readiness layer.
+   Route transitions + resilient skeleton / error / 404 surfaces.
+   No changes to the existing premium homepage visual identity.
+*/
+.opal-route-transition{min-width:0}
+@media(prefers-reduced-motion:no-preference){
+  .opal-route-transition{
+    animation:opal-route-arrive .32s cubic-bezier(.2,.8,.2,1) both;
+  }
+  @keyframes opal-route-arrive{
+    from{opacity:.92;transform:translateY(6px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+}
+.opal-route-loading,
+.opal-recovery{
+  color:#f8f3e7;background:#1c372b;
+  min-height:100svh;
+  font-family:var(--premium-sans,Arial,sans-serif);
+}
+.opal-route-loading-top,
+.opal-recovery-top{
+  display:flex;align-items:center;gap:14px;
+  padding:20px clamp(21px,5vw,75px);
+  border-bottom:1px solid rgba(255,255,255,.16);
+  min-height:85px;
+}
+.opal-route-loading-mark{
+  width:42px;height:42px;border:1px solid rgba(251,247,233,.44);
+  display:grid;place-items:center;font:400 37px/.88 var(--premium-serif,Georgia,serif);
+  flex-shrink:0;padding-bottom:3px;
+}
+.opal-route-loading-brand{
+  display:flex;flex-direction:column;gap:6px;
+  font:400 24px/1 var(--premium-serif,Georgia,serif);
+  letter-spacing:.08em;
+}
+.opal-route-loading-brand small,
+.opal-recovery-top small{
+  color:#c9b898;font:600 8px/1.3 var(--premium-sans,Arial,sans-serif);
+  letter-spacing:.22em;
+}
+.opal-route-loading-body{
+  max-width:1140px;margin:auto;padding:clamp(90px,14vw,180px) clamp(25px,5vw,70px) 90px;
+  display:flex;flex-direction:column;align-items:flex-start;
+}
+.opal-route-loading-lines{
+  display:flex;flex-direction:column;gap:18px;width:min(100%,630px);
+}
+.opal-route-loading-lines span{
+  height:clamp(22px,4vw,48px);
+  width:100%;background:#ffffff12;border:1px solid #ffffff14;
+}
+.opal-route-loading-lines span:nth-child(2){width:81%}
+.opal-route-loading-lines span:nth-child(3){width:56%;height:19px;margin-top:14px}
+.opal-route-loading-orbit{
+  margin:50px 0 20px;width:22px;height:22px;
+  border-radius:50%;border:2px solid rgba(221,200,163,.18);
+  border-top-color:#c7ae84;
+  animation:opal-loading-orbit 1.15s linear infinite;
+}
+.opal-route-loading p{
+  color:#d2cab8;font-size:13px;font-weight:600;letter-spacing:.025em;line-height:1.8;
+}
+@keyframes opal-loading-orbit{to{transform:rotate(360deg)}}
+.opal-recovery{
+  display:flex;flex-direction:column;
+  min-height:100svh;background:
+    radial-gradient(circle at 84% 78%,#5c645227,transparent 45%),
+    #1c372b;
+}
+.opal-recovery-top{gap:18px}
+.opal-recovery-brand{
+  font:400 27px/1 var(--premium-serif,Georgia,serif);letter-spacing:.07em;
+}
+.opal-recovery-body{
+  flex:1;display:flex;flex-direction:column;align-items:flex-start;
+  justify-content:center;max-width:1280px;width:100%;
+  margin:0 auto;padding:clamp(60px,8vw,130px) clamp(23px,5vw,74px);
+}
+.opal-recovery-index{
+  font-size:10px;letter-spacing:.18em;color:#cfb28c;font-weight:750;
+}
+.opal-recovery h1{
+  font:400 clamp(65px,8.7vw,145px)/.95 var(--premium-serif,Georgia,serif);
+  letter-spacing:-.055em;text-wrap:balance;margin:25px 0 30px;
+}
+.opal-recovery h1 em{display:block;color:#bdab8c;font-weight:400}
+.opal-recovery-body>p:not(.opal-recovery-index){
+  max-width:610px;color:#d5d7c8;font-size:15px;line-height:1.85;
+}
+.opal-recovery-actions{
+  display:flex;flex-wrap:wrap;align-items:center;gap:15px;margin-top:36px;
+}
+.opal-recovery-actions :is(a,button){
+  min-height:51px;display:inline-flex;align-items:center;justify-content:space-between;
+  gap:26px;background:#f3e9d8;color:#1d382b;border:1px solid #f3e9d8;
+  padding:14px 20px;font:750 12px/1.3 var(--premium-sans,Arial,sans-serif);
+  text-decoration:none;cursor:pointer;
+}
+.opal-recovery-actions :is(a,button).is-secondary{
+  background:transparent;color:#f4eddb;border-color:#dcc8a65c;
+}
+.opal-recovery-actions :is(a,button):hover{filter:brightness(.91)}
+.opal-recovery-actions :is(a,button):focus-visible{
+  outline:2px solid #e0c399;outline-offset:4px;
+}
+.opal-recovery-actions span{font-size:20px;line-height:1}
+.opal-recovery-foot{
+  padding:25px clamp(22px,5vw,75px);color:#bbc8ba;
+  font-size:11px;line-height:1.5;border-top:1px solid rgba(255,255,255,.14);
+}
+[dir="rtl"] .opal-recovery h1{
+  font:700 clamp(39px,7vw,94px)/1.4 "Cairo",Tahoma,sans-serif;
+  letter-spacing:0;
+}
+[dir="rtl"] .opal-recovery h1 em{font-style:normal;font-weight:750}
+[dir="rtl"] .opal-recovery-index{letter-spacing:0}
+[dir="rtl"] .opal-recovery-actions span{transform:rotate(180deg)}
+@media(max-width:600px){
+  .opal-route-loading-top,.opal-recovery-top{min-height:72px;padding:16px 20px}
+  .opal-route-loading-brand{font-size:20px}
+  .opal-route-loading-mark{width:38px;height:38px;font-size:33px}
+  .opal-route-loading-body{padding:85px 22px}
+  .opal-recovery h1{font-size:clamp(58px,13vw,82px)}
+  .opal-recovery-body{padding:73px 22px}
+  .opal-recovery-body>p:not(.opal-recovery-index){font-size:13px}
+  .opal-recovery-actions{width:100%;flex-direction:column;align-items:stretch}
+  .opal-recovery-actions :is(a,button){width:100%}
+  [dir="rtl"] .opal-recovery h1{font-size:clamp(35px,9.1vw,53px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .opal-route-transition{animation:none!important}
+  .opal-route-loading-orbit{animation:none!important;border-color:#c7ae84}
+}
