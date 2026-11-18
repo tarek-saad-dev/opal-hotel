@@ -431,7 +431,8 @@ for(const lang of langs)for(const screen of screens){
       sameOrigin:provenancePhotos.length>=5
         &&provenancePhotos.every(i=>i.origin===expectedPhotoOrigin),
       localizedHero:lang==='ar'
-        ? audit.images.some(i=>i.origin===expectedPhotoOrigin&&/[\\u0600-\\u06ff]/.test(i.alt))
+        ? audit.images.some(i=>i.origin===expectedPhotoOrigin
+            &&[...i.alt].some(char=>char.charCodeAt(0)>=0x600&&char.charCodeAt(0)<=0x6ff))
         : audit.images.some(i=>i.origin===expectedPhotoOrigin&&i.alt.length>10),
     };
     const passed=validHeadings&&validAnchors&&!overflow&&errors.length===0
