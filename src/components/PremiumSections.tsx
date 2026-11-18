@@ -23,7 +23,7 @@ function PreviewImage({ index, locale, eager = false }: { index: number; locale:
   const img = galleryImages[index];
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img className="opal-editorial-photo" src={img.src} alt={photoAlt(index,locale)}
+    <img className="opal-editorial-photo" data-media-origin={img.origin} src={img.src} alt={photoAlt(index,locale)}
       srcSet={responsivePhotoSrcSet(img.src)} sizes="(max-width: 600px) 100vw, (max-width: 900px) 65vw, 42vw"
       width={1200} height={900} decoding="async" loading={eager ? "eager" : "lazy"} onError={demoImageError}/>
   );
