@@ -186,6 +186,11 @@ for(const lang of langs)for(const screen of screens){
 
       await page.locator('.premium-booking-submit').click();
       await page.waitForURL(`**/${lang}/booking?*`,{timeout:8000});
+      // Route loading.tsx now deliberately shows a loading state until the
+      // booking UI is ready. A URL change is NOT proof hydration completed.
+      await page.locator('.opal-book-step.is-current').waitFor({
+        state:'visible',timeout:8000
+      });
       const homepageHandoff=new URL(page.url());
       interactions.booking=homepageHandoff.pathname===`/${lang}/booking`
         &&homepageHandoff.searchParams.has('checkin')
