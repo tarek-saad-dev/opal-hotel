@@ -102,3 +102,14 @@ Quality gate: GitHub Actions build/typecheck/tests + EN/AR desktop/tablet/mobile
 - Verified target behavior includes open/close/ESC, restored focus, menu navigation to an actual section, booking-preview link, no behind-menu scrolling, and full viewport geometry at 320/390/768 px.
 - Automated visual workflow now captures open-menu screenshots and explicitly checks portal position/geometry rather than merely checking the modal is visible.
 - Frontend-only; no production deployment or backend changes. User updates production VPS via the existing `ops/deploy-vps.sh` command after merge.
+
+## Rooms Experience V2 — 2026-11-18
+- Created fully navigable bilingual room **concept** routes: `/en/rooms`, `/ar/rooms` and per-design-story routes `/{locale}/rooms/{slug}`.
+- Three design stories are centralized in `src/lib/room-concepts.ts`; these are editorial mood boards **not confirmed hotel rooms**, and there is no capacity, pricing or availability claim.
+- Added room catalogue with premium visual cards, an immersive room-detail layout, thumbnail switching, keyboard-supported photo viewer, related concept navigation, language preservation on detail routes, and navigation back to the homepage.
+- Home page room cards now link to corresponding detail concept pages while keeping the existing image lightbox.
+- Room details are marked noindex and retain a clear disclaimer before booking UI integration.
+- The new `src/app/rooms-experience.css` stylesheet is responsive and RTL-aware.
+- Visual preview QA now visits the listing and details in both EN/AR at 1440/768/390/320px, checks URL navigation, gallery actions, lightbox focus, missing inventory guard and overflow, and exports screenshots.
+- Official room photographs, approved inventory names, occupancy, verified room-specific amenities, room IDs, rates, booking data integration and ownership approval remain prerequisites for any real room availability.
+- No backend or live booking changed; deploying a merged commit still requires the existing VPS deployment script.
