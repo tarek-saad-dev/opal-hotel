@@ -23,7 +23,7 @@ function PreviewPhoto({index,locale}:{index:number;locale:Locale}) {
     img.src="/media/photo-placeholder.svg";
   };
   // eslint-disable-next-line @next/next/no-img-element
-  return <img className="opal-book-photo" src={image.src}
+  return <img className="opal-book-photo" data-media-origin={image.origin} src={image.src}
     srcSet={responsivePhotoSrcSet(image.src)} sizes="(max-width: 700px) 100vw, 40vw"
     width={900} height={650} alt={photoAlt(index,locale)} loading="lazy" decoding="async" onError={fallback}/>;
 }
