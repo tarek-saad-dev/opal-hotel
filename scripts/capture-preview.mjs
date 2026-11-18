@@ -245,17 +245,77 @@ for(const lang of langs)for(const screen of screens){
     }catch(e){
       errors.push({type:'interaction',message:String(e.message).slice(0,320)});
     }
+    // Validate both new bilingual Rooms V2 routes with a browser, not just
+    // source assertions. These paths are concept previews, never inventory.
+    const roomsQA={collection:false,detail:false,thumbnails:false,lightbox:false,
+      language:false,navigation:false,previewOnly:false,noOverflow:false};
+    try{
+      await load(page,`${origin}/${lang}/rooms`);
+      await page.waitForTimeout(450);
+      roomsQA.collection=(await page.locator('.room-exp-catalogue-card').count())===3
+        &&(await page.locator('.room-exp-concept-badge').count())>=1;
+      const catalogueMetrics=await page.evaluate(()=>({
+        width:document.documentElement.scrollWidth,
+        viewport:innerWidth,
+      }));
+      roomsQA.noOverflow=catalogueMetrics.width<=screen.width+2;
+      await page.screenshot({path:path.join(dir,'rooms-collection.png'),
+        fullPage:true,animations:'disabled',timeout:60000});
+
+      await page.locator('.room-exp-card-visual').first().click();
+      await page.waitForURL(`**/${lang}/rooms/light-and-stillness`,{timeout:8000});
+      roomsQA.detail=(await page.locator('.room-exp-detail-heading h1').count())===1
+        &&(await page.locator('.room-exp-related-card').count())===2;
+      await page.screenshot({path:path.join(dir,'room-detail.png'),
+        fullPage:true,animations:'disabled',timeout:60000});
+      await page.locator('.room-exp-gallery-controls button').nth(1).click();
+      roomsQA.thumbnails=await page.locator('.room-exp-gallery-controls button').nth(1)
+        .getAttribute('aria-pressed')==='true';
+      const beforeZoom=await page.locator('.room-exp-gallery-counter').innerText();
+      roomsQA.thumbnails=roomsQA.thumbnails&&beforeZoom.includes('02');
+      await page.locator('.room-exp-gallery-open').click();
+      await page.locator('.room-exp-lightbox').waitFor({state:'visible',timeout:3000});
+      await page.keyboard.press('ArrowRight');
+      const zoomCounter=await page.locator('.room-exp-lightbox-image p').innerText();
+      await page.keyboard.press('Escape');
+      await page.locator('.room-exp-lightbox').waitFor({state:'detached',timeout:3000});
+      const zoomFocus=await page.locator('.room-exp-gallery-open')
+        .evaluate(el=>el===document.activeElement);
+      roomsQA.lightbox=zoomCounter.includes('3 / 3')&&zoomFocus;
+
+      const notice=await page.locator('.room-exp-truth-note').innerText();
+      roomsQA.previewOnly=lang==='ar'
+        ? notice.includes('نموذج UI')&&notice.includes('لا توجد أسعار')
+        : notice.includes('Design preview only')&&notice.includes('rates');
+      const detailMetrics=await page.evaluate(()=>({
+        width:document.documentElement.scrollWidth,viewport:innerWidth
+      }));
+      roomsQA.noOverflow=roomsQA.noOverflow&&detailMetrics.width<=screen.width+2;
+
+      const targetLang=lang==='en'?'ar':'en';
+      roomsQA.language=(await page.locator('.room-exp-language').getAttribute('href'))
+        ===`/${targetLang}/rooms/light-and-stillness`;
+      await page.locator('.room-exp-related-card').first().click();
+      await page.waitForURL(`**/${lang}/rooms/quiet-comforts`,{timeout:8000});
+      roomsQA.navigation=(await page.locator('.room-exp-detail-heading h1').count())===1;
+      await page.locator('.room-exp-breadcrumb a').nth(1).click();
+      await page.waitForURL(`**/${lang}/rooms`,{timeout:8000});
+      roomsQA.navigation=roomsQA.navigation
+        &&(await page.locator('.room-exp-catalogue-card').count())===3;
+    }catch(err){
+      errors.push({type:'rooms-v2',message:String(err.message).slice(0,320)});
+    }
     const validHeadings=audit.headings.some(h=>/opal legacy/i.test(h||''));
     const validAnchors=Object.values(audit.anchors).every(Boolean);
     const overflow=audit.document.width > screen.width+2;
     const passed=validHeadings&&validAnchors&&!overflow&&errors.length===0
-      &&Object.values(interactions).every(Boolean)
+      &&Object.values(interactions).every(Boolean)&&Object.values(roomsQA).every(Boolean)
       &&audit.images.filter(i=>i.visible).every(i=>i.naturalWidth>0);
     if(!passed)failures++;
     const result={lang,screen:screen.id,passed,validHeadings,validAnchors,overflow,interactions,
       failedImages:audit.images.filter(i=>i.visible&&!i.naturalWidth).length,
       placeholderImages:audit.images.filter(i=>i.visible&&i.placeholder).length,
-      totalImages:audit.images.length,errors};
+      totalImages:audit.images.length,roomsQA,errors};
     records.push(result);
     console.log(JSON.stringify(result));
   }catch(err){
