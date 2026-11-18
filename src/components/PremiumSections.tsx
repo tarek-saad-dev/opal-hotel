@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { ReactNode, SyntheticEvent } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
 import { galleryImages, responsivePhotoSrcSet } from "@/lib/gallery";
+import { roomConcepts } from "@/lib/room-concepts";
 
 type SharedProps = { locale: Locale; content: HotelContent };
 type StoryProps = SharedProps & { onOpenPhoto: (index: number) => void };
@@ -180,6 +182,7 @@ export function PremiumRooms({ locale, content: c, onOpenPhoto, attemptedBooking
     ],
     view:"عرض الصور", warning:"تصور مبدئي للغرف — ليس عرض حجز أو قائمة غرف فعلية",
     plan:"حالتك الحالية", noDates:"اختار تواريخ الإقامة من الأعلى لمعاينة تجربة الحجز.",
+    details:"استكشف التفاصيل", allConcepts:"شوف كل التصورات",
   } : {
     kicker:"THE ART OF REST", title:"Rooms to slow down.", italic:"Moments to stay.",
     note:"An editorial preview of how the room experience could look. Photography and concepts are illustrative, not confirmed hotel inventory.",
@@ -190,6 +193,7 @@ export function PremiumRooms({ locale, content: c, onOpenPhoto, attemptedBooking
     ],
     view:"EXPLORE IMAGES", warning:"Concept room imagery only · Not actual room types or bookable inventory",
     plan:"YOUR STAY PREVIEW", noDates:"Select your dates above to preview the booking journey.",
+    details:"EXPLORE THE CONCEPT", allConcepts:"VIEW ALL ROOM STORIES",
   };
   return <div className="opal-rooms-wrap">
     <Header number="04" kicker={t.kicker} title={t.title} italic={t.italic} note={t.note}/>
@@ -202,11 +206,18 @@ export function PremiumRooms({ locale, content: c, onOpenPhoto, attemptedBooking
           <span className="opal-room-image-badge">{story.label}</span>
         </button>
         <div className="opal-room-card-footer">
-          <div><h3>{story.name}</h3><p>{story.text}</p></div>
+          <div><h3>{story.name}</h3><p>{story.text}</p>
+            <Link className="opal-room-details-link" href={`/${locale}/rooms/${roomConcepts[i].slug}`}>
+              {t.details}<span aria-hidden="true">↗</span>
+            </Link>
+          </div>
           <button className="opal-room-view" type="button" onClick={() => onOpenPhoto(roomPhotos[i])} aria-label={`${t.view}: ${story.name}`}>↗</button>
         </div>
       </article>)}
     </div>
+    <Link className="opal-rooms-collection-link" href={`/${locale}/rooms`}>
+      {t.allConcepts}<span aria-hidden="true">↗</span>
+    </Link>
     <div className="opal-rooms-action">
       <p className="opal-rooms-disclaimer">{t.warning}</p>
       <div className="opal-rooms-availability" role="status" aria-live="polite">
