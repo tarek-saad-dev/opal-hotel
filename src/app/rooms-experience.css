@@ -277,26 +277,3 @@
   .room-exp-page *,.room-exp-header *,.room-exp-footer *{transition:none!important;animation:none!important}
 }
 
-/* Homepage room cards now have clear second-level exploration affordances. */
-.opal-room-details-link{
-  display:inline-flex;align-items:center;gap:17px;
-  margin-top:17px;padding-bottom:8px;border-bottom:1px solid #b4a083;
-  color:#2c5340;font-size:11px;letter-spacing:.035em;font-weight:700;
-  transition:gap .2s ease;
-}
-.opal-room-details-link span{font-size:18px;line-height:1}
-.opal-room-details-link:hover{gap:22px}
-.opal-rooms-collection-link{
-  display:flex;align-items:center;justify-content:space-between;gap:25px;
-  width:max-content;max-width:100%;margin-top:39px;
-  padding:12px 17px;background:#294838;color:#f5f2e7;
-  border:1px solid #294838;font-size:12px;font-weight:700;letter-spacing:.06em;
-  transition:background .2s ease;
-}
-.opal-rooms-collection-link span{font-size:20px;font-weight:400}
-.opal-rooms-collection-link:hover{background:#1b3628;color:#fff}
-[dir="rtl"] .opal-room-details-link,[dir="rtl"] .opal-rooms-collection-link{letter-spacing:0}
-@media(max-width:600px){
-  .opal-room-details-link{margin-top:12px}
-  .opal-rooms-collection-link{width:100%;margin-top:33px}
-}
