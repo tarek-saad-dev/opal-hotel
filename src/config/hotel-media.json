@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "mode": "preview",
+  "approval": {
+    "approvedBy": null,
+    "approvedOn": null,
+    "licenseEvidence": null,
+    "contentVerified": false
+  },
+  "logo": {
+    "src": null,
+    "rightsConfirmed": false
+  },
+  "photos": {
+    "exterior": {
+      "src": null,
+      "altEn": null,
+      "altAr": null,
+      "rightsConfirmed": false
+    },
+    "garden": {
+      "src": null,
+      "altEn": null,
+      "altAr": null,
+      "rightsConfirmed": false
+    },
+    "roomMain": {
+      "src": null,
+      "altEn": null,
+      "altAr": null,
+      "rightsConfirmed": false
+    },
+    "roomSecondary": {
+      "src": null,
+      "altEn": null,
+      "altAr": null,
+      "rightsConfirmed": false
+    },
+    "architecture": {
+      "src": null,
+      "altEn": null,
+      "altAr": null,
+      "rightsConfirmed": false
+    },
+    "roomDetail": {
+      "src": null,
+      "altEn": null,
+      "altAr": null,
+      "rightsConfirmed": false
+    }
+  }
+}
