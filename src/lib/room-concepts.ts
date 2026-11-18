@@ -1,4 +1,5 @@
 import type { Locale } from "@/lib/hotel-content";
+import { officialMediaActive } from "@/lib/gallery";
 
 /**
  * Design-only mood stories. These are NOT actual named or bookable room types
@@ -63,8 +64,8 @@ export const roomConcepts: readonly RoomConcept[] = [
       ar: "تصور لصباحات على مهل وإيقاع أهدى.",
     },
     story: {
-      en: "A study of morning light, generous breathing room and simple rituals. Imagery is illustrative and may not represent any space at Opal Legacy.",
-      ar: "فكرة بصرية عن نور الصباح ومساحات تنفّس وعادات يومية بسيطة. الصور توضيحية ومش بالضرورة بتمثل أي غرفة في أوبال ليجاسي.",
+      en: "A study of morning light, generous breathing room and simple rituals. This mood story is not a confirmed room category.",
+      ar: "فكرة بصرية عن نور الصباح ومساحات تنفّس وعادات يومية بسيطة. التصور ده مش نوع غرفة مؤكّد أو متاح للحجز.",
     },
     highlights: {
       en: ["A softer start", "Calm composition", "Natural visual warmth"],
@@ -77,7 +78,8 @@ export const roomConcepts: readonly RoomConcept[] = [
 export const getRoomConcept = (slug: string): RoomConcept | undefined =>
   roomConcepts.find(room => room.slug === slug);
 
-export const roomUI = (locale: Locale) => locale === "ar" ? {
+export const roomUI = (locale: Locale) => {
+  const copy = locale === "ar" ? {
   collection: "تصورات الغرف",
   preface: "استكشف أسلوب التصميم",
   headline: "كل مساحة", italic: "ليها حكاية.",
@@ -125,4 +127,15 @@ export const roomUI = (locale: Locale) => locale === "ar" ? {
   back: "Back to room concepts",
   other: "Explore another story",
   skip: "Skip to content",
+};
+  if (!officialMediaActive) return copy;
+  return {
+    ...copy,
+    introduction: locale==="ar"
+      ? "صور الفندق معتمدة، لكن أسماء تصورات الغرف والحكايات دي للعرض البصري فقط وليست أنواع غرف مؤكدة أو متاحة للحجز."
+      : "The photography is hotel-approved. The room mood stories and names are design concepts, not verified or bookable inventory.",
+    notice: locale==="ar"
+      ? "صور الفندق الرسمية معتمدة، لكن السعة والمرافق وأنواع الغرف والأسعار والإتاحة تحتاج اعتمادًا منفصلًا."
+      : "Approved property photography. Room categories, capacity, amenities, rates and availability remain unverified.",
+  };
 };

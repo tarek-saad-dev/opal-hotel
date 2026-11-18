@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
-import { hotelBrand } from "@/lib/gallery";
+import { hotelBrand, officialMediaActive } from "@/lib/gallery";
 
 type Props = { locale: Locale; content: HotelContent };
 const mapUrl = "https://www.google.com/maps/search/?api=1&query=Opal+Legacy+Luxor+Hotel";
@@ -208,7 +208,7 @@ export function PremiumFooter({locale,content:c}:Props) {
     title:"الحكايات الجميلة", accent:"بتبدأ من هنا.",
     pre:"فندق أوبال ليجاسي", discover:"اكتشف", connect:"روابط سريعة",
     next:"مستعد تكتشف أكثر؟", map:"شوف الموقع", language:"English",
-    demo:"نسخة العرض — الصور التوضيحية لا تمثل الفندق، والحجز والتواصل غير مفعلين.",
+    demo:officialMediaActive ? "صور الفندق معتمدة؛ الحجز والتواصل الإلكتروني غير مفعلين بعد." : "نسخة العرض — الصور التوضيحية لا تمثل الفندق، والحجز والتواصل غير مفعلين.",
     credits:"صُمم بهدوء ليبقى في الذاكرة",
   } : {
     top:"BACK TO THE TOP",
@@ -216,7 +216,7 @@ export function PremiumFooter({locale,content:c}:Props) {
     title:"Beautiful stories", accent:"begin here.",
     pre:"Opal Legacy Hotel", discover:"EXPLORE", connect:"DISCOVER",
     next:"READY FOR YOUR NEXT STORY?", map:"FIND US ON THE MAP", language:"العربية",
-    demo:"Design preview. Imagery is illustrative; bookings and contact delivery are not enabled.",
+    demo:officialMediaActive ? "Approved hotel imagery. Booking and online contact remain disabled." : "Design preview. Imagery is illustrative; bookings and contact delivery are not enabled.",
     credits:"CONSIDERED DETAILS. LASTING FEELINGS.",
   };
   const explore=(["overview","facilities","rooms","gallery"] as const);

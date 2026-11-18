@@ -8,6 +8,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const origin = process.env.OPAL_PREVIEW_URL || 'http://127.0.0.1:3000';
+const mediaConfig=JSON.parse(await fs.readFile('src/config/hotel-media.json','utf8'));
+const expectedPhotoOrigin=mediaConfig.mode==='official'?'hotel-approved':'design-demo';
 const out = path.resolve('artifacts/frontend-preview');
 const screens = [
   {id:'desktop-1440',width:1440,height:900,isMobile:false},
@@ -66,6 +68,8 @@ for(const lang of langs)for(const screen of screens){
       const images=Array.from(document.images).map(i=>({
         src:i.currentSrc,srcSet:!!i.getAttribute('srcset'),complete:i.complete,naturalWidth:i.naturalWidth,
         placeholder:i.dataset.placeholder==='true',
+        origin:i.dataset.mediaOrigin||null,
+        alt:i.alt,
         visible:i.getClientRects().length>0 && getComputedStyle(i).visibility!=='hidden'
       }));
       const headings=Array.from(document.querySelectorAll('h1,h2')).map(n=>n.textContent?.trim());
@@ -422,7 +426,17 @@ for(const lang of langs)for(const screen of screens){
     const validHeadings=audit.headings.some(h=>/opal legacy/i.test(h||''));
     const validAnchors=Object.values(audit.anchors).every(Boolean);
     const overflow=audit.document.width > screen.width+2;
+    const provenancePhotos=audit.images.filter(i=>i.origin!==null);
+    const mediaQA={
+      sameOrigin:provenancePhotos.length>=5
+        &&provenancePhotos.every(i=>i.origin===expectedPhotoOrigin),
+      localizedHero:lang==='ar'
+        ? audit.images.some(i=>i.origin===expectedPhotoOrigin
+            &&[...i.alt].some(char=>char.charCodeAt(0)>=0x600&&char.charCodeAt(0)<=0x6ff))
+        : audit.images.some(i=>i.origin===expectedPhotoOrigin&&i.alt.length>10),
+    };
     const passed=validHeadings&&validAnchors&&!overflow&&errors.length===0
+      &&Object.values(mediaQA).every(Boolean)
       &&audit.lang===lang&&audit.dir===(lang==='ar'?'rtl':'ltr')
       &&Object.values(interactions).every(Boolean)&&Object.values(roomsQA).every(Boolean)
       &&Object.values(bookingQA).every(Boolean)&&Object.values(routeQA).every(Boolean)
@@ -431,7 +445,7 @@ for(const lang of langs)for(const screen of screens){
     const result={lang,screen:screen.id,passed,validHeadings,validAnchors,overflow,interactions,
       failedImages:audit.images.filter(i=>i.visible&&!i.naturalWidth).length,
       placeholderImages:audit.images.filter(i=>i.visible&&i.placeholder).length,
-      totalImages:audit.images.length,roomsQA,bookingQA,routeQA,errors};
+      totalImages:audit.images.length,roomsQA,bookingQA,routeQA,mediaQA,errors};
     records.push(result);
     console.log(JSON.stringify(result));
   }catch(err){

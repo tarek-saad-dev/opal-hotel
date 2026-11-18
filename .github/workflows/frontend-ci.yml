@@ -29,6 +29,8 @@ jobs:
         run: node --check docs/reference-lock/capture/opal-capture.mjs
       - name: VPS deploy shell syntax
         run: bash -n ops/deploy-vps.sh
+      - name: Official media integrity (preview-safe)
+        run: npm run media:check
       - name: TypeScript
         run: npm run typecheck
       - name: Build

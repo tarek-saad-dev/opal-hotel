@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, SVGProps, MouseEvent as ReactMouseEvent } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
-import { heroScenes, hotelBrand, responsivePhotoSrcSet } from "@/lib/gallery";
+import { heroScenes, hotelBrand, officialMediaActive, responsivePhotoSrcSet } from "@/lib/gallery";
 
 type Props = {
   locale: Locale;
@@ -238,7 +238,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
     discover: "اكتشف المكان", photos: "استعرض الصور", scroll: "اكتشف المزيد", aesthetic: "تفاصيل تصنع الفرق",
     reserve: "خطط لإقامتك", nights: "إقامة لا تُنسى تبدأ هنا", guests: "الضيوف",
     guestPlural: "ضيف", adult: "البالغون", child: "الأطفال", plan: "استعرض الإقامة",
-    preview: "عرض تصميمي — الصور توضيحية لحين اعتماد صور الفندق",
+    preview: officialMediaActive ? "صور الفندق معتمدة · الحجز الإلكتروني لا يزال في مرحلة المعاينة" : "عرض تصميمي — الصور توضيحية لحين اعتماد صور الفندق",
     menuTitle: "اكتشف أوبال", helper: "تواريخك للعرض فقط؛ الحجز الفعلي غير مفعل بعد.",
     guestsHint: "عدد الضيوف", rooms: "تعرف على الغرف",
   } : {
@@ -248,7 +248,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
     discover: "Discover our story", photos: "Explore the gallery", scroll: "SCROLL TO EXPLORE", aesthetic: "THE ART OF FEELING AT HOME",
     reserve: "Plan your stay", nights: "YOUR LUXOR STORY STARTS HERE", guests: "Guests",
     guestPlural: "guests", adult: "Adults", child: "Children", plan: "Explore your stay",
-    preview: "Design preview · illustrative photography until hotel assets are approved",
+    preview: officialMediaActive ? "Approved hotel photography · booking is still a design preview" : "Design preview · illustrative photography until hotel assets are approved",
     menuTitle: "Explore Opal", helper: "Dates are for preview only. Live reservations are not yet enabled.",
     guestsHint: "Your party", rooms: "Explore the rooms",
   };
@@ -330,10 +330,10 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
       <section className="premium-hero" aria-labelledby="hotel-name">
         <div className="premium-hero-visual">
           {!imageFailed
-            ? <img key={slide} className="premium-hero-photo" src={heroScenes[slide].src}
+            ? <img key={slide} className="premium-hero-photo" data-media-origin={officialMediaActive?"hotel-approved":"design-demo"} src={heroScenes[slide].src}
               srcSet={responsivePhotoSrcSet(heroScenes[slide].src)} sizes="100vw"
               width={1920} height={1080} loading="eager" decoding="async" fetchPriority={slide===0?"high":"auto"}
-              alt={heroScenes[slide].alt} onError={() => setImageFailed(true)} />
+              alt={ar ? heroScenes[slide].altAr : heroScenes[slide].alt} onError={() => setImageFailed(true)} />
             : <div className="premium-hero-fallback" role="img" aria-label="Decorative boutique architecture illustration">
                 <span className="arch arch-one"/><span className="arch arch-two"/><span className="arch arch-three"/>
               </div>}

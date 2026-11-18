@@ -4,13 +4,13 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, SyntheticEvent } from "react";
 import type { Locale } from "@/lib/hotel-content";
-import { galleryImages, hotelBrand, responsivePhotoSrcSet } from "@/lib/gallery";
+import { galleryImages, hotelBrand, officialMediaActive, photoAlt, responsivePhotoSrcSet } from "@/lib/gallery";
 import { type RoomConcept, roomConcepts, roomUI } from "@/lib/room-concepts";
 
 type ShellProps = { locale: Locale };
 
-function ConceptPhoto({ index, eager = false, sizes = "(max-width: 700px) 100vw, 50vw" }: {
-  index: number; eager?: boolean; sizes?: string;
+function ConceptPhoto({ index, locale, eager = false, sizes = "(max-width: 700px) 100vw, 50vw" }: {
+  index: number; locale: Locale; eager?: boolean; sizes?: string;
 }) {
   const photo = galleryImages[index];
   const handleFail = (event:SyntheticEvent<HTMLImageElement>) => {
@@ -22,8 +22,8 @@ function ConceptPhoto({ index, eager = false, sizes = "(max-width: 700px) 100vw,
   };
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img className="room-exp-image" src={photo.src} srcSet={responsivePhotoSrcSet(photo.src)}
-      sizes={sizes} width={1400} height={1050} alt={photo.alt}
+    <img className="room-exp-image" data-media-origin={photo.origin} src={photo.src} srcSet={responsivePhotoSrcSet(photo.src)}
+      sizes={sizes} width={1400} height={1050} alt={photoAlt(index,locale)}
       decoding="async" loading={eager?"eager":"lazy"}
       fetchPriority={eager?"high":"auto"} onError={handleFail}/>
   );
@@ -87,7 +87,7 @@ export function RoomCollection({locale}:ShellProps) {
             <Link className="room-exp-back-link" href={`/${locale}`}>{t.backHome} <span aria-hidden="true">↗</span></Link>
           </div>
         </div>
-        <div className="room-exp-hero-media"><ConceptPhoto index={2} eager sizes="(max-width: 700px) 100vw, 48vw"/>
+        <div className="room-exp-hero-media"><ConceptPhoto locale={locale} index={2} eager sizes="(max-width: 700px) 100vw, 48vw"/>
           <span className="room-exp-photo-number">01 / 03</span>
         </div>
       </section>
@@ -98,7 +98,7 @@ export function RoomCollection({locale}:ShellProps) {
         <div className="room-exp-catalogue-grid">
           {roomConcepts.map((concept,i)=><article className="room-exp-catalogue-card" key={concept.slug}>
             <Link href={`/${locale}/rooms/${concept.slug}`} className="room-exp-card-visual" aria-label={`${t.explore}: ${concept.name[locale]}`}>
-              <ConceptPhoto index={concept.imageIndices[0]}/>
+              <ConceptPhoto locale={locale} index={concept.imageIndices[0]}/>
               <span className="room-exp-card-pill">{concept.label[locale]}</span>
               <span className="room-exp-card-arrow" aria-hidden="true">↗</span>
             </Link>
@@ -115,7 +115,7 @@ export function RoomCollection({locale}:ShellProps) {
       </section>
       <div className="room-exp-truth-note" role="note">
         <span className="room-exp-note-index">✳</span>
-        <div><h2>{t.noteHeading}</h2><p>{t.notice}</p></div>
+        <div><h2>{t.noteHeading}</h2><p>{officialMediaActive ? (locale==="ar"?"الصور معتمدة للفندق، لكن أسماء تصورات الغرف والإتاحة ليست غرفًا مؤكدة أو قابلة للحجز.":"Photos are hotel-approved; room concepts are not verified inventory or bookable room types.") : t.notice}</p></div>
         <Link href={`/${locale}/booking`} className="room-exp-secondary-cta">{t.book} <span aria-hidden="true">↗</span></Link>
       </div>
     </main>
@@ -168,7 +168,7 @@ function RoomPhotoExplorer({concept,locale}:{concept:RoomConcept;locale:Locale})
     <div className="room-exp-gallery-main">
       <button className="room-exp-gallery-open" type="button" ref={opener}
         onClick={()=>setZoom(true)} aria-label={t.image+" "+(selected+1)+" "+t.of+" "+total}>
-        <ConceptPhoto index={concept.imageIndices[selected]} eager sizes="(max-width: 800px) 100vw, 60vw"/>
+        <ConceptPhoto locale={locale} index={concept.imageIndices[selected]} eager sizes="(max-width: 800px) 100vw, 60vw"/>
         <span className="room-exp-gallery-zoom" aria-hidden="true">↗</span>
       </button>
       <div className="room-exp-gallery-counter" dir="ltr" aria-live="polite">{String(selected+1).padStart(2,"0")} / {String(total).padStart(2,"0")}</div>
@@ -179,7 +179,7 @@ function RoomPhotoExplorer({concept,locale}:{concept:RoomConcept;locale:Locale})
         {concept.imageIndices.map((image,index)=><button type="button" key={index}
           id={`room-thumb-${concept.slug}-${index}`} aria-label={`${t.image} ${index+1}`}
           aria-pressed={selected===index} className={selected===index?"is-selected":""}
-          onClick={()=>setSelected(index)}><ConceptPhoto index={image}/></button>)}
+          onClick={()=>setSelected(index)}><ConceptPhoto locale={locale} index={image}/></button>)}
       </div>
       <div className="room-exp-gallery-arrows">
         <button type="button" onClick={()=>move(-1)} aria-label={t.previous}>‹</button>
@@ -190,7 +190,7 @@ function RoomPhotoExplorer({concept,locale}:{concept:RoomConcept;locale:Locale})
       <button type="button" className="room-exp-lightbox-close" ref={closeRef}
         aria-label={locale==="ar"?"إغلاق الصورة":"Close image"} onClick={()=>setZoom(false)}>×</button>
       <button type="button" className="room-exp-lightbox-prev" aria-label={t.previous} onClick={()=>move(-1)}>‹</button>
-      <div className="room-exp-lightbox-image"><ConceptPhoto index={concept.imageIndices[selected]} eager sizes="100vw"/>
+      <div className="room-exp-lightbox-image"><ConceptPhoto locale={locale} index={concept.imageIndices[selected]} eager sizes="100vw"/>
         <p dir="ltr" aria-live="polite">{selected+1} / {total}</p></div>
       <button type="button" className="room-exp-lightbox-next" aria-label={t.next} onClick={()=>move(1)}>›</button>
     </div>}
@@ -230,14 +230,14 @@ export function RoomDetail({locale,concept}:{locale:Locale;concept:RoomConcept})
       </section>
       <section className="room-exp-truth-note" role="note" aria-label={t.noteHeading}>
         <span className="room-exp-note-index">✳</span>
-        <div><h2>{t.noteHeading}</h2><p>{t.notice}</p><p>{t.bookNote}</p></div>
+        <div><h2>{t.noteHeading}</h2><p>{officialMediaActive ? (locale==="ar"?"هذه صور الفندق المعتمدة؛ تفاصيل الغرف وسعاتها والإتاحة تحتاج اعتمادًا منفصلًا.":"These are hotel-approved photos; room types, occupancy and availability are not confirmed.") : t.notice}</p><p>{t.bookNote}</p></div>
         <Link href={`/${locale}/booking?room=${concept.slug}`} className="room-exp-secondary-cta">{t.book}<span aria-hidden="true">↗</span></Link>
       </section>
       <section className="room-exp-related">
         <div className="room-exp-related-heading"><h2>{t.other}</h2><Link href={`/${locale}/rooms`}>{t.all} <span aria-hidden="true">↗</span></Link></div>
         <div className="room-exp-related-grid">
           {others.map(room=><Link href={`/${locale}/rooms/${room.slug}`} className="room-exp-related-card" key={room.slug}>
-            <div><ConceptPhoto index={room.imageIndices[0]}/></div>
+            <div><ConceptPhoto locale={locale} index={room.imageIndices[0]}/></div>
             <span>{room.label[locale]}</span>
             <strong>{room.name[locale]}</strong>
             <span className="room-exp-related-arrow" aria-hidden="true">↗</span>
