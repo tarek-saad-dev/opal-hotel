@@ -29,7 +29,7 @@ function ConceptPhoto({ index, eager = false, sizes = "(max-width: 700px) 100vw,
   );
 }
 
-function RoomHeader({locale}:ShellProps) {
+function RoomHeader({locale,slug}:{locale:Locale;slug?:string}) {
   const t=roomUI(locale);
   return <header className="room-exp-header">
     <div className="room-exp-header-inner">
@@ -42,7 +42,7 @@ function RoomHeader({locale}:ShellProps) {
       <nav className="room-exp-header-nav" aria-label={t.collection}>
         <Link href={`/${locale}/rooms`}>{t.all}</Link>
         <Link href={`/${locale}#booking`} className="room-exp-header-cta">{t.book}<span aria-hidden="true">↗</span></Link>
-        <Link href={locale==="ar"?"/en/rooms":"/ar/rooms"} lang={locale==="ar"?"en":"ar"} hrefLang={locale==="ar"?"en":"ar"}
+        <Link href={`/${locale==="ar"?"en":"ar"}/rooms${slug?"/"+slug:""}`} lang={locale==="ar"?"en":"ar"} hrefLang={locale==="ar"?"en":"ar"}
           className="room-exp-language">{t.language}</Link>
       </nav>
     </div>
@@ -202,7 +202,7 @@ export function RoomDetail({locale,concept}:{locale:Locale;concept:RoomConcept})
   const others=roomConcepts.filter(item=>item.slug!==concept.slug);
   return <>
     <a href="#room-main" className="opal-skip-link">{t.skip}</a>
-    <RoomHeader locale={locale}/>
+    <RoomHeader locale={locale} slug={concept.slug}/>
     <main className="room-exp-page room-exp-detail" id="room-main">
       <nav className="room-exp-breadcrumb" aria-label={locale==="ar"?"مسار التنقل":"Breadcrumb"}>
         <Link href={`/${locale}`}>{t.brand}</Link><span aria-hidden="true">/</span>
