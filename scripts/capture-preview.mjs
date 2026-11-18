@@ -248,12 +248,21 @@ for(const lang of langs)for(const screen of screens){
     // Validate both new bilingual Rooms V2 routes with a browser, not just
     // source assertions. These paths are concept previews, never inventory.
     const roomsQA={collection:false,detail:false,thumbnails:false,lightbox:false,
-      language:false,navigation:false,previewOnly:false,noOverflow:false};
+      language:false,navigation:false,previewOnly:false,noOverflow:false,
+      imagesReady:false};
     try{
       await load(page,`${origin}/${lang}/rooms`);
       await page.waitForTimeout(450);
       roomsQA.collection=(await page.locator('.room-exp-catalogue-card').count())===3
         &&(await page.locator('.room-exp-concept-badge').count())>=1;
+      // Eagerly load the gallery/catalgoue images for screenshot fidelity.
+      // When the user navigates quickly, remote images may still be loading
+      // even though the route itself has rendered.
+      await page.evaluate(()=>document.querySelectorAll('.room-exp-page img').forEach(img=>{
+        img.loading='eager';
+      }));
+      await page.waitForFunction(()=>[...document.querySelectorAll('.room-exp-page img')]
+        .every(img=>img.complete&&img.naturalWidth>0),null,{timeout:15000});
       const catalogueMetrics=await page.evaluate(()=>({
         width:document.documentElement.scrollWidth,
         viewport:innerWidth,
@@ -266,6 +275,13 @@ for(const lang of langs)for(const screen of screens){
       await page.waitForURL(`**/${lang}/rooms/light-and-stillness`,{timeout:8000});
       roomsQA.detail=(await page.locator('.room-exp-detail-heading h1').count())===1
         &&(await page.locator('.room-exp-related-card').count())===2;
+      await page.evaluate(()=>document.querySelectorAll('.room-exp-page img').forEach(img=>{
+        img.loading='eager';
+      }));
+      await page.waitForFunction(()=>[...document.querySelectorAll('.room-exp-page img')]
+        .every(img=>img.complete&&img.naturalWidth>0),null,{timeout:15000});
+      roomsQA.imagesReady=await page.locator('.room-exp-gallery-open img')
+        .evaluate(img=>img.complete&&img.naturalWidth>0);
       await page.screenshot({path:path.join(dir,'room-detail.png'),
         fullPage:true,animations:'disabled',timeout:60000});
       await page.locator('.room-exp-gallery-controls button').nth(1).click();
