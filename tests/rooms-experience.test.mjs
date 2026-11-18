@@ -15,7 +15,7 @@ test("Room concept catalogue and details exist as real bilingual routes",()=>{
 
 test("Concept manifest is deliberately illustrative and never claims real inventory",()=>{
   const src=read("src/lib/room-concepts.ts");
-  assert.ok(src.includes("design-only"));
+  assert.ok(src.includes("Design-only"));
   assert.ok(src.includes("roomConcepts"));
   assert.ok(src.includes('slug: "light-and-stillness"'));
   assert.ok(src.includes('slug: "quiet-comforts"'));
