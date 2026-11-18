@@ -22,7 +22,7 @@ function ConceptPhoto({ index, locale, eager = false, sizes = "(max-width: 700px
   };
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img className="room-exp-image" src={photo.src} srcSet={responsivePhotoSrcSet(photo.src)}
+    <img className="room-exp-image" data-media-origin={photo.origin} src={photo.src} srcSet={responsivePhotoSrcSet(photo.src)}
       sizes={sizes} width={1400} height={1050} alt={photoAlt(index,locale)}
       decoding="async" loading={eager?"eager":"lazy"}
       fetchPriority={eager?"high":"auto"} onError={handleFail}/>
