@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import type { KeyboardEvent, SyntheticEvent } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, SyntheticEvent } from "react";
 import type { Locale } from "@/lib/hotel-content";
 import { galleryImages, hotelBrand, responsivePhotoSrcSet } from "@/lib/gallery";
 import { type RoomConcept, roomConcepts, roomUI } from "@/lib/room-concepts";
@@ -137,7 +137,7 @@ function RoomPhotoExplorer({concept,locale}:{concept:RoomConcept;locale:Locale})
     const previous=document.body.style.overflow;
     document.body.style.overflow="hidden";
     closeRef.current?.focus({preventScroll:true});
-    const onKey=(e:globalThis.KeyboardEvent)=>{
+    const onKey=(e:KeyboardEvent)=>{
       if(e.key==="Escape"){e.preventDefault();setZoom(false);}
       else if(e.key==="ArrowRight"){e.preventDefault();move(1);}
       else if(e.key==="ArrowLeft"){e.preventDefault();move(-1);}
@@ -156,7 +156,7 @@ function RoomPhotoExplorer({concept,locale}:{concept:RoomConcept;locale:Locale})
     };
   },[zoom,total]);
 
-  const onGalleryKey=(event:KeyboardEvent<HTMLDivElement>)=>{
+  const onGalleryKey=(event:ReactKeyboardEvent<HTMLDivElement>)=>{
     if(event.key!=="ArrowLeft"&&event.key!=="ArrowRight")return;
     event.preventDefault();
     const next=(selected+(event.key==="ArrowRight"?1:-1)+total)%total;
