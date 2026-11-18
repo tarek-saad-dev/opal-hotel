@@ -113,3 +113,15 @@ Quality gate: GitHub Actions build/typecheck/tests + EN/AR desktop/tablet/mobile
 - Visual preview QA now visits the listing and details in both EN/AR at 1440/768/390/320px, checks URL navigation, gallery actions, lightbox focus, missing inventory guard and overflow, and exports screenshots.
 - Official room photographs, approved inventory names, occupancy, verified room-specific amenities, room IDs, rates, booking data integration and ownership approval remain prerequisites for any real room availability.
 - No backend or live booking changed; deploying a merged commit still requires the existing VPS deployment script.
+
+## Booking UI V2 — 2026-11-18
+- Added a branded, fully responsive bilingual **3-stage design-preview booking journey** at `/{locale}/booking`, with all states client-side and no real reservation API.
+- Stage 1 collects only preview check-in/check-out dates and adult/child counts. Dates are validated client-side and the selected values flow from the homepage through safe, non-personal query parameters.
+- Stage 2 lets users choose one of three clearly **illustrative concept stories**, never actual room inventory. Concept detail pages may pass their slug into the preview, but no price, room capacity or real availability is shown.
+- Stage 3 is an honest summary of the preview with editing paths. **No booking confirmation, reference number, payment, guest PII or form submission** occurs. There is no real booking CTA until an approved backend is connected.
+- Refined an editorial split-layout on desktop and accessible stacked mobile experience; RTL Arabic, EN, responsive 320/390/768/1440px, reduced-motion and keyboard/focus interactions.
+- New route is `noindex`. Home booking form now navigates into preview preserving selected check-in/check-out and guest counts; room pages link to preview as well.
+- Added `src/lib/booking-preview.ts` for bounded/sanitized query parameters, robust date math and bilingual labels.
+- Browser QA covers homepage handoff, stage progression, guest counter, room selection, review, edit/back action, non-booking disclosure, no overflow, and real screenshots for each stage on 8 locale/device combinations.
+- Go-live gates: hotel-owned room photos, actual inventory and capacity, approved pricing and conditions, availability source, booking API, customer data consent/security, and payment/confirmation flows after separate approval. None are claimed in this phase.
+- No automatic VPS deployment. Merge only after CI + browser QA; user runs the existing VPS deploy script when ready.

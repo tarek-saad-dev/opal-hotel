@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { SyntheticEvent } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
 import { galleryImages, responsivePhotoSrcSet } from "@/lib/gallery";
@@ -18,6 +19,7 @@ function handleImageError(event:SyntheticEvent<HTMLImageElement>) {
   img.src="/media/photo-placeholder.svg";
 }
 export function HotelExperience({locale,content:c}:Props) {
+  const router=useRouter();
   const [photo,setPhoto]=useState<number|null>(null);
   const [checkin,setCheckin]=useState("");
   const [checkout,setCheckout]=useState("");
@@ -104,11 +106,14 @@ export function HotelExperience({locale,content:c}:Props) {
     <>
       <PremiumMasthead locale={locale} content={c}
         onOpenGallery={() => openPhoto(0)}
-        onAvailability={({checkin,checkout}) => {
+        onAvailability={({checkin,checkout,adults,children}) => {
           setCheckin(checkin);
           setCheckout(checkout);
           setAttemptedBooking(true);
-          document.getElementById("rooms")?.scrollIntoView({behavior:"smooth"});
+          const params=new URLSearchParams({
+            checkin, checkout, adults:String(adults), children:String(children),
+          });
+          router.push(`/${locale}/booking?${params.toString()}`);
         }}
       />
       <main>

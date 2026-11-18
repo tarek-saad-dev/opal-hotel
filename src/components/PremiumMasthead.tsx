@@ -10,7 +10,7 @@ import { heroScenes, hotelBrand, responsivePhotoSrcSet } from "@/lib/gallery";
 type Props = {
   locale: Locale;
   content: HotelContent;
-  onAvailability: (range: { checkin: string; checkout: string; guests: number }) => void;
+  onAvailability: (range: { checkin: string; checkout: string; guests: number; adults: number; children: number }) => void;
   onOpenGallery: () => void;
 };
 
@@ -228,7 +228,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
     }
     setError("");
     setGuestsOpen(false);
-    onAvailability({ checkin, checkout, guests: adults + children });
+    onAvailability({ checkin, checkout, guests: adults + children, adults, children });
   }
 
   const t = ar ? {
