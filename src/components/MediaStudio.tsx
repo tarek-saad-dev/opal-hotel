@@ -14,7 +14,7 @@ type Props={
   draft:CmsSite;
   published:CmsSite|null;
   change:(updater:(previous:CmsSite|null)=>CmsSite|null)=>void;
-  upload:(files:File[])=>Promise<void>;
+  upload:(files:File[])=>Promise<string[]>;
   uploading:string;
 };
 const move=(items:string[],index:number,delta:number)=>{
@@ -29,6 +29,7 @@ const removeRefs=(visual:CmsVisualLibrary,src:string)=>{
   p.hero=p.hero.filter(x=>x!==src);
   p.gallery=p.gallery.filter(x=>x!==src);
   p.overviewMain=clean(p.overviewMain);p.overviewInset=clean(p.overviewInset);
+  p.overviewVideo=clean(p.overviewVideo);
   p.facilities=clean(p.facilities);p.location=clean(p.location);
   for(const room of Object.values(p.rooms)){
     room.cover=clean(room.cover);room.video=clean(room.video);
@@ -78,7 +79,7 @@ export function MediaStudio({draft,published,change,upload,uploading}:Props){
   };
   const used=new Set<string>([
     ...visual.placements.hero,...visual.placements.gallery,
-    visual.placements.overviewMain,visual.placements.overviewInset,
+    visual.placements.overviewMain,visual.placements.overviewInset,visual.placements.overviewVideo,
     visual.placements.facilities,visual.placements.location,
     ...Object.values(visual.placements.rooms).flatMap(x=>[x.cover,...x.gallery,x.video])
   ]);
@@ -240,7 +241,45 @@ export function MediaStudio({draft,published,change,upload,uploading}:Props){
       {renderOrder("hero")}
     </section>
     <section className="opal-cms-editor-card">
-      <div className="opal-cms-editor-head"><span>02 / SECTIONS</span><h3>الصور الرئيسية لكل سكشن</h3></div>
+      <div className="opal-cms-editor-head"><span>02 / SECTIONS</span><h3>وسائط أقسام الموقع</h3></div>
+      <div className="opal-overview-video-editor">
+        <div className="opal-overview-video-editor-heading">
+          <div>
+            <strong>فيديو Overview — جنب الكلام</strong>
+            <p>اختار فيديو MP4، وهيظهر مكان الصورتين في السكشن. صورة الـOverview الكبيرة هتكون Poster قبل التشغيل تلقائيًا. الفيديو مش هيشتغل أو يتحمل إلا لما الزائر يضغط Play.</p>
+          </div>
+          {visual.placements.overviewVideo&&<span className="opal-overview-video-selected">فيديو متحدد ✓</span>}
+        </div>
+        <div className="opal-overview-video-actions">
+          <label className="opal-overview-video-upload">
+            <span>{uploading?"جاري رفع الفيديو…":"＋ ارفع فيديو للـOverview"}</span>
+            <small>MP4 · حتى 50MB</small>
+            <input type="file" accept="video/mp4,.mp4" disabled={Boolean(uploading)}
+              onChange={event=>{
+                const file=event.currentTarget.files?.[0];
+                if(file)void (async()=>{
+                  const paths=await upload([file]);
+                  if(paths[0])edit(v=>{v.placements.overviewVideo=paths[0];});
+                })();
+                event.currentTarget.value="";
+              }}/>
+          </label>
+          <div className="opal-overview-video-existing">
+            <MediaPicker assets={assets} label="أو اختار فيديو مرفوع قبل كده" kind="video"
+              value={visual.placements.overviewVideo}
+              onChange={src=>edit(v=>{v.placements.overviewVideo=src;})}/>
+          </div>
+        </div>
+        {visual.placements.overviewVideo&&<>
+          <video className="opal-overview-video-admin-preview" controls playsInline preload="none"
+            poster={assets.find(a=>a.src===visual.placements.overviewVideo)?.poster||visual.placements.overviewMain||undefined}
+            src={visual.placements.overviewVideo}
+            aria-label="معاينة فيديو Overview"/>
+          <p className="opal-media-ready">✓ الفيديو متحدد. اضغط «حفظ ونشر الآن» مرة واحدة عشان يظهر في السكشن بالعربي والإنجليزي.</p>
+        </>}
+        <p className="opal-cms-help">من غير فيديو: هيفضل عرض الصورتين الحالي. لإلغاء الفيديو اختار «إزالة الاختيار» من زر اختيار الفيديو. للمعاينة قبل النشر احفظ المسودة الأول؛ أو اضغط «حفظ ونشر الآن» مباشرة.</p>
+      </div>
+      <h4 className="opal-overview-photo-fallback-heading">صور الـOverview (Poster وبديل الفيديو)</h4>
       {([
         ["overviewMain","Overview — الصورة الكبيرة"],
         ["overviewInset","Overview — الصورة الصغيرة"],

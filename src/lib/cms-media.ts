@@ -22,6 +22,7 @@ export type VisualPlacements={
   hero:string[];
   overviewMain:string;
   overviewInset:string;
+  overviewVideo:string;
   facilities:string;
   location:string;
   gallery:string[];
@@ -32,7 +33,7 @@ export const visualImagePath=(src:string)=>/^\/api\/cms\/media\/[0-9a-f]{32}\.(?
 export const visualVideoPath=(src:string)=>/^\/api\/cms\/video\/[0-9a-f]{32}\.mp4$/.test(src);
 export function defaultVisualLibrary():CmsVisualLibrary{
   return {assets:[],placements:{
-    hero:[],overviewMain:"",overviewInset:"",facilities:"",location:"",
+    hero:[],overviewMain:"",overviewInset:"",overviewVideo:"",facilities:"",location:"",
     gallery:[],rooms:Object.fromEntries(roomConcepts.map(room=>[room.slug,{cover:"",gallery:[],video:""}]))
   }};
 }
@@ -119,6 +120,8 @@ export function normalizeVisualLibrary(raw:unknown):CmsVisualLibrary{
     hero:verifiedRefs(placements.hero,"hero",6,images,"image"),
     overviewMain:single(placements.overviewMain,"overview.main"),
     overviewInset:single(placements.overviewInset,"overview.inset"),
+    // Historical V2 snapshots did not contain this field.
+    overviewVideo:single(placements.overviewVideo??"","overview.video","video"),
     facilities:single(placements.facilities,"facilities"),
     location:single(placements.location,"location"),
     gallery:verifiedRefs(placements.gallery,"gallery",100,allowed),
@@ -137,7 +140,7 @@ export type UnreadyVisualPlacement={src:string;label:string;issues:string[]};
 export function assignedVisualSources(visual:CmsVisualLibrary):Set<string>{
   const p=visual.placements;
   const chosen=[
-    ...p.hero,p.overviewMain,p.overviewInset,p.facilities,p.location,...p.gallery,
+    ...p.hero,p.overviewMain,p.overviewInset,p.overviewVideo,p.facilities,p.location,...p.gallery,
     ...Object.values(p.rooms).flatMap(r=>[r.cover,...r.gallery,r.video])
   ];
   const selected=new Set(chosen.filter(Boolean));
@@ -153,6 +156,7 @@ export function unreadyVisualPlacements(visual:CmsVisualLibrary):UnreadyVisualPl
     ...p.hero.map((src,i)=>({src,label:"Hero "+(i+1)})),
     {src:p.overviewMain,label:"Overview — الصورة الكبيرة"},
     {src:p.overviewInset,label:"Overview — الصورة الصغيرة"},
+    {src:p.overviewVideo,label:"Overview — فيديو المكان"},
     {src:p.facilities,label:"Facilities"},
     {src:p.location,label:"Location"},
     ...p.gallery.map((src,i)=>({src,label:"Gallery "+(i+1)})),
@@ -198,7 +202,7 @@ export function approvedAsset(visual:CmsVisualLibrary,src:string):VisualAsset|un
 export function approvedPublishedPaths(visual:CmsVisualLibrary):Set<string>{
   const p=visual.placements;
   const refs=[
-    ...p.hero,p.overviewMain,p.overviewInset,p.facilities,p.location,...p.gallery,
+    ...p.hero,p.overviewMain,p.overviewInset,p.overviewVideo,p.facilities,p.location,...p.gallery,
     ...Object.values(p.rooms).flatMap(r=>[r.cover,...r.gallery,r.video])
   ];
   const out=new Set<string>();
