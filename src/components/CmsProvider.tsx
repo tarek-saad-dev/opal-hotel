@@ -3,7 +3,7 @@
 import { createContext,useContext,useMemo,type ReactNode } from "react";
 import { defaultCmsSite,hasApprovedCmsLogo,hasCompleteCmsMedia,mediaRoles,type CmsSite } from "@/lib/cms-schema";
 import { galleryImages,hotelBrand,officialMediaActive,type HotelImage } from "@/lib/gallery";
-import { approvedAsset,assignedVisualSources,visualAssetAlt } from "@/lib/cms-media";
+import { approvedAsset,visualAssetAlt } from "@/lib/cms-media";
 import { roomConcepts } from "@/lib/room-concepts";
 import { getContent,type HotelContent,type Locale } from "@/lib/hotel-content";
 
@@ -75,8 +75,10 @@ export function useHotelMedia(){
       images,
       imageCategories:categories,
       logoSrc:hasApprovedCmsLogo(cms)?cms.media.logo:hotelBrand.officialLogoSrc,
-      approved:ready||officialMediaActive
-        ||Array.from(assignedVisualSources(visual)).some(src=>Boolean(approvedAsset(visual,src))),
+      approved:ready||officialMediaActive,
+      overviewApproved:Boolean(placed.overviewMain&&placed.overviewInset
+        &&approvedAsset(visual,placed.overviewMain)
+        &&approvedAsset(visual,placed.overviewInset)),
       heroIndices:heroIndices.length?heroIndices:[0,1,2],
       galleryIndices:galleryImagesIndices.length||galleryVideos.length?galleryImagesIndices:images.map((_,i)=>i).slice(0,6),
       galleryVideos,
