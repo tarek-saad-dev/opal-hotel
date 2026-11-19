@@ -277,7 +277,7 @@ export function MediaStudio({draft,published,change,upload,uploading}:Props){
             aria-label="معاينة فيديو Overview"/>
           <p className="opal-media-ready">✓ الفيديو متحدد. اضغط «حفظ ونشر الآن» مرة واحدة عشان يظهر في السكشن بالعربي والإنجليزي.</p>
         </>}
-        <p className="opal-cms-help">من غير فيديو: هيفضل عرض الصورتين الحالي. لإلغاء الفيديو اختار «إزالة الاختيار» من زر اختيار الفيديو.</p>
+        <p className="opal-cms-help">من غير فيديو: هيفضل عرض الصورتين الحالي. لإلغاء الفيديو اختار «إزالة الاختيار» من زر اختيار الفيديو. للمعاينة قبل النشر احفظ المسودة الأول؛ أو اضغط «حفظ ونشر الآن» مباشرة.</p>
       </div>
       <h4 className="opal-overview-photo-fallback-heading">صور الـOverview (Poster وبديل الفيديو)</h4>
       {([
