@@ -1,0 +1,17 @@
+import { NextRequest,NextResponse } from "next/server";
+import { isCmsAuthenticated,noStoreHeaders,validCmsMutationOrigin } from "@/lib/cms-auth";
+import { restoreAsDraft } from "@/lib/cms-store";
+export const runtime="nodejs";
+export async function POST(request:NextRequest){
+  if(!await isCmsAuthenticated())return NextResponse.json({error:"UNAUTHORIZED"},{status:401,headers:noStoreHeaders});
+  if(!validCmsMutationOrigin(request))return NextResponse.json({error:"INVALID_ORIGIN"},{status:403});
+  try{
+    const body=await request.json() as {revision?:number;expectedRevision?:number};
+    if(!Number.isSafeInteger(body.revision)||!Number.isSafeInteger(body.expectedRevision))throw new Error("BAD_REVISION");
+    const draft=await restoreAsDraft(body.revision!,body.expectedRevision!);
+    return NextResponse.json({draft},{headers:noStoreHeaders});
+  }catch(err){
+    const error=err instanceof Error?err.message:"UNKNOWN_ERROR";
+    return NextResponse.json({error},{status:error==="REVISION_CONFLICT"?409:400,headers:noStoreHeaders});
+  }
+}
