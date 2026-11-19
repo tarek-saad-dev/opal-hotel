@@ -218,7 +218,11 @@ for(const lang of langs)for(const screen of screens){
       const momentsCount=await page.locator('.opal-gallery-item').count();
       await galleryTabs.nth(0).click();
       const allCount=await page.locator('.opal-gallery-item').count();
-      interactions.galleryFilter=spacesCount===4&&momentsCount===2&&allCount===6;
+      // V2 categorizes the gallery by actual hotel scene, not the old
+      // hardcoded "spaces" (4) / "moments" (2) demo-image buckets.
+      interactions.galleryFilter=(await galleryTabs.count())>=3
+        &&spacesCount>0&&momentsCount>0
+        &&spacesCount<allCount&&momentsCount<allCount&&allCount>=6;
       await page.locator('.opal-gallery-item').first().click();
       await page.locator('.lightbox').waitFor({state:'visible',timeout:3000});
       await page.keyboard.press('Escape');
