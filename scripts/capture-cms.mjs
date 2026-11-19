@@ -362,7 +362,7 @@ try{
       "Rights approval must never be automatic");
     await editor.locator('input[type="checkbox"]').check();
     await issueMapping.locator(".opal-media-ready").waitFor();
-    check((await issueMapping.locator(".opal-media-ready").innerText()).includes("احفظ المسودة"),
+    check((await issueMapping.locator(".opal-media-ready").innerText()).includes("حفظ المسودة"),
       "Owner should receive the exact Save Draft then Publish instruction");
     // Don't save; preserve the deliberately unapproved server fixture for
     // all privacy and partial-publication tests below.
