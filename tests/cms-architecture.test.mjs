@@ -57,8 +57,10 @@ test("Mutations require signed owner cookies, allowed origin and bounded input",
 
 test("Published CMS replaces public content only after publish, and draft preview is private",()=>{
  const layout=read(paths[5]),home=read(paths[6]),privatePreview=read("src/app/[locale]/preview/page.tsx");
- assert.ok(layout.includes('readPublished()'));
- assert.ok(layout.includes('CmsProvider value={published}'));
+ assert.ok(!layout.includes("readPublished()"));
+ assert.ok(read("src/app/[locale]/page.tsx").includes("readPublished()"));
+ assert.ok(read("src/app/[locale]/page.tsx").includes("CmsProvider value={published}"));
+ assert.ok(read("src/app/[locale]/rooms/[slug]/page.tsx").includes("readPublished()"));
  assert.ok(home.includes("cms.sections.filter(section=>section.visible)"));
  assert.ok(home.includes('useCmsContent(locale)'));
  assert.ok(privatePreview.includes('isCmsAuthenticated()'));
