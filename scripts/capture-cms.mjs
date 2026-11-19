@@ -405,6 +405,57 @@ try{
     }
   }finally{await approvedVisitor.close();}
 
+  // Visual media selector E2E: thumbnails, search, category, single and
+  // multiple selection. These interactions remain draft-only (not published).
+  await page.getByRole("button",{name:/مكتبة الوسائط V2/}).click();
+  await page.getByRole("heading",{name:"مكتبة صور وفيديوهات الفندق"}).waitFor();
+  const overviewMapping=page.locator(".opal-media-mapping").filter({hasText:"Overview — الصورة الكبيرة"});
+  const mappingButton=overviewMapping.getByRole("button",{name:"Overview — الصورة الكبيرة"});
+  await mappingButton.click();
+  const modal=page.getByRole("dialog",{name:"Overview — الصورة الكبيرة"});
+  await modal.waitFor();
+  check(await modal.locator(".opal-picker-tile").count()===2,
+    "Single image picker must show two photo thumbnails, not filenames only");
+  check(await modal.locator(".opal-picker-tile img").count()===2,
+    "Library picker must render actual image thumbnails");
+  await modal.getByRole("searchbox",{name:"بحث في الوسائط"}).fill("Opal pool");
+  check(await modal.locator(".opal-picker-tile").count()===1,
+    "Image thumbnail search should filter assets by title");
+  await modal.getByRole("button",{name:/Opal pool/}).click();
+  check(await modal.locator(".opal-picker-preview img").getAttribute("src")===v2Photo2,
+    "Image picker should show large selected photo preview");
+  await modal.getByRole("button",{name:"استخدام الوسيط المختار"}).click();
+  await modal.waitFor({state:"detached"});
+  check(await mappingButton.locator("img").getAttribute("src")===v2Photo2,
+    "Chosen image preview should appear in the mapping field immediately");
+  const galleryPicker=page.getByRole("button",{name:"إضافة صور وفيديوهات للجاليري"});
+  await galleryPicker.click();
+  const galleryDialog=page.getByRole("dialog",{name:"إضافة صور وفيديوهات للجاليري"});
+  check(await galleryDialog.locator(".opal-picker-tile").count()===3,
+    "Gallery picker should show images and videos together");
+  await galleryDialog.getByRole("button",{name:"فيديو"}).click();
+  check(await galleryDialog.locator(".opal-picker-tile").count()===1,
+    "Gallery picker video filter should work");
+  await galleryDialog.getByRole("button",{name:"الكل"}).click();
+  await galleryDialog.getByRole("button",{name:/Opal overview/}).click();
+  check(await galleryDialog.getByRole("button",{name:"إضافة 1 للموقع"}).isEnabled(),
+    "Gallery must support multi-select via thumbnail tiles");
+  await galleryDialog.getByRole("button",{name:"إضافة 1 للموقع"}).click();
+  check(await page.locator(".opal-media-order-row").filter({hasText:"Opal overview"}).count()>=1,
+    "Gallery multi-selection should append the new photo");
+  await page.setViewportSize({width:390,height:844});
+  await mappingButton.click();
+  await modal.waitFor();
+  check(await modal.locator(".opal-picker-grid").isVisible(),
+    "Mobile thumbnail grid should remain accessible");
+  await page.screenshot({path:path.join(dir,"owner-thumbnail-picker-mobile.png"),animations:"disabled"});
+  await page.keyboard.press("Escape");
+  await modal.waitFor({state:"detached"});
+  check(await mappingButton.evaluate(el=>document.activeElement===el),
+    "Closing picker with Escape should restore keyboard focus");
+  await page.setViewportSize({width:1440,height:900});
+  await page.screenshot({path:path.join(dir,"owner-media-v2.png"),fullPage:true,animations:"disabled"});
+
   await page.screenshot({path:path.join(dir,"owner-sections.png"),fullPage:true,animations:"disabled"});
 
   await page.getByRole("button",{name:/تسجيل الخروج/}).click();
@@ -415,7 +466,7 @@ try{
   check(logout.status()===401,"Logout must revoke private content access");
   check(errors.length===0,"Browser errors: "+errors.join("; "));
   console.log(JSON.stringify({cmsPassed:true,publicStableBeforePublish:true,
-    draftPreview:true,publishedInstantly:true,sectionControl:true,history:true,uploadSecurity:true,logoLocales:true,heroFilm:true,filmRange:true,mediaV2:true,logout:true}));
+    draftPreview:true,publishedInstantly:true,sectionControl:true,history:true,uploadSecurity:true,logoLocales:true,heroFilm:true,filmRange:true,mediaV2:true,thumbnailPicker:true,mobilePicker:true,logout:true}));
 }catch(error){
   console.error("CMS integration failed:",error);
   process.exitCode=1;
