@@ -2,7 +2,7 @@
 
 import { createPortal } from "react-dom";
 import { useEffect,useId,useRef,useState } from "react";
-import { visualCategories,visualAssetIssues,type VisualAsset,type VisualKind,type VisualCategory } from "@/lib/cms-media";
+import { visualCategories,type VisualAsset,type VisualKind,type VisualCategory } from "@/lib/cms-media";
 
 const names:Record<VisualCategory,string>={
   exterior:"واجهة الفندق",pool:"المسبح",rooms:"الغرف",restaurant:"المطعم",
