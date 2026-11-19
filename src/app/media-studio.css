@@ -178,3 +178,9 @@
  .opal-picker-trigger{min-height:74px;gap:9px}
  .opal-picker-trigger-action{min-width:52px;padding:6px}
 }
+
+
+.opal-media-video-cover{width:100%;height:116px;position:relative;overflow:hidden;background:#18372a}
+.opal-media-video-cover img{display:block;width:100%;height:100%;object-fit:cover}
+.opal-media-video-cover span{position:absolute;bottom:7px;inset-inline-start:7px;
+ background:#0d2921de;color:#fff;padding:5px 9px;font:700 9px Arial,sans-serif;letter-spacing:.09em}
