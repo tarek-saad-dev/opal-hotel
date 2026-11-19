@@ -9,6 +9,9 @@ DOMAIN="$1"
 PORT=3418
 APP_USER=opalhotel
 APP_DIR=/var/www/opal-hotel
+CMS_DIR=/var/lib/opal-hotel-cms
+CMS_CONFIG_DIR=/etc/opal-hotel
+CMS_ENV=/etc/opal-hotel/cms.env
 UNIT=/etc/systemd/system/opal-hotel.service
 VHOST=/etc/nginx/sites-available/opal-hotel.conf
 VHOST_LINK=/etc/nginx/sites-enabled/opal-hotel.conf
@@ -46,6 +49,24 @@ if ! id "$APP_USER" >/dev/null 2>&1; then
   useradd --system --no-create-home --home-dir "$APP_DIR" --shell /usr/sbin/nologin "$APP_USER"
 fi
 install -d -o "$APP_USER" -g "$APP_USER" -m 0755 "$APP_DIR"
+# Owner CMS data and uploads are intentionally OUTSIDE the Git checkout:
+# git reset --hard or a future deployment cannot erase published content.
+install -d -o "$APP_USER" -g "$APP_USER" -m 0700 "$CMS_DIR"
+install -d -o root -g root -m 0700 "$CMS_CONFIG_DIR"
+if [[ ! -f "$CMS_ENV" ]]; then
+  # One-time strong credentials. Never display or commit them in logs.
+  ADMIN_PASS="$(node -e "process.stdout.write(require('crypto').randomBytes(24).toString('base64url'))")"
+  SESSION_KEY="$(node -e "process.stdout.write(require('crypto').randomBytes(48).toString('base64url'))")"
+  (
+    umask 077
+    printf 'OPAL_CMS_ADMIN_PASSWORD=%s\nOPAL_CMS_SESSION_SECRET=%s\nOPAL_CMS_PUBLIC_ORIGIN=https://%s\n' \
+      "$ADMIN_PASS" "$SESSION_KEY" "$DOMAIN" > "$CMS_ENV"
+  )
+  chmod 0600 "$CMS_ENV"
+  unset ADMIN_PASS SESSION_KEY
+  log "Owner CMS environment created at $CMS_ENV (root-only)."
+  log "To retrieve the one-time owner password on the VPS, run: sudo grep '^OPAL_CMS_ADMIN_PASSWORD=' $CMS_ENV"
+fi
 if [[ ! -d "$APP_DIR/.git" ]]; then
   [[ -z "$(find "$APP_DIR" -mindepth 1 -print -quit)" ]] || die "Application directory is not empty."
   log "Cloning repository..."
@@ -73,6 +94,9 @@ Group=opalhotel
 WorkingDirectory=/var/www/opal-hotel
 Environment=NODE_ENV=production
 Environment=NEXT_TELEMETRY_DISABLED=1
+Environment=OPAL_CMS_DATA_DIR=/var/lib/opal-hotel-cms
+EnvironmentFile=/etc/opal-hotel/cms.env
+UMask=0077
 ExecStart=/usr/bin/env npm run start -- -H 127.0.0.1 -p 3418
 Restart=on-failure
 RestartSec=3
@@ -82,6 +106,11 @@ PrivateTmp=true
 [Install]
 WantedBy=multi-user.target
 SYSTEMD
+fi
+# Existing production installs already have an Opal-managed unit. Retrofit
+# just the new CMS configuration without changing unrelated services.
+if ! grep -Fq 'Environment=OPAL_CMS_DATA_DIR=/var/lib/opal-hotel-cms' "$UNIT"; then
+  sed -i '/^Environment=NEXT_TELEMETRY_DISABLED=1$/a Environment=OPAL_CMS_DATA_DIR=/var/lib/opal-hotel-cms\nEnvironmentFile=/etc/opal-hotel/cms.env\nUMask=0077' "$UNIT"
 fi
 
 log "Starting production service..."
