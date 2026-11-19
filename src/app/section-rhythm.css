@@ -73,7 +73,7 @@ html{scroll-padding-top:calc(var(--opal-rhythm-header) + 14px)}
   min-height:0;
   padding-block:clamp(62px,8svh,112px);
 }
-.opal-room-photo{aspect-ratio:clamp(.82, 1, 1.02)}
+.opal-room-photo{aspect-ratio:.96}
 .opal-gallery-mosaic{grid-auto-rows:clamp(140px,21svh,220px)}
 
 /* Home — Reviews: balanced two-column editorial section while keeping the
