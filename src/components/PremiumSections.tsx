@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef,useState } from "react";
 import Link from "next/link";
 import type { ReactNode, SyntheticEvent } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
@@ -42,6 +42,14 @@ export function PremiumStory({ locale, content: c, onOpenPhoto }: StoryProps) {
   const cms=useCmsSite();
   const heading=cms.locales[locale].headings.overview;
   const media=useHotelMedia();
+  const filmRef=useRef<HTMLVideoElement>(null);
+  const [filmStarted,setFilmStarted]=useState(false);
+  const startFilm=()=>{
+    // This runs from the visitor's own click. The network request for the
+    // MP4 begins only now; no cinematic video autoplay or initial transfer.
+    setFilmStarted(true);
+    void filmRef.current?.play().catch(()=>{ /* native controls remain available */ });
+  };
   const ar = locale === "ar";
   const t = ar ? {
     kicker: "تجربة أوبال", top: "وراء كل إقامة", italic: "حكاية.",
@@ -56,7 +64,7 @@ export function PremiumStory({ locale, content: c, onOpenPhoto }: StoryProps) {
     photo: "Explore the images", line: "DISCOVER THE DETAILS",
     art: media.overviewApproved||media.approved ? "Hotel-approved property photography" : "Illustrative imagery · not photos of Opal Legacy",
   };
-  return <div className="opal-story-wrap">
+  return <div className={`opal-story-wrap${media.overviewVideo?" is-film-layout":""}`}>
     <div className="opal-story-copy">
       <div className="opal-heading-kicker"><A>01</A><span>{heading.kicker}</span></div>
       <h2>{heading.title} <em>{heading.accent}</em></h2>
@@ -69,18 +77,40 @@ export function PremiumStory({ locale, content: c, onOpenPhoto }: StoryProps) {
       <a className="opal-text-link" href={`#${cms.sections.find(x=>x.id!=="overview"&&x.visible)?.id||"booking"}`}>{t.line}<span aria-hidden="true">↗</span></a>
       <div className="opal-story-signature"><span className="opal-signature-line"/><span>{t.slow}</span></div>
     </div>
-    <div className="opal-story-media">
-      <button className="opal-story-main-photo" type="button" onClick={() => onOpenPhoto(media.overviewMain)} aria-label={t.photo}>
-        <PreviewImage locale={locale} index={media.overviewMain} eager/>
-        <span className="opal-media-hover" aria-hidden="true">↗</span>
-      </button>
-      <div className="opal-story-inset">
-        <button type="button" className="opal-story-small-photo" onClick={() => onOpenPhoto(media.overviewInset)} aria-label={t.photo}>
-          <PreviewImage locale={locale} index={media.overviewInset} />
+    <div className={"opal-story-media"+(media.overviewVideo?" is-video":"")}>
+      {media.overviewVideo ? <div className="opal-story-film">
+        <div className="opal-story-film-topline">
+          <span>{ar?"استكشف أوبال":"DISCOVER OPAL"}</span>
+          <span>01 / FILM</span>
+        </div>
+        <div className="opal-story-film-frame">
+          <video ref={filmRef} src={media.overviewVideo.src}
+            poster={media.overviewVideo.poster||undefined} preload="none"
+            playsInline controls={filmStarted}
+            aria-label={ar?"شاهد فيديو الفندق":"Watch the hotel film"}/>
+          {!filmStarted&&<button type="button" className="opal-story-film-start" onClick={startFilm}
+            aria-label={ar?"شغّل فيديو الفندق":"Play hotel film"}>
+            <span className="opal-story-film-play" aria-hidden="true">▶</span>
+            <span className="opal-story-film-start-label">{ar?"شاهد المكان":"WATCH THE FILM"}</span>
+          </button>}
+        </div>
+        <div className="opal-story-film-bottomline">
+          <span>{ar?"الفندق بعدسة حقيقية":"THE PLACE, IN MOTION"}</span>
+          <span>{ar?"شغّل الفيديو وقت ما تحب":"PLAY WHEN YOU'RE READY"}</span>
+        </div>
+      </div> : <>
+        <button className="opal-story-main-photo" type="button" onClick={() => onOpenPhoto(media.overviewMain)} aria-label={t.photo}>
+          <PreviewImage locale={locale} index={media.overviewMain} eager/>
+          <span className="opal-media-hover" aria-hidden="true">↗</span>
         </button>
-        <span className="opal-story-side-note">{t.secondary}</span>
-      </div>
-      <p className="opal-photo-credit">{t.art}</p>
+        <div className="opal-story-inset">
+          <button type="button" className="opal-story-small-photo" onClick={() => onOpenPhoto(media.overviewInset)} aria-label={t.photo}>
+            <PreviewImage locale={locale} index={media.overviewInset}/>
+          </button>
+          <span className="opal-story-side-note">{t.secondary}</span>
+        </div>
+        <p className="opal-photo-credit">{t.art}</p>
+      </>}
     </div>
   </div>;
 }
