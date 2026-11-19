@@ -42,7 +42,7 @@ test("Every live public guest route and RTL locale is measured with real browser
   const workflow=read(".github/workflows/frontend-visual-preview.yml");
   const pkg=read("package.json");
   for(const term of ["light-and-stillness","quiet-comforts","slow-mornings",
-    "opal-book-introduction","room-exp-catalogue-section","opal-stage",
+    "opal-book-introduction","room-exp-catalogue-section","premium-hero",
     "document.documentElement.scrollWidth","heroCopyFits","short-laptop","small-mobile"])
     assert.ok(audit.includes(term),term);
   assert.match(audit,/for\(const locale of \["en","ar"\]\)/);
