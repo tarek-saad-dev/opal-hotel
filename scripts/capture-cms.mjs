@@ -537,6 +537,59 @@ try{
     }
   }finally{await fastVisitor.close();}
 
+
+  // Overview video direct upload: one MP4 input auto-adds and auto-selects it.
+  // No per-file approval, poster upload, or developer intervention is needed.
+  await page.locator(".opal-overview-video-upload input[type=file]").setInputFiles({
+    name:"hotel-overview.mp4",mimeType:"video/mp4",buffer:mp4Fixture
+  });
+  const filmPreview=page.locator(".opal-overview-video-admin-preview");
+  await filmPreview.waitFor({state:"attached"});
+  const newOverviewFilm=await filmPreview.getAttribute("src");
+  check(Boolean(newOverviewFilm?.startsWith("/api/cms/video/")),
+    "Overview upload must automatically select the uploaded video");
+  const filmPrivateVisitor=await browser.newContext();
+  try{
+    check((await filmPrivateVisitor.request.get(origin+newOverviewFilm)).status()===404,
+      "Unpublished Overview video must stay private");
+  }finally{await filmPrivateVisitor.close();}
+  const privateFilm=await context.newPage();
+  try{
+    await privateFilm.goto(origin+"/ar/preview",{waitUntil:"domcontentloaded"});
+    check(await privateFilm.locator(".opal-story-film-frame video").getAttribute("src")===newOverviewFilm,
+      "Owner private AR preview should show the newly uploaded film beside story text");
+  }finally{await privateFilm.close();}
+  page.once("dialog",dialog=>void dialog.accept());
+  await page.getByRole("button",{name:"حفظ ونشر الآن"}).click();
+  await page.getByText("تم الحفظ والنشر ✅",{exact:false}).waitFor();
+  const filmVisitor=await browser.newContext();
+  try{
+    check((await filmVisitor.request.get(origin+newOverviewFilm,{headers:{Range:"bytes=0-15"}})).status()===206,
+      "Published Overview movie should support on-demand byte ranges");
+    for(const locale of ["ar","en"]){
+      const vpage=await filmVisitor.newPage();
+      await vpage.goto(origin+"/"+locale,{waitUntil:"domcontentloaded"});
+      const video=vpage.locator(".opal-story-film-frame video");
+      check(await video.count()===1,"Overview should show editorial video in "+locale);
+      check(await video.getAttribute("src")===newOverviewFilm,
+        "Overview must use the uploaded film in "+locale);
+      check(await video.getAttribute("preload")==="none",
+        "Video must not preload the full film for "+locale);
+      check(await vpage.locator(".opal-story-film-start").count()===1,
+        "Visitor should see a clear click-to-play control for "+locale);
+      check(await vpage.locator(".opal-story-inset").count()===0,
+        "Don't overlay the old secondary photo over film in "+locale);
+      await vpage.close();
+    }
+  }finally{await filmVisitor.close();}
+  const filmMobile=await context.newPage({viewport:{width:390,height:844}});
+  try{
+    await filmMobile.goto(origin+"/ar/preview",{waitUntil:"domcontentloaded"});
+    check(await filmMobile.locator(".opal-story-film-frame").isVisible(),
+      "Mobile Overview film should remain visible and responsive");
+    await filmMobile.screenshot({path:path.join(dir,"owner-overview-film-mobile.png"),animations:"disabled"});
+  }finally{await filmMobile.close();}
+
   await page.screenshot({path:path.join(dir,"owner-sections.png"),fullPage:true,animations:"disabled"});
 
   await page.getByRole("button",{name:/تسجيل الخروج/}).click();
@@ -547,7 +600,7 @@ try{
   check(logout.status()===401,"Logout must revoke private content access");
   check(errors.length===0,"Browser errors: "+errors.join("; "));
   console.log(JSON.stringify({cmsPassed:true,publicStableBeforePublish:true,
-    draftPreview:true,publishedInstantly:true,sectionControl:true,history:true,uploadSecurity:true,logoLocales:true,heroFilm:true,filmRange:true,mediaV2:true,thumbnailPicker:true,mobilePicker:true,logout:true}));
+    draftPreview:true,publishedInstantly:true,sectionControl:true,history:true,uploadSecurity:true,logoLocales:true,heroFilm:true,filmRange:true,mediaV2:true,thumbnailPicker:true,overviewVideo:true,mobilePicker:true,logout:true}));
 }catch(error){
   console.error("CMS integration failed:",error);
   process.exitCode=1;
