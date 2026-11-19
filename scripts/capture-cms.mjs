@@ -407,6 +407,10 @@ try{
 
   // Visual media selector E2E: thumbnails, search, category, single and
   // multiple selection. These interactions remain draft-only (not published).
+  // API-driven tests modified the draft while the admin React page was open;
+  // reload to hydrate the latest saved library before interacting with it.
+  await page.goto(origin+"/admin",{waitUntil:"domcontentloaded"});
+  await page.getByRole("heading",{name:"المحتوى والنصوص"}).waitFor();
   await page.getByRole("button",{name:/مكتبة الوسائط V2/}).click();
   await page.getByRole("heading",{name:"مكتبة صور وفيديوهات الفندق"}).waitFor();
   const overviewMapping=page.locator(".opal-media-mapping").filter({hasText:"Overview — الصورة الكبيرة"});
