@@ -5,7 +5,7 @@ set -Eeuo pipefail
 
 (( $# == 1 )) || { echo "Usage: bash ops/check-cms-production.sh <opal-domain>" >&2; exit 2; }
 DOMAIN="$1"
-[[ "$DOMAIN" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*\\.[A-Za-z]{2,}$ ]] || { echo "Invalid domain" >&2; exit 2; }
+[[ "$DOMAIN" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*\.[A-Za-z]{2,}$ ]] || { echo "Invalid domain" >&2; exit 2; }
 command -v curl >/dev/null || { echo "curl is required" >&2; exit 2; }
 command -v node >/dev/null || { echo "node is required" >&2; exit 2; }
 BASE="https://$DOMAIN"
