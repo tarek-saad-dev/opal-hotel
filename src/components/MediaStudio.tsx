@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo,useState,type ChangeEvent,type DragEvent } from "react";
+import { useEffect,useMemo,useRef,useState,type ChangeEvent,type DragEvent } from "react";
 import type { CmsSite } from "@/lib/cms-schema";
-import { approvedAsset,visualCategories,type VisualAsset,type CmsVisualLibrary } from "@/lib/cms-media";
+import { approvedAsset,unreadyVisualPlacements,visualAssetIssues,visualCategories,type VisualAsset,type CmsVisualLibrary } from "@/lib/cms-media";
 import { roomConcepts } from "@/lib/room-concepts";
 import { MediaPicker } from "@/components/MediaPicker";
 
@@ -12,6 +12,7 @@ const labels:Record<string,string>={
 };
 type Props={
   draft:CmsSite;
+  published:CmsSite|null;
   change:(updater:(previous:CmsSite|null)=>CmsSite|null)=>void;
   upload:(files:File[])=>Promise<void>;
   uploading:string;
@@ -56,15 +57,46 @@ export async function optimizeMediaPhoto(file:File):Promise<File>{
     return new File([blob],file.name.replace(/\.[^.]+$/,"")+(blob.type==="image/webp"?".webp":".jpg"),{type:blob.type});
   }finally{bitmap.close();}
 }
-export function MediaStudio({draft,change,upload,uploading}:Props){
+export function MediaStudio({draft,published,change,upload,uploading}:Props){
   const [query,setQuery]=useState("");
   const [category,setCategory]=useState("all");
   const [selected,setSelected]=useState("");
+  const [scrollToDetails,setScrollToDetails]=useState(false);
+  const detailsRef=useRef<HTMLElement>(null);
   const visual=draft.media.visual;
   const assets=visual.assets;
   const photos=assets.filter(a=>a.kind==="image");
   const films=assets.filter(a=>a.kind==="video");
   const active=assets.find(a=>a.src===selected);
+  const unready=unreadyVisualPlacements(visual);
+  const uniqueUnready=Array.from(new Map(unready.map(item=>[item.src,item])).values());
+  useEffect(()=>{
+    if(!scrollToDetails||!active)return;
+    detailsRef.current?.scrollIntoView({behavior:"smooth",block:"center"});
+    setScrollToDetails(false);
+  },[active,scrollToDetails]);
+  const prepareAsset=(src:string)=>{
+    setSelected(src);
+    setScrollToDetails(true);
+  };
+  type SingleSlot="overviewMain"|"overviewInset"|"facilities"|"location";
+  const renderReadiness=(src:string,slot:SingleSlot)=>{
+    if(!src)return null;
+    const issues=visualAssetIssues(visual,src);
+    const current=published?.media.visual;
+    const live=!!current&&current.placements[slot]===src&&!!approvedAsset(current,src);
+    if(issues.length===0)return <p className="opal-media-ready" role="status">
+      {live?"✓ الصورة دي معتمدة وموجودة في النسخة المنشورة":
+        "✓ الصورة جاهزة، لكنها مش هتظهر للزوار إلا بعد «حفظ المسودة» و«نشر على الموقع»."}
+    </p>;
+    return <div className="opal-media-not-ready" role="status">
+      <strong>الصورة المحددة مش هتظهر على الموقع — هيظهر البديل القديم.</strong>
+      <span>المطلوب: {issues.join(" · ")}</span>
+      <button type="button" onClick={()=>prepareAsset(src)}>
+        استكمال بيانات الصورة واعتماد النشر
+      </button>
+    </div>;
+  };
   const used=new Set<string>([
     ...visual.placements.hero,...visual.placements.gallery,
     visual.placements.overviewMain,visual.placements.overviewInset,
@@ -123,6 +155,10 @@ export function MediaStudio({draft,change,upload,uploading}:Props){
                 :<span aria-hidden="true">▶</span>}
           </span>
           <strong>{asset?.title||"Media"}</strong>
+          {asset&&visualAssetIssues(visual,src).length>0&&
+            <button type="button" className="opal-media-fix-link" onClick={()=>prepareAsset(src)}>
+              غير جاهز للنشر — استكمال البيانات
+            </button>}
           <span className="opal-media-order-buttons">
             <button type="button" disabled={i===0} onClick={()=>edit(v=>{v.placements[target]=move(v.placements[target],i,-1);})} aria-label="رفع الترتيب">↑</button>
             <button type="button" disabled={i===selectedList.length-1} onClick={()=>edit(v=>{v.placements[target]=move(v.placements[target],i,1);})} aria-label="خفض الترتيب">↓</button>
@@ -142,10 +178,17 @@ export function MediaStudio({draft,change,upload,uploading}:Props){
         الصور بتتضغط تلقائيًا لـWebP (حتى 2200px) علشان السرعة وحذف بيانات الكاميرا،
         والفيديو لازم يكون MP4 H.264 مُحسّن للويب. الملفات المسودة خاصة ومش بتظهر للزوار إلا بعد اعتماد الحقوق وربطها بالقسم ثم النشر.
       </p>
+      {uniqueUnready.length>0&&<div className="opal-media-readiness-summary" role="status">
+        <strong>{uniqueUnready.length} صورة/فيديو مرتبط بالأقسام لكنه غير جاهز للظهور.</strong>
+        <p>مجرد اختيار الوسيط مش معناه نشره. افتح بياناته، اكتب وصف عربي وإنجليزي، وأكّد حق النشر، ثم احفظ المسودة وانشرها.</p>
+        <button type="button" onClick={()=>prepareAsset(uniqueUnready[0].src)}>
+          ابدأ بتجهيز أول وسيط غير معتمد
+        </button>
+      </div>}
       <div className="opal-media-stats">
         <strong>{photos.length}<small> صورة</small></strong>
         <strong>{films.length}<small> فيديو</small></strong>
-        <strong>{assets.filter(a=>a.approved).length}<small> معتمد</small></strong>
+        <strong>{assets.filter(a=>assetInfo(a)).length}<small> جاهز للنشر</small></strong>
         <strong>{used.size-(used.has("")?1:0)}<small> مرتبط بالموقع</small></strong>
       </div>
       <label className="opal-media-upload">
@@ -180,13 +223,13 @@ export function MediaStudio({draft,change,upload,uploading}:Props){
               ?<div className="opal-media-video-cover"><img src={a.poster} alt="" loading="lazy"/><span>▶ VIDEO</span></div>
               :<div className="opal-media-video-icon">▶<small>VIDEO</small></div>}
           <strong title={a.title}>{a.title}</strong>
-          <span>{labels[a.category]} · {a.approved?"✓ معتمد":"○ بانتظار الاعتماد"}</span>
+          <span>{labels[a.category]} · {assetInfo(a)?"✓ جاهز":"○ غير جاهز للنشر"}</span>
           {used.has(a.src)&&<small>مرتبط بقسم</small>}
         </button>)}
         {assets.length===0&&<p className="opal-cms-note">المكتبة فاضية. ارفع الصور الحقيقية للفندق علشان تبدأ.</p>}
       </div>
     </section>
-    {active&&<section className="opal-cms-editor-card" aria-label="تفاصيل الوسيط المختار">
+    {active&&<section ref={detailsRef} className="opal-cms-editor-card opal-media-approval-editor" aria-label="تفاصيل الوسيط المختار">
       <div className="opal-cms-editor-head"><span>ASSET DETAILS</span><h3>تعديل الوسيط المختار</h3></div>
       <div className="opal-media-details">
         {active.kind==="image"
@@ -213,7 +256,10 @@ export function MediaStudio({draft,change,upload,uploading}:Props){
             onChange={e=>updateAsset(active.src,a=>{a.approved=e.target.checked;})}/>
             أؤكد أن الصورة/الفيديو حقيقي ومصرح بنشره على موقع الفندق
           </label>
-          <small>{assetInfo(active)?"جاهز للربط والنشر":"أكمل الوصف باللغتين وتأكيد الحقوق قبل النشر"}</small>
+          <small className={assetInfo(active)?"opal-media-ready":"opal-media-warning"}>
+            {assetInfo(active)?"✓ بيانات الوسيط مكتملة. احفظ المسودة وانشر التغيير لو عايزه يظهر للزوار.":
+              "لن يظهر هذا الوسيط للزوار حتى تستكمل: "+visualAssetIssues(visual,active.src).join(" · ")}
+          </small>
           <button className="opal-cms-outline" type="button" onClick={()=>{
             if(!window.confirm("إزالة الوسيط من المكتبة وكل الأقسام؟ الملف القديم يظل محفوظًا لتاريخ النسخ."))return;
             edit(v=>removeRefs(v,active.src));setSelected("");
@@ -240,6 +286,7 @@ export function MediaStudio({draft,change,upload,uploading}:Props){
         <span>{label}</span>
         <MediaPicker assets={assets} label={label} kind="image"
           value={visual.placements[slot]} onChange={src=>edit(v=>{v.placements[slot]=src;})}/>
+        {renderReadiness(visual.placements[slot],slot)}
       </div>)}
     </section>
     <section className="opal-cms-editor-card">
@@ -263,11 +310,19 @@ export function MediaStudio({draft,change,upload,uploading}:Props){
             <span>صورة الغرفة الأساسية</span>
             <MediaPicker assets={assets} label={"غلاف "+room.name.ar} kind="image"
               value={mapping.cover} onChange={src=>edit(v=>{v.placements.rooms[room.slug].cover=src;})}/>
+            {mapping.cover&&visualAssetIssues(visual,mapping.cover).length>0&&
+              <button type="button" className="opal-media-fix-link" onClick={()=>prepareAsset(mapping.cover)}>
+                الغلاف غير جاهز للنشر — استكمال الوصف والحقوق
+              </button>}
           </div>
           <div className="opal-media-mapping">
             <span>فيديو اختياري</span>
             <MediaPicker assets={assets} label={"فيديو "+room.name.ar} kind="video"
               value={mapping.video} onChange={src=>edit(v=>{v.placements.rooms[room.slug].video=src;})}/>
+            {mapping.video&&visualAssetIssues(visual,mapping.video).length>0&&
+              <button type="button" className="opal-media-fix-link" onClick={()=>prepareAsset(mapping.video)}>
+                الفيديو غير جاهز للنشر — استكمال الوصف والحقوق
+              </button>}
           </div>
           <div className="opal-media-add">
             <MediaPicker assets={assets} label={"إضافة صور لمعرض "+room.name.ar} kind="image"
@@ -284,6 +339,10 @@ export function MediaStudio({draft,change,upload,uploading}:Props){
                 <img src={src} alt="" loading="lazy"/>
               </span>
               <strong>{assets.find(a=>a.src===src)?.title}</strong>
+              {visualAssetIssues(visual,src).length>0&&
+                <button type="button" className="opal-media-fix-link" onClick={()=>prepareAsset(src)}>
+                  غير جاهزة للنشر — تجهيز
+                </button>}
               <span className="opal-media-order-buttons">
                 <button type="button" disabled={i===0} onClick={()=>edit(v=>{
                   const list=v.placements.rooms[room.slug].gallery;
