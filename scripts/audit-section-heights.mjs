@@ -18,7 +18,7 @@ const viewports=[
 ];
 const routes=[
   {path:"",selectors:[
-    ".premium-hero","#overview","#facilities","#location","#rooms","#gallery",
+    ".premium-hero",".premium-booking-zone","#overview","#facilities","#location","#rooms","#gallery",
     "#reviews","#contact",".opal-end-footer"]},
   {path:"rooms",selectors:[
     ".room-exp-collection-hero",".room-exp-catalogue-section",
