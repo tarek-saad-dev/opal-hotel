@@ -342,35 +342,24 @@ try{
   });
   check(saveVisual.status()===200,"V2 library and section assignments should save");
   const unapprovedDraft=(await saveVisual.json()).draft;
-  // Reproduce owner report: Overview media is selected but not rights-approved,
-  // so public website intentionally continues showing the old fallback.
-  // The owner must see the reason and an actionable approval shortcut.
+  // Unapproved draft photos must be visually previewable by the owner without
+  // requiring AR/EN alt text or checking a rights box for every asset.
   const ownerApproval=await context.newPage();
   try{
     await ownerApproval.goto(origin+"/admin",{waitUntil:"domcontentloaded"});
     await ownerApproval.getByRole("button",{name:/مكتبة الوسائط V2/}).click();
-    const issueMapping=ownerApproval.locator(".opal-media-mapping")
+    const mapping=ownerApproval.locator(".opal-media-mapping")
       .filter({hasText:"Overview — الصورة الكبيرة"});
-    await issueMapping.locator(".opal-media-not-ready").waitFor();
-    check((await issueMapping.locator(".opal-media-not-ready").innerText())
-      .includes("حقوق النشر لم يتم تأكيدها"),
-      "Owner should see exactly why assigned Overview photo is still old");
-    await issueMapping.getByRole("button",{name:"استكمال بيانات الصورة واعتماد النشر"}).click();
-    const editor=ownerApproval.locator(".opal-media-approval-editor");
-    await editor.waitFor();
-    check(await editor.locator('input[type="checkbox"]').isChecked()===false,
-      "Rights approval must never be automatic");
-    await editor.locator('input[type="checkbox"]').check();
-    await issueMapping.locator(".opal-media-ready").waitFor();
-    check((await issueMapping.locator(".opal-media-ready").innerText()).includes("حفظ المسودة"),
-      "Owner should receive the exact Save Draft then Publish instruction");
-    // Don't save; preserve the deliberately unapproved server fixture for
-    // all privacy and partial-publication tests below.
+    await mapping.locator(".opal-media-ready").waitFor();
+    check((await mapping.locator(".opal-media-ready").innerText()).includes("حفظ ونشر الآن"),
+      "Owner should see a single Save & Publish step, not photo-by-photo approval");
+    check(await mapping.locator(".opal-media-not-ready").count()===0,
+      "No per-photo rights blocker should appear in the media assignment field");
   }finally{await ownerApproval.close();}
   const previewVisual=await context.newPage();
   await previewVisual.goto(origin+"/ar/preview",{waitUntil:"domcontentloaded"});
-  check(await previewVisual.locator(".opal-story-main-photo img").getAttribute("src")!==v2Photo,
-    "Unapproved assigned photo must not render even to owner as final published media");
+  check(await previewVisual.locator(".opal-story-main-photo img").getAttribute("src")===v2Photo,
+    "Private preview should render selected photo before batch rights publication");
   await previewVisual.close();
   const publishPartial=await context.request.post(origin+"/api/admin/cms/publish",{
     headers:{Origin:origin,"Content-Type":"application/json"},
@@ -484,6 +473,69 @@ try{
     "Closing picker with Escape should restore keyboard focus");
   await page.setViewportSize({width:1440,height:900});
   await page.screenshot({path:path.join(dir,"owner-media-v2.png"),fullPage:true,animations:"disabled"});
+
+  // Regression: upload two new photos with no descriptions or approval, then
+  // change the Overview image and save+publish in one owner click.
+  const newPhotoResponse=await context.request.post(origin+"/api/admin/cms/upload",{
+    headers:{Origin:origin},multipart:{
+      image:{name:"new-overview.png",mimeType:"image/png",buffer:tinyPng}
+    }
+  });
+  check(newPhotoResponse.status()===200,"Fast path image upload should succeed");
+  const newPhotoSrc=(await newPhotoResponse.json()).src;
+  const unusedPhotoResponse=await context.request.post(origin+"/api/admin/cms/upload",{
+    headers:{Origin:origin},multipart:{
+      image:{name:"private-unselected.png",mimeType:"image/png",buffer:tinyPng}
+    }
+  });
+  check(unusedPhotoResponse.status()===200,"Private unused image upload should succeed");
+  const unusedPhotoSrc=(await unusedPhotoResponse.json()).src;
+  const beforeFast=await context.request.get(origin+"/api/admin/cms");
+  const fastDoc=(await beforeFast.json()).draft;
+  for(const [src,title] of [[newPhotoSrc,"Fresh owner overview"],[unusedPhotoSrc,"Private unused photo"]]){
+    fastDoc.media.visual.assets.push({src,kind:"image",title,category:"other",
+      altEn:"",altAr:"",approved:false,poster:""});
+  }
+  const savedFast=await context.request.put(origin+"/api/admin/cms",{
+    headers:{Origin:origin,"Content-Type":"application/json"},
+    data:{document:fastDoc,expectedRevision:fastDoc.revision}
+  });
+  check(savedFast.status()===200,"New unapproved photos should save as a private draft");
+  await page.goto(origin+"/admin",{waitUntil:"domcontentloaded"});
+  await page.getByRole("button",{name:/مكتبة الوسائط V2/}).click();
+  const fastMapping=page.locator(".opal-media-mapping").filter({hasText:"Overview — الصورة الكبيرة"});
+  await fastMapping.getByRole("button",{name:"Overview — الصورة الكبيرة"}).click();
+  const fastPicker=page.getByRole("dialog",{name:"Overview — الصورة الكبيرة"});
+  await fastPicker.getByRole("button",{name:/Fresh owner overview/}).click();
+  await fastPicker.getByRole("button",{name:"استخدام الوسيط المختار"}).click();
+  check(await fastMapping.getByRole("button",{name:"Overview — الصورة الكبيرة"})
+    .locator("img").getAttribute("src")===newPhotoSrc,
+    "New owner photo should be picked with no mandatory translation fields");
+  page.once("dialog",dialog=>void dialog.accept());
+  await page.getByRole("button",{name:"حفظ ونشر الآن"}).click();
+  await page.getByText("تم الحفظ والنشر ✅",{exact:false}).waitFor();
+  const afterFast=await context.request.get(origin+"/api/admin/cms");
+  const publishedFast=(await afterFast.json()).published.media.visual;
+  check(publishedFast.assets.find(a=>a.src===newPhotoSrc).approved===true,
+    "Owner's single rights confirmation approves the selected photo atomically");
+  check(publishedFast.assets.find(a=>a.src===unusedPhotoSrc).approved===false,
+    "Unselected photo must stay unapproved and private");
+  const fastVisitor=await browser.newContext();
+  try{
+    check((await fastVisitor.request.get(origin+newPhotoSrc)).status()===200,
+      "Newly selected photo must be publicly available after one-click publish");
+    check((await fastVisitor.request.get(origin+unusedPhotoSrc)).status()===404,
+      "Unselected photo must never leak to the public");
+    for(const locale of ["ar","en"]){
+      const vpage=await fastVisitor.newPage();
+      await vpage.goto(origin+"/"+locale,{waitUntil:"domcontentloaded"});
+      check(await vpage.locator(".opal-story-main-photo img").getAttribute("src")===newPhotoSrc,
+        "No-alt media must appear in the chosen Overview section in "+locale);
+      const alt=await vpage.locator(".opal-story-main-photo img").getAttribute("alt");
+      check(Boolean(alt?.trim()),"Fallback image alt text must be non-empty in "+locale);
+      await vpage.close();
+    }
+  }finally{await fastVisitor.close();}
 
   await page.screenshot({path:path.join(dir,"owner-sections.png"),fullPage:true,animations:"disabled"});
 
