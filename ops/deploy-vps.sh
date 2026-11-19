@@ -148,7 +148,8 @@ server {
 
     access_log /var/log/nginx/opal-hotel.access.log;
     error_log /var/log/nginx/opal-hotel.error.log warn;
-    client_max_body_size 8m;
+    # Film upload is 50 MB max; only the Opal site gets this Nginx allowance.
+    client_max_body_size 55m;
 
     location / {
         proxy_pass http://127.0.0.1:3418;
@@ -169,7 +170,13 @@ NGINX
   fi
   systemctl reload nginx
 else
+  # Keep existing TLS/certbot configuration; change only our managed Opal host.
+  # The full film upload route accepts <=50 MB, so 8 MB Nginx hosts need 55 MB.
+  if grep -Fq 'client_max_body_size 8m;' "$VHOST"; then
+    sed -i 's/client_max_body_size 8m;/client_max_body_size 55m;/' "$VHOST"
+  fi
   nginx -t || die "Nginx validation failed."
+  systemctl reload nginx
 fi
 
 log "Next.js is healthy on localhost:$PORT; dedicated host http://$DOMAIN/en configured."
