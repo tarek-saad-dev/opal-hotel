@@ -277,3 +277,68 @@
   .room-exp-page *,.room-exp-header *,.room-exp-footer *{transition:none!important;animation:none!important}
 }
 
+
+
+/* V3 RHYTHM AUDIT — ROOMS LISTING & ALL THREE ROOM DETAILS
+   A collection cover can approach one viewport. Galleries, long translated
+   descriptions and related rooms must expand with their content. */
+.room-exp-page{min-height:100svh}
+.room-exp-collection-hero{
+  min-height:calc(100svh - 88px);
+  align-items:stretch;
+}
+.room-exp-hero-copy{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding-block:clamp(42px,7svh,93px);
+}
+.room-exp-hero-media{
+  min-height:clamp(370px,64svh,760px);
+}
+.room-exp-catalogue-section{
+  min-height:0;
+  padding-block:clamp(58px,8svh,112px);
+}
+.room-exp-card-visual{aspect-ratio:clamp(.85,1,1.03)}
+.room-exp-detail-hero{
+  min-height:min(81svh,830px);
+  align-items:start;
+}
+.room-exp-gallery-open{
+  height:clamp(370px,63svh,680px);
+}
+.room-exp-detail-story{
+  min-height:0;
+  margin-block:clamp(50px,7svh,96px);
+  padding-block:clamp(36px,5svh,62px);
+}
+.room-exp-related{
+  min-height:0;
+  padding-bottom:clamp(45px,7svh,87px);
+}
+.room-exp-related-card>div{height:clamp(190px,29svh,360px)}
+.room-exp-back-bottom{margin-bottom:clamp(42px,6svh,73px)}
+@media(max-width:800px){
+  .room-exp-collection-hero{min-height:0}
+  .room-exp-hero-copy{padding:clamp(45px,6svh,72px) 28px clamp(28px,4svh,52px)}
+  .room-exp-hero-media{min-height:0;height:clamp(300px,43svh,480px)}
+  .room-exp-catalogue-section{padding-block:clamp(48px,7svh,88px)}
+  .room-exp-detail-hero{min-height:0;display:grid}
+  .room-exp-gallery-open{height:clamp(330px,53svh,550px)}
+  .room-exp-detail-story{margin-block:clamp(44px,6svh,70px)}
+}
+@media(max-width:600px){
+  .room-exp-hero-copy{padding:clamp(36px,6svh,60px) 21px 30px}
+  .room-exp-hero-media{height:clamp(255px,40svh,365px)}
+  .room-exp-card-visual{aspect-ratio:1.12}
+  .room-exp-catalogue-section{padding-block:clamp(45px,6svh,67px)}
+  .room-exp-gallery-open{height:clamp(270px,44svh,430px)}
+  .room-exp-related-card>div{height:clamp(195px,35svh,305px)}
+  .room-exp-truth-note{margin-bottom:clamp(28px,5svh,50px)}
+  .room-exp-back-bottom{margin-bottom:clamp(32px,6svh,54px)}
+}
+@media(max-width:360px){
+  .room-exp-hero-media{height:clamp(250px,39svh,320px)}
+  .room-exp-gallery-open{height:clamp(260px,45svh,370px)}
+}
