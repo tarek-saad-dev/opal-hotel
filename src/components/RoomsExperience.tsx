@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, SyntheticEvent } from "react";
 import type { Locale } from "@/lib/hotel-content";
-import { galleryImages, hotelBrand, officialMediaActive, photoAlt, responsivePhotoSrcSet } from "@/lib/gallery";
+import { hotelBrand, photoAlt, responsivePhotoSrcSet } from "@/lib/gallery";
+import { useHotelMedia } from "@/components/CmsProvider";
 import { type RoomConcept, roomConcepts, roomUI } from "@/lib/room-concepts";
 
 type ShellProps = { locale: Locale };
@@ -12,7 +13,7 @@ type ShellProps = { locale: Locale };
 function ConceptPhoto({ index, locale, eager = false, sizes = "(max-width: 700px) 100vw, 50vw" }: {
   index: number; locale: Locale; eager?: boolean; sizes?: string;
 }) {
-  const photo = galleryImages[index];
+  const photo = useHotelMedia().images[index];
   const handleFail = (event:SyntheticEvent<HTMLImageElement>) => {
     const img=event.currentTarget;
     if(img.dataset.placeholder==="true")return;
@@ -23,7 +24,7 @@ function ConceptPhoto({ index, locale, eager = false, sizes = "(max-width: 700px
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img className="room-exp-image" data-media-origin={photo.origin} src={photo.src} srcSet={responsivePhotoSrcSet(photo.src)}
-      sizes={sizes} width={1400} height={1050} alt={photoAlt(index,locale)}
+      sizes={sizes} width={1400} height={1050} alt={photo.origin==="hotel-approved"?(locale==="ar"?photo.altAr:photo.alt):photoAlt(index,locale)}
       decoding="async" loading={eager?"eager":"lazy"}
       fetchPriority={eager?"high":"auto"} onError={handleFail}/>
   );
@@ -31,11 +32,13 @@ function ConceptPhoto({ index, locale, eager = false, sizes = "(max-width: 700px
 
 function RoomHeader({locale,slug}:{locale:Locale;slug?:string}) {
   const t=roomUI(locale);
+  const {logoSrc}=useHotelMedia();
+  const brandLogo=logoSrc??hotelBrand.officialLogoSrc;
   return <header className="room-exp-header">
     <div className="room-exp-header-inner">
       <Link href={`/${locale}`} className="room-exp-brand" aria-label={t.backHome}>
-        {hotelBrand.officialLogoSrc
-          ? <ConceptBrandLogo src={hotelBrand.officialLogoSrc}/>
+        {brandLogo
+          ? <ConceptBrandLogo src={brandLogo}/>
           : <span className="room-exp-monogram" aria-hidden="true">O</span>}
         <span><strong>OPAL LEGACY</strong><small>LUXOR · EGYPT</small></span>
       </Link>
@@ -56,10 +59,11 @@ function ConceptBrandLogo({src}:{src:string}) {
 
 function RoomFooter({locale}:ShellProps) {
   const t=roomUI(locale);
+  const media=useHotelMedia();
   return <footer className="room-exp-footer">
     <div className="room-exp-footer-inner">
       <div><strong>OPAL LEGACY</strong><span> LUXOR · EGYPT</span></div>
-      <p>{t.notice}</p>
+      <p>{media.approved?(locale==="ar"?"الصور معتمدة من إدارة الفندق؛ الغرف والحجوزات المعروضة ما زالت معاينة تصميمية.":"Owner-approved photography; displayed room concepts and booking remain previews."):t.notice}</p>
       <Link href={`/${locale}`}>{t.backHome}<span aria-hidden="true">↗</span></Link>
     </div>
   </footer>;
@@ -73,6 +77,7 @@ function ConceptBadge({locale}:ShellProps) {
 
 export function RoomCollection({locale}:ShellProps) {
   const t=roomUI(locale);
+  const media=useHotelMedia();
   return <>
     <a href="#room-main" className="opal-skip-link">{t.skip}</a>
     <RoomHeader locale={locale}/>
@@ -81,7 +86,7 @@ export function RoomCollection({locale}:ShellProps) {
         <div className="room-exp-hero-copy">
           <span className="room-exp-kicker">{t.collection} <span> / 03</span></span>
           <h1>{t.headline}<em>{t.italic}</em></h1>
-          <p>{t.introduction}</p>
+          <p>{media.approved?(locale==="ar"?"صور الفندق معتمدة؛ أسماء الغرف والأوصاف هنا تصورات تصميمية وليست غرفًا مؤكدة للحجز.":"Hotel-approved photography; room names and stories shown here are concepts, not verified bookable inventory."):t.introduction}</p>
           <div className="room-exp-hero-bottom">
             <ConceptBadge locale={locale}/>
             <Link className="room-exp-back-link" href={`/${locale}`}>{t.backHome} <span aria-hidden="true">↗</span></Link>
@@ -115,7 +120,7 @@ export function RoomCollection({locale}:ShellProps) {
       </section>
       <div className="room-exp-truth-note" role="note">
         <span className="room-exp-note-index">✳</span>
-        <div><h2>{t.noteHeading}</h2><p>{officialMediaActive ? (locale==="ar"?"الصور معتمدة للفندق، لكن أسماء تصورات الغرف والإتاحة ليست غرفًا مؤكدة أو قابلة للحجز.":"Photos are hotel-approved; room concepts are not verified inventory or bookable room types.") : t.notice}</p></div>
+        <div><h2>{t.noteHeading}</h2><p>{media.approved ? (locale==="ar"?"الصور معتمدة للفندق، لكن أسماء تصورات الغرف والإتاحة ليست غرفًا مؤكدة أو قابلة للحجز.":"Photos are hotel-approved; room concepts are not verified inventory or bookable room types.") : t.notice}</p></div>
         <Link href={`/${locale}/booking`} className="room-exp-secondary-cta">{t.book} <span aria-hidden="true">↗</span></Link>
       </div>
     </main>
@@ -199,6 +204,7 @@ function RoomPhotoExplorer({concept,locale}:{concept:RoomConcept;locale:Locale})
 
 export function RoomDetail({locale,concept}:{locale:Locale;concept:RoomConcept}) {
   const t=roomUI(locale);
+  const media=useHotelMedia();
   const others=roomConcepts.filter(item=>item.slug!==concept.slug);
   return <>
     <a href="#room-main" className="opal-skip-link">{t.skip}</a>
@@ -230,7 +236,7 @@ export function RoomDetail({locale,concept}:{locale:Locale;concept:RoomConcept})
       </section>
       <section className="room-exp-truth-note" role="note" aria-label={t.noteHeading}>
         <span className="room-exp-note-index">✳</span>
-        <div><h2>{t.noteHeading}</h2><p>{officialMediaActive ? (locale==="ar"?"هذه صور الفندق المعتمدة؛ تفاصيل الغرف وسعاتها والإتاحة تحتاج اعتمادًا منفصلًا.":"These are hotel-approved photos; room types, occupancy and availability are not confirmed.") : t.notice}</p><p>{t.bookNote}</p></div>
+        <div><h2>{t.noteHeading}</h2><p>{media.approved ? (locale==="ar"?"هذه صور الفندق المعتمدة؛ تفاصيل الغرف وسعاتها والإتاحة تحتاج اعتمادًا منفصلًا.":"These are hotel-approved photos; room types, occupancy and availability are not confirmed.") : t.notice}</p><p>{t.bookNote}</p></div>
         <Link href={`/${locale}/booking?room=${concept.slug}`} className="room-exp-secondary-cta">{t.book}<span aria-hidden="true">↗</span></Link>
       </section>
       <section className="room-exp-related">
