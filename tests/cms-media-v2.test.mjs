@@ -82,35 +82,40 @@ test("Media assignments use thumbnail dialogs instead of unreadable filename dro
 });
 
 
-test("Assigned media must be rights-approved and bilingual before public image resolution",()=>{
+test("A selected photo publishes with one rights attestation; descriptions are optional",()=>{
   const gate=read("src/lib/cms-media.ts");
+  const store=read("src/lib/cms-store.ts");
+  const route=read("src/app/api/admin/cms/publish/route.ts");
   const provider=read("src/components/CmsProvider.tsx");
-  assert.match(gate,/export function visualAssetIssues/);
-  assert.match(gate,/!asset\.altAr\.trim\(\)/);
-  assert.match(gate,/!asset\.altEn\.trim\(\)/);
-  assert.match(gate,/!asset\.approved/);
-  assert.match(gate,/export function unreadyVisualPlacements/);
-  assert.match(gate,/visualAssetIssues\(visual,src\)\.length>0/);
-  assert.match(provider,/const lookup=\(src:string\)=>approvedAsset\(visual,src\)/);
-  assert.match(provider,/overviewMain:resolve\(placed\.overviewMain,4\)/);
+  assert.match(gate,/export function approveAssignedVisualMedia/);
+  assert.match(gate,/export function assignedVisualSources/);
+  assert.match(gate,/selected\.has\(asset\.src\)/);
+  assert.match(gate,/export function visualAssetAlt/);
+  assert.match(gate,/if\(custom\.trim\(\)\)return custom\.trim\(\)/);
+  assert.match(gate,/if\(!asset\?\.approved\)return undefined/);
+  assert.ok(!gate.includes('if(!asset.altAr.trim())issues.push'),"Alt text must not block publishing");
+  assert.match(store,/confirmAssignedMediaRights/);
+  assert.match(store,/approveAssignedVisualMedia\(draft\.media\.visual\)/);
+  assert.match(route,/data\.confirmAssignedMediaRights===true/);
+  assert.match(provider,/const lookup=\(src:string\)=>preview/);
+  assert.match(provider,/visualAssetAlt\(asset,"ar"\)/);
 });
 
-test("Owner sees why selected images remain old, and can jump to approval and publish",()=>{
+test("The owner can pick and publish without checking every image or writing translations",()=>{
   const studio=read("src/components/MediaStudio.tsx");
   const picker=read("src/components/MediaPicker.tsx");
   const admin=read("src/components/AdminCms.tsx");
-  for(const needle of ["unreadyVisualPlacements","visualAssetIssues",
-    "renderReadiness(visual.placements[slot],slot)","prepareAsset",
-    "استكمال بيانات الصورة واعتماد النشر","الوصف العربي ناقص","selected"])
-    assert.ok((studio+read("src/lib/cms-media.ts")).includes(needle),needle);
-  assert.match(studio,/detailsRef\.current\?\.scrollIntoView/);
-  assert.match(studio,/published:CmsSite\|null/);
-  assert.match(studio,/if\(issues\.length===0\)/);
-  assert.match(picker,/غير جاهز للنشر/);
-  assert.match(picker,/تأكيد حق النشر/);
-  assert.match(admin,/unreadyVisualPlacements\(saved\.media\.visual\)/);
-  assert.match(admin,/unreadyVisualPlacements\(data\.published\.media\.visual\)/);
-  assert.match(admin,/setMessage\("تم نشر النسخة الجديدة/);
-  assert.match(admin,/unpublished\?"● المسودة محفوظة لكن لسه مش منشورة"/);
-  assert.match(admin,/published={published}/);
+  const preview=read("src/app/[locale]/preview/page.tsx");
+  assert.match(studio,/renderReadiness\(visual\.placements\[slot\],slot\)/);
+  assert.match(studio,/الوسيط جاهز للاختيار/);
+  assert.match(studio,/تعديل الاسم والتصنيف والوصف \(اختياري\)/);
+  assert.ok(!studio.includes('active.approved=e.target.checked'),"No manual rights checkbox needed");
+  assert.match(picker,/اختار الصورة عادي/);
+  assert.match(picker,/الصور المختارة مرة واحدة/);
+  assert.match(admin,/async function publish\(\)/);
+  assert.match(admin,/confirmAssignedMediaRights:count>0/);
+  assert.match(admin,/expectedRevision:current\.revision/);
+  assert.match(admin,/جاري الحفظ والنشر/);
+  assert.match(admin,/حفظ ونشر الآن/);
+  assert.match(preview,/<CmsProvider value={draft} preview>/);
 });
