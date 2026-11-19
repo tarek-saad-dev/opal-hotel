@@ -197,7 +197,7 @@ function RoomPhotoExplorer({concept,locale}:{concept:RoomConcept;locale:Locale})
       <button type="button" className="room-exp-lightbox-close" ref={closeRef}
         aria-label={locale==="ar"?"إغلاق الصورة":"Close image"} onClick={()=>setZoom(false)}>×</button>
       <button type="button" className="room-exp-lightbox-prev" aria-label={t.previous} onClick={()=>move(-1)}>‹</button>
-      <div className="room-exp-lightbox-image"><ConceptPhoto locale={locale} index={concept.imageIndices[selected]} eager sizes="100vw"/>
+      <div className="room-exp-lightbox-image"><ConceptPhoto locale={locale} index={imageIndices[selected]} eager sizes="100vw"/>
         <p dir="ltr" aria-live="polite">{selected+1} / {total}</p></div>
       <button type="button" className="room-exp-lightbox-next" aria-label={t.next} onClick={()=>move(1)}>›</button>
     </div>}
