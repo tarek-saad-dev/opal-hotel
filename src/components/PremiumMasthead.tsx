@@ -60,7 +60,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
     setFilmOpen(false);
     requestAnimationFrame(()=>filmTriggerRef.current?.focus({preventScroll:true}));
   };
-  const heroScenes=media.images.slice(0,3).map((image,i)=>({...image,label:String(i+1).padStart(2,"0")}));
+  const heroScenes=media.heroIndices.map((index,i)=>({...media.images[index],label:String(i+1).padStart(2,"0")}));
   const logoSrc=media.logoSrc??hotelBrand.officialLogoSrc;
   const heroCopy=cms.locales[locale].hero;
   const firstVisible=cms.sections.find(item=>item.visible)?.id||"booking";
