@@ -204,6 +204,8 @@ export function PremiumContact({locale,content:c}:Props) {
 }
 
 export function PremiumFooter({locale,content:c}:Props) {
+  const cms=useCmsSite();
+  const visible=new Set(cms.sections.filter(item=>item.visible).map(item=>item.id));
   const media=useHotelMedia();
   const logoSrc=media.logoSrc??hotelBrand.officialLogoSrc;
   const ar=locale==="ar";
@@ -243,11 +245,11 @@ export function PremiumFooter({locale,content:c}:Props) {
       </div>
       <nav aria-label={t.discover}>
         <h3>{t.discover}</h3>
-        {explore.map(key=><a href={`#${key}`} key={key}>{c.nav[key]}</a>)}
+        {explore.filter(key=>visible.has(key)).map(key=><a href={`#${key}`} key={key}>{c.nav[key]}</a>)}
       </nav>
       <nav aria-label={t.connect}>
         <h3>{t.connect}</h3>
-        {other.map(key=><a href={`#${key}`} key={key}>{c.nav[key]}</a>)}
+        {other.filter(key=>visible.has(key)).map(key=><a href={`#${key}`} key={key}>{c.nav[key]}</a>)}
       </nav>
       <div className="opal-end-footer-last">
         <span>{t.next}</span>
