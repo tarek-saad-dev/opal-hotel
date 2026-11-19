@@ -48,13 +48,13 @@ export function PremiumStory({ locale, content: c, onOpenPhoto }: StoryProps) {
     lead: "هنا تلتقي تفاصيل المكان بروح الأقصر؛ وتتحوّل أبسط اللحظات إلى ذكريات تستحق البقاء.",
     slow: "مساحة للإحساس بالمكان", secondary: "تجربة تكتشفها على مهل",
     photo: "استكشف الصور", line: "اكتشف التفاصيل",
-    art: media.approved ? "صور حقيقية معتمدة من إدارة الفندق" : "صور توضيحية · سيتم استبدالها بصور الفندق المعتمدة",
+    art: media.overviewApproved||media.approved ? "صور حقيقية معتمدة من إدارة الفندق" : "صور توضيحية · سيتم استبدالها بصور الفندق المعتمدة",
   } : {
     kicker: "THE OPAL EXPERIENCE", top: "Beyond a stay,", italic: "a feeling.",
     lead: "A place to discover more slowly. Inspired by the textures, light and timeless atmosphere of Luxor.",
     slow: "THE BEAUTY OF SLOWING DOWN", secondary: "STORIES IN EVERY DETAIL",
     photo: "Explore the images", line: "DISCOVER THE DETAILS",
-    art: media.approved ? "Hotel-approved property photography" : "Illustrative imagery · not photos of Opal Legacy",
+    art: media.overviewApproved||media.approved ? "Hotel-approved property photography" : "Illustrative imagery · not photos of Opal Legacy",
   };
   return <div className="opal-story-wrap">
     <div className="opal-story-copy">
