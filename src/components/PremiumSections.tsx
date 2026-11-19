@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import type { ReactNode, SyntheticEvent } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
-import { galleryImages, officialMediaActive, photoAlt, responsivePhotoSrcSet } from "@/lib/gallery";
+import { photoAlt, responsivePhotoSrcSet } from "@/lib/gallery";
+import { useCmsSite,useHotelMedia } from "@/components/CmsProvider";
 import { roomConcepts } from "@/lib/room-concepts";
 
 type SharedProps = { locale: Locale; content: HotelContent };
@@ -20,10 +21,10 @@ function demoImageError(event: SyntheticEvent<HTMLImageElement>) {
   img.src = "/media/photo-placeholder.svg";
 }
 function PreviewImage({ index, locale, eager = false }: { index: number; locale: Locale; eager?: boolean }) {
-  const img = galleryImages[index];
+  const img = useHotelMedia().images[index];
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img className="opal-editorial-photo" data-media-origin={img.origin} src={img.src} alt={photoAlt(index,locale)}
+    <img className="opal-editorial-photo" data-media-origin={img.origin} src={img.src} alt={img.origin==="hotel-approved"?(locale==="ar"?img.altAr:img.alt):photoAlt(index,locale)}
       srcSet={responsivePhotoSrcSet(img.src)} sizes="(max-width: 600px) 100vw, (max-width: 900px) 65vw, 42vw"
       width={1200} height={900} decoding="async" loading={eager ? "eager" : "lazy"} onError={demoImageError}/>
   );
@@ -38,27 +39,34 @@ function Header({ number, kicker, title, italic, note }: {
 }
 
 export function PremiumStory({ locale, content: c, onOpenPhoto }: StoryProps) {
+  const cms=useCmsSite();
+  const heading=cms.locales[locale].headings.overview;
+  const media=useHotelMedia();
   const ar = locale === "ar";
   const t = ar ? {
     kicker: "تجربة أوبال", top: "وراء كل إقامة", italic: "حكاية.",
     lead: "هنا تلتقي تفاصيل المكان بروح الأقصر؛ وتتحوّل أبسط اللحظات إلى ذكريات تستحق البقاء.",
     slow: "مساحة للإحساس بالمكان", secondary: "تجربة تكتشفها على مهل",
     photo: "استكشف الصور", line: "اكتشف التفاصيل",
-    art: officialMediaActive ? "صور حقيقية معتمدة من إدارة الفندق" : "صور توضيحية · سيتم استبدالها بصور الفندق المعتمدة",
+    art: media.approved ? "صور حقيقية معتمدة من إدارة الفندق" : "صور توضيحية · سيتم استبدالها بصور الفندق المعتمدة",
   } : {
     kicker: "THE OPAL EXPERIENCE", top: "Beyond a stay,", italic: "a feeling.",
     lead: "A place to discover more slowly. Inspired by the textures, light and timeless atmosphere of Luxor.",
     slow: "THE BEAUTY OF SLOWING DOWN", secondary: "STORIES IN EVERY DETAIL",
     photo: "Explore the images", line: "DISCOVER THE DETAILS",
-    art: officialMediaActive ? "Hotel-approved property photography" : "Illustrative imagery · not photos of Opal Legacy",
+    art: media.approved ? "Hotel-approved property photography" : "Illustrative imagery · not photos of Opal Legacy",
   };
   return <div className="opal-story-wrap">
     <div className="opal-story-copy">
-      <div className="opal-heading-kicker"><A>01</A><span>{t.kicker}</span></div>
-      <h2>{t.top} <em>{t.italic}</em></h2>
-      <p className="opal-story-lead">{t.lead}</p>
+      <div className="opal-heading-kicker"><A>01</A><span>{heading.kicker}</span></div>
+      <h2>{heading.title} <em>{heading.accent}</em></h2>
+      <p className="opal-story-lead">{heading.description}</p>
       <p className="opal-story-detail">{c.overview[0]}</p>
-      <a className="opal-text-link" href="#facilities">{t.line}<span aria-hidden="true">↗</span></a>
+      {c.overview.length>1&&<details className="opal-cms-more-story">
+        <summary>{ar?"تعرف على المكان أكثر":"More about the property"}</summary>
+        {c.overview.slice(1).map((paragraph,i)=><p key={i}>{paragraph}</p>)}
+      </details>}
+      <a className="opal-text-link" href={`#${cms.sections.find(x=>x.id!=="overview"&&x.visible)?.id||"booking"}`}>{t.line}<span aria-hidden="true">↗</span></a>
       <div className="opal-story-signature"><span className="opal-signature-line"/><span>{t.slow}</span></div>
     </div>
     <div className="opal-story-media">
@@ -78,6 +86,9 @@ export function PremiumStory({ locale, content: c, onOpenPhoto }: StoryProps) {
 }
 
 export function PremiumFacilities({ locale, content: c }: SharedProps) {
+  const cms=useCmsSite();
+  const heading=cms.locales[locale].headings.facilities;
+  const media=useHotelMedia();
   const ar = locale === "ar";
   const t = ar ? {
     kicker: "راحة في كل تفصيلة", title: "تفاصيل بسيطة.", italic: "تفرق كتير.",
@@ -101,7 +112,10 @@ export function PremiumFacilities({ locale, content: c }: SharedProps) {
     foot: "Amenities and policies are based on the previous listing and require hotel verification before launch.",
   };
   return <div className="opal-facilities-layout">
-    <Header number="02" kicker={t.kicker} title={t.title} italic={t.italic} note={t.note}/>
+    <Header number="02" kicker={heading.kicker} title={heading.title} italic={heading.accent} note={heading.description}/>
+    {c.quick.length>0&&<ul className="opal-cms-quick-facts">
+      {c.quick.map((item,i)=><li key={i}>{item}</li>)}
+    </ul>}
     <div className="opal-facility-features">
       {t.items.map((item, i) => <article className="opal-feature" key={item.number}>
         <span className="opal-feature-number">{item.number} / 03</span>
@@ -131,6 +145,9 @@ export function PremiumFacilities({ locale, content: c }: SharedProps) {
 }
 
 export function PremiumLocation({ locale, content: c }: SharedProps) {
+  const cms=useCmsSite();
+  const heading=cms.locales[locale].headings.location;
+  const media=useHotelMedia();
   const ar = locale === "ar";
   const t = ar ? {
     kicker: "الموقع", title: "في قلب", italic: "الحكاية.",
@@ -143,12 +160,12 @@ export function PremiumLocation({ locale, content: c }: SharedProps) {
     explore: "OPEN IN GOOGLE MAPS", nearby: "IN THE NEIGHBOURHOOD",
     notice: "Distances are indicative and sourced from the prior listing. Verify before publication.",
   };
-  const map = "https://www.google.com/maps/search/?api=1&query=Opal+Legacy+Luxor+Hotel";
+  const map = "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(c.address);
   return <div className="opal-location-layout">
     <div className="opal-location-copy">
-      <div className="opal-heading-kicker"><A>03</A><span>{t.kicker}</span></div>
-      <h2>{t.title} <em>{t.italic}</em></h2>
-      <p className="opal-location-intro">{t.intro}</p>
+      <div className="opal-heading-kicker"><A>03</A><span>{heading.kicker}</span></div>
+      <h2>{heading.title} <em>{heading.accent}</em></h2>
+      <p className="opal-location-intro">{heading.description}</p>
       <div className="opal-location-address"><span className="opal-location-pin" aria-hidden="true">⌖</span>
         <div><span>{t.subtitle}</span><strong>{c.address}</strong></div>
       </div>
@@ -171,10 +188,13 @@ export function PremiumLocation({ locale, content: c }: SharedProps) {
 const roomPhotos = [2,5,3] as const;
 
 export function PremiumRooms({ locale, content: c, onOpenPhoto, attemptedBooking, checkin, checkout }: RoomsProps) {
+  const cms=useCmsSite();
+  const heading=cms.locales[locale].headings.rooms;
+  const media=useHotelMedia();
   const ar = locale === "ar";
   const t = ar ? {
     kicker:"مساحات للإلهام", title:"أماكن تهدأ فيها.", italic:"وتستمتع بكل لحظة.",
-    note:officialMediaActive ? "صور الفندق معتمدة، لكن تصورات الغرف والأوصاف ليست أنواعًا مؤكدة أو متاحة للحجز." : "معاينة لأسلوب عرض الغرف في الموقع الجديد؛ الصور والأوصاف توضيحية وليست أنواع غرف مؤكدة.",
+    note:media.approved ? "صور الفندق معتمدة، لكن تصورات الغرف والأوصاف ليست أنواعًا مؤكدة أو متاحة للحجز." : "معاينة لأسلوب عرض الغرف في الموقع الجديد؛ الصور والأوصاف توضيحية وليست أنواع غرف مؤكدة.",
     stories:[
       {label:"فكرة تصميمية 01",name:"نور وهدوء",text:"مساحات هادئة وخامات دافئة."},
       {label:"فكرة تصميمية 02",name:"تفاصيل مريحة",text:"تصميم يجعل الراحة جزءًا من التجربة."},
@@ -185,18 +205,18 @@ export function PremiumRooms({ locale, content: c, onOpenPhoto, attemptedBooking
     details:"استكشف التفاصيل", allConcepts:"شوف كل التصورات",
   } : {
     kicker:"THE ART OF REST", title:"Rooms to slow down.", italic:"Moments to stay.",
-    note:officialMediaActive ? "Approved hotel photography. Room concepts and descriptions remain illustrative, not confirmed inventory." : "An editorial preview of how the room experience could look. Photography and concepts are illustrative, not confirmed hotel inventory.",
+    note:media.approved ? "Approved hotel photography. Room concepts and descriptions remain illustrative, not confirmed inventory." : "An editorial preview of how the room experience could look. Photography and concepts are illustrative, not confirmed hotel inventory.",
     stories:[
       {label:"DESIGN STORY 01",name:"Light & stillness",text:"A softer rhythm and warm material details."},
       {label:"DESIGN STORY 02",name:"Quiet comforts",text:"The thoughtful details that make a stay feel personal."},
       {label:"DESIGN STORY 03",name:"Slow mornings",text:"Time to pause, breathe and feel at ease."},
     ],
-    view:"EXPLORE IMAGES", warning:officialMediaActive ? "Hotel photography approved · Concepts are not actual room types or bookable inventory" : "Concept room imagery only · Not actual room types or bookable inventory",
+    view:"EXPLORE IMAGES", warning:media.approved ? "Hotel photography approved · Concepts are not actual room types or bookable inventory" : "Concept room imagery only · Not actual room types or bookable inventory",
     plan:"YOUR STAY PREVIEW", noDates:"Select your dates above to preview the booking journey.",
     details:"EXPLORE THE CONCEPT", allConcepts:"VIEW ALL ROOM STORIES",
   };
   return <div className="opal-rooms-wrap">
-    <Header number="04" kicker={t.kicker} title={t.title} italic={t.italic} note={t.note}/>
+    <Header number="04" kicker={heading.kicker} title={heading.title} italic={heading.accent} note={media.approved?"Owner-approved images · room types remain concepts.":t.note}/>
     <div className="opal-room-cards">
       {t.stories.map((story, i) => <article className="opal-room-card" key={story.label}>
         <button type="button" className="opal-room-photo" onClick={() => onOpenPhoto(roomPhotos[i])}
@@ -236,25 +256,29 @@ const categoryPhotos: Record<Exclude<Category,"all">,number[]> = {
   spaces:[0,2,4,5], moments:[1,3],
 };
 export function PremiumGallery({ locale, onOpenPhoto }: GalleryProps) {
+  const cms=useCmsSite();
+  const heading=cms.locales[locale].headings.gallery;
+  const media=useHotelMedia();
   const ar = locale === "ar";
+  const galleryImages=media.images;
   const [filter,setFilter] = useState<Category>("all");
   const t = ar ? {
     kicker:"نظرة أقرب",title:"جمال التفاصيل.",italic:"من كل زاوية.",
-    note:officialMediaActive ? "صور الفندق الرسمية والمعتمدة من إدارة الفندق." : "صور للإلهام البصري فقط؛ سيتم استبدالها بالصور الرسمية للفندق.",
+    note:media.approved ? "صور الفندق الرسمية والمعتمدة من إدارة الفندق." : "صور للإلهام البصري فقط؛ سيتم استبدالها بالصور الرسمية للفندق.",
     filters:{all:"كل الصور",spaces:"المساحات",moments:"اللحظات"},
-    footer:officialMediaActive ? "الصور من الفندق ومعتمدة للاستخدام؛ تفاصيل الغرف والإتاحة تحتاج اعتماد منفصل." : "الصور المعروضة توضيحية ولا تمثل غرف أو مرافق فندق Opal Legacy.",
+    footer:media.approved ? "الصور من الفندق ومعتمدة للاستخدام؛ تفاصيل الغرف والإتاحة تحتاج اعتماد منفصل." : "الصور المعروضة توضيحية ولا تمثل غرف أو مرافق فندق Opal Legacy.",
     photo:"افتح الصورة",count:"صور معروضة",
   } : {
     kicker:"VISUAL JOURNAL",title:"A closer look.",italic:"Every angle.",
-    note:officialMediaActive ? "Explore hotel-approved property photography." : "Explore the visual direction. These photographs are illustrative until approved hotel imagery is provided.",
+    note:media.approved ? "Explore hotel-approved property photography." : "Explore the visual direction. These photographs are illustrative until approved hotel imagery is provided.",
     filters:{all:"All images",spaces:"Spaces",moments:"Moments"},
-    footer:officialMediaActive ? "Approved property photography. Room inventory and live booking remain unverified." : "Illustrative photography for the UI concept. Not photographs of Opal Legacy Hotel.",
+    footer:media.approved ? "Approved property photography. Room inventory and live booking remain unverified." : "Illustrative photography for the UI concept. Not photographs of Opal Legacy Hotel.",
     photo:"Open photo",count:"images on view",
   };
   const visible = galleryImages.map((img,i)=>({...img,index:i}))
     .filter(img=>filter==="all" || categoryPhotos[filter].includes(img.index));
   return <div className="opal-gallery-wrap">
-    <Header number="05" kicker={t.kicker} title={t.title} italic={t.italic} note={t.note}/>
+    <Header number="05" kicker={heading.kicker} title={heading.title} italic={heading.accent} note={media.approved?"Owner-approved hotel imagery":t.note}/>
     <div className="opal-gallery-toolbar">
       <div className="opal-gallery-tabs" role="group" aria-label={ar?"نوع الصور":"Image category"}>
         {categories.map(key=><button key={key} type="button" aria-pressed={filter===key}

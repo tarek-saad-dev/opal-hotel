@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { RoomCollection } from "@/components/RoomsExperience";
 import { isLocale } from "@/lib/hotel-content";
 import { roomUI } from "@/lib/room-concepts";
+import { readPublished } from "@/lib/cms-store";
+import { CmsProvider } from "@/components/CmsProvider";
+export const dynamic="force-dynamic";
 
 type Props={params:Promise<{locale:string}>};
 export function generateStaticParams(){return [{locale:"en"},{locale:"ar"}];}
@@ -22,5 +25,6 @@ export async function generateMetadata({params}:Props):Promise<Metadata>{
 export default async function RoomsPage({params}:Props){
   const {locale}=await params;
   if(!isLocale(locale))notFound();
-  return <RoomCollection locale={locale}/>;
+  const published=await readPublished();
+  return <CmsProvider value={published}><RoomCollection locale={locale}/></CmsProvider>;
 }

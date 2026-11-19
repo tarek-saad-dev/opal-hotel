@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/*.test.mjs",
     "capture:preview": "node scripts/capture-preview.mjs",
+    "capture:cms": "node scripts/capture-cms.mjs",
     "media:check": "node scripts/verify-official-media.mjs",
     "media:launch-check": "node scripts/verify-official-media.mjs --launch"
   },

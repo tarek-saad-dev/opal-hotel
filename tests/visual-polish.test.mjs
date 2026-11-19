@@ -55,7 +55,8 @@ test("Floating booking shortcut stays preview-only and skip link supports reduce
   const css=read("src/app/visual-polish.css");
   assert.ok(head.includes("opal-stay-dock"));
   assert.ok(head.includes('href="#booking"'));
-  assert.ok(head.includes('href="#overview"'));
+  assert.ok(head.includes("firstVisible"));
+  assert.ok(head.includes("visibleNav"));
   assert.ok(head.includes("beforeFooter"));
   assert.ok(css.includes(".opal-skip-link:focus-visible"));
   assert.ok(css.includes("prefers-reduced-motion:reduce"));

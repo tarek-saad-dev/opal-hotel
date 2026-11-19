@@ -23,6 +23,16 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
+      - name: Prepare isolated owner CMS test credentials
+        run: |
+          PASS="$(node -e "process.stdout.write(require('crypto').randomBytes(24).toString('base64url'))")"
+          SECRET="$(node -e "process.stdout.write(require('crypto').randomBytes(48).toString('base64url'))")"
+          echo "::add-mask::$PASS"
+          echo "::add-mask::$SECRET"
+          echo "OPAL_CMS_ADMIN_PASSWORD=$PASS" >> "$GITHUB_ENV"
+          echo "OPAL_CMS_SESSION_SECRET=$SECRET" >> "$GITHUB_ENV"
+          echo "OPAL_CMS_DATA_DIR=$RUNNER_TEMP/opal-cms-test-data" >> "$GITHUB_ENV"
+          echo "OPAL_CMS_PUBLIC_ORIGIN=http://127.0.0.1:3000" >> "$GITHUB_ENV"
       - name: Build Next.js
         run: npm run build
       - name: Start local Next server
@@ -31,6 +41,12 @@ jobs:
           echo $! > /tmp/opal-next.pid
       - name: Validate screenshot utility syntax
         run: node --check scripts/capture-preview.mjs
+      - name: Run CMS owner dashboard integration
+        run: npm run capture:cms
+      - name: Reset isolated CMS test data before frontend screenshots
+        run: |
+          test "$OPAL_CMS_DATA_DIR" = "$RUNNER_TEMP/opal-cms-test-data"
+          rm -rf -- "$OPAL_CMS_DATA_DIR"
       - name: Capture own frontend EN/AR screenshots
         run: npm run capture:preview
       - name: Show Next server output on failure

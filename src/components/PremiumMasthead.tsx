@@ -5,7 +5,8 @@ import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, SVGProps, MouseEvent as ReactMouseEvent } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
-import { heroScenes, hotelBrand, officialMediaActive, responsivePhotoSrcSet } from "@/lib/gallery";
+import { hotelBrand, responsivePhotoSrcSet } from "@/lib/gallery";
+import { useCmsSite,useHotelMedia } from "@/components/CmsProvider";
 
 type Props = {
   locale: Locale;
@@ -47,6 +48,13 @@ function dayAfter(input: string) {
 }
 
 export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGallery }: Props) {
+  const cms=useCmsSite();
+  const media=useHotelMedia();
+  const heroScenes=media.images.slice(0,3).map((image,i)=>({...image,label:String(i+1).padStart(2,"0")}));
+  const logoSrc=media.logoSrc??hotelBrand.officialLogoSrc;
+  const heroCopy=cms.locales[locale].hero;
+  const firstVisible=cms.sections.find(item=>item.visible)?.id||"booking";
+  const visibleNav=new Set(cms.sections.filter(item=>item.visible).map(item=>item.id));
   const ar = locale === "ar";
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -238,7 +246,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
     discover: "اكتشف المكان", photos: "استعرض الصور", scroll: "اكتشف المزيد", aesthetic: "تفاصيل تصنع الفرق",
     reserve: "خطط لإقامتك", nights: "إقامة لا تُنسى تبدأ هنا", guests: "الضيوف",
     guestPlural: "ضيف", adult: "البالغون", child: "الأطفال", plan: "استعرض الإقامة",
-    preview: officialMediaActive ? "صور الفندق معتمدة · الحجز الإلكتروني لا يزال في مرحلة المعاينة" : "عرض تصميمي — الصور توضيحية لحين اعتماد صور الفندق",
+    preview: media.approved ? "صور الفندق معتمدة · الحجز الإلكتروني لا يزال في مرحلة المعاينة" : "عرض تصميمي — الصور توضيحية لحين اعتماد صور الفندق",
     menuTitle: "اكتشف أوبال", helper: "تواريخك للعرض فقط؛ الحجز الفعلي غير مفعل بعد.",
     guestsHint: "عدد الضيوف", rooms: "تعرف على الغرف",
   } : {
@@ -248,7 +256,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
     discover: "Discover our story", photos: "Explore the gallery", scroll: "SCROLL TO EXPLORE", aesthetic: "THE ART OF FEELING AT HOME",
     reserve: "Plan your stay", nights: "YOUR LUXOR STORY STARTS HERE", guests: "Guests",
     guestPlural: "guests", adult: "Adults", child: "Children", plan: "Explore your stay",
-    preview: officialMediaActive ? "Approved hotel photography · booking is still a design preview" : "Design preview · illustrative photography until hotel assets are approved",
+    preview: media.approved ? "Approved hotel photography · booking is still a design preview" : "Design preview · illustrative photography until hotel assets are approved",
     menuTitle: "Explore Opal", helper: "Dates are for preview only. Live reservations are not yet enabled.",
     guestsHint: "Your party", rooms: "Explore the rooms",
   };
@@ -259,13 +267,13 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
       <header className={`premium-header${scrolled || menuOpen ? " is-scrolled" : ""}`} id="top">
         <div className="premium-header-inner">
           <Link className="premium-mark" href={`/${locale}`} aria-label={t.home}>
-            {hotelBrand.officialLogoSrc
-              ? <img className="premium-mark-official" src={hotelBrand.officialLogoSrc} alt="" width={56} height={56} />
+            {logoSrc
+              ? <img className="premium-mark-official" src={logoSrc} alt="" width={56} height={56} />
               : <span className="premium-mark-symbol" aria-hidden="true">O</span>}
             <span className="premium-mark-words"><strong>{hotelBrand.wordmark}</strong><small>L U X O R&nbsp; · &nbsp;E G Y P T</small></span>
           </Link>
           <nav className="premium-desktop-nav" aria-label={c.labels.menu}>
-            {navItems.slice(0, 5).map(id =>
+            {navItems.filter(id=>visibleNav.has(id)).slice(0,5).map(id =>
               <a key={id} href={`#${id}`} aria-current={activeSection===id?"location":undefined}>{c.nav[id]}</a>
             )}
           </nav>
@@ -289,8 +297,8 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
           role="dialog" aria-modal="true" aria-label={t.menuTitle} ref={menuRef}>
           <div className="premium-menu-top">
             <span className="premium-menu-brand" aria-label={hotelBrand.wordmark}>
-              {hotelBrand.officialLogoSrc
-                ? <img className="premium-mark-official" src={hotelBrand.officialLogoSrc} alt="" width={48} height={48}/>
+              {logoSrc
+                ? <img className="premium-mark-official" src={logoSrc} alt="" width={48} height={48}/>
                 : <span className="premium-menu-brand-symbol" aria-hidden="true">O</span>}
               <span className="premium-menu-brand-wordmark"><strong>OPAL LEGACY</strong><small>LUXOR · EGYPT</small></span>
             </span>
@@ -305,7 +313,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
           <div className="premium-menu-content">
             <p className="premium-menu-eyebrow">{t.menuTitle}</p>
             <nav aria-label={c.labels.menu}>
-              {navItems.map((id, i) =>
+              {navItems.filter(id=>visibleNav.has(id)).map((id, i) =>
                 <a href={`#${id}`} key={id} aria-current={activeSection===id?"location":undefined}
                   onClick={event => navigateFromMenu(event, id)}>
                   <span className="premium-menu-number">{String(i + 1).padStart(2, "0")}</span>
@@ -330,7 +338,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
       <section className="premium-hero" aria-labelledby="hotel-name">
         <div className="premium-hero-visual">
           {!imageFailed
-            ? <img key={slide} className="premium-hero-photo" data-media-origin={officialMediaActive?"hotel-approved":"design-demo"} src={heroScenes[slide].src}
+            ? <img key={slide} className="premium-hero-photo" data-media-origin={heroScenes[slide].origin} src={heroScenes[slide].src}
               srcSet={responsivePhotoSrcSet(heroScenes[slide].src)} sizes="100vw"
               width={1920} height={1080} loading="eager" decoding="async" fetchPriority={slide===0?"high":"auto"}
               alt={ar ? heroScenes[slide].altAr : heroScenes[slide].alt} onError={() => setImageFailed(true)} />
@@ -341,11 +349,11 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
         <div className="premium-hero-shade" />
         <div className="premium-hero-layout">
           <div className="premium-hero-copy">
-            <p className="premium-eyebrow"><span className="premium-eyebrow-line" />{t.kicker}</p>
-            <h1 id="hotel-name"><span className="opal-visually-hidden">{c.hotelName}: </span><span>{t.first}</span><em>{t.second}</em></h1>
-            <p className="premium-hero-description">{t.description}</p>
+            <p className="premium-eyebrow"><span className="premium-eyebrow-line" />{heroCopy.kicker}</p>
+            <h1 id="hotel-name"><span className="opal-visually-hidden">{c.hotelName}: </span><span>{heroCopy.title}</span><em>{heroCopy.accent}</em></h1>
+            <p className="premium-hero-description">{heroCopy.description}</p>
             <div className="premium-hero-actions">
-              <a href="#overview" className="premium-hero-button">{t.discover}<Glyph name="arrow" /></a>
+              <a href={`#${firstVisible}`} className="premium-hero-button">{t.discover}<Glyph name="arrow" /></a>
               <button type="button" className="premium-photo-button" onClick={onOpenGallery}>
                 <span><Glyph name="camera"/></span>{t.photos}
               </button>
@@ -357,7 +365,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
           </div>
         </div>
         <div className="premium-hero-bottom">
-          <a href="#overview" className="premium-scroll-cue">
+          <a href={`#${firstVisible}`} className="premium-scroll-cue">
             <span className="premium-scroll-mark" /><span>{t.scroll}</span>
           </a>
           <div className="premium-hero-scene-navigation">

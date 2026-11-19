@@ -25,3 +25,6 @@ docs/reference-lock/capture/output/
 Thumbs.db
 .idea/
 .vscode/
+
+# Local CMS drafts, published data and media (never commit)
+.cms-data/

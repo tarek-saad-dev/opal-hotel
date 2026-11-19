@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
-import { hotelBrand, officialMediaActive } from "@/lib/gallery";
+import { hotelBrand } from "@/lib/gallery";
+import { useCmsSite,useHotelMedia } from "@/components/CmsProvider";
 
 type Props = { locale: Locale; content: HotelContent };
-const mapUrl = "https://www.google.com/maps/search/?api=1&query=Opal+Legacy+Luxor+Hotel";
+const mapUrl = (address:string) => "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(address);
 
 function Arrow({ diagonal = false }: { diagonal?: boolean }) {
   return <svg width="21" height="21" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
@@ -21,6 +22,7 @@ function Eyebrow({number,children}: {number:string;children:ReactNode}) {
 }
 
 export function PremiumReviews({locale,content:c}:Props) {
+  const heading=useCmsSite().locales[locale].headings.reviews;
   const ar=locale==="ar";
   const [rating,setRating]=useState(8);
   const [submitted,setSubmitted]=useState(false);
@@ -63,9 +65,9 @@ export function PremiumReviews({locale,content:c}:Props) {
 
   return <div className="opal-end-review-layout">
     <div className="opal-end-review-story opal-reveal">
-      <Eyebrow number="06">{t.kicker}</Eyebrow>
-      <h2 id="reviews-heading">{t.heading} <em>{t.accent}</em></h2>
-      <p className="opal-end-lead">{t.lead}</p>
+      <Eyebrow number="06">{heading.kicker}</Eyebrow>
+      <h2 id="reviews-heading">{heading.title} <em>{heading.accent}</em></h2>
+      <p className="opal-end-lead">{heading.description}</p>
       <div className="opal-end-quote-decoration" aria-hidden="true">“</div>
       <div className="opal-end-review-line"><span />{t.preview}</div>
     </div>
@@ -115,6 +117,7 @@ export function PremiumReviews({locale,content:c}:Props) {
 }
 
 export function PremiumContact({locale,content:c}:Props) {
+  const heading=useCmsSite().locales[locale].headings.contact;
   const ar=locale==="ar";
   const [submitted,setSubmitted]=useState(false);
   const t=ar ? {
@@ -157,14 +160,14 @@ export function PremiumContact({locale,content:c}:Props) {
   };
   return <div className="opal-end-contact-layout">
     <div className="opal-end-contact-intro opal-reveal">
-      <Eyebrow number="07">{t.kicker}</Eyebrow>
-      <h2 id="contact-heading">{t.heading} <em>{t.accent}</em></h2>
-      <p>{t.intro}</p>
+      <Eyebrow number="07">{heading.kicker}</Eyebrow>
+      <h2 id="contact-heading">{heading.title} <em>{heading.accent}</em></h2>
+      <p>{heading.description}</p>
       <div className="opal-end-contact-place">
         <span className="opal-end-contact-place-mark" aria-hidden="true">⌖</span>
         <div><small>{t.location}</small><strong>{t.place}</strong><span>{c.address}</span></div>
       </div>
-      <a className="opal-end-map-link" href={mapUrl} rel="noopener noreferrer" target="_blank">
+      <a className="opal-end-map-link" href={mapUrl(c.address)} rel="noopener noreferrer" target="_blank">
         {t.map}<Arrow diagonal/>
       </a>
       <p className="opal-end-contact-footnote">{t.note}</p>
@@ -201,6 +204,10 @@ export function PremiumContact({locale,content:c}:Props) {
 }
 
 export function PremiumFooter({locale,content:c}:Props) {
+  const cms=useCmsSite();
+  const visible=new Set(cms.sections.filter(item=>item.visible).map(item=>item.id));
+  const media=useHotelMedia();
+  const logoSrc=media.logoSrc??hotelBrand.officialLogoSrc;
   const ar=locale==="ar";
   const t=ar ? {
     top:"ارجع لبداية الحكاية",
@@ -208,7 +215,7 @@ export function PremiumFooter({locale,content:c}:Props) {
     title:"الحكايات الجميلة", accent:"بتبدأ من هنا.",
     pre:"فندق أوبال ليجاسي", discover:"اكتشف", connect:"روابط سريعة",
     next:"مستعد تكتشف أكثر؟", map:"شوف الموقع", language:"English",
-    demo:officialMediaActive ? "صور الفندق معتمدة؛ الحجز والتواصل الإلكتروني غير مفعلين بعد." : "نسخة العرض — الصور التوضيحية لا تمثل الفندق، والحجز والتواصل غير مفعلين.",
+    demo:media.approved ? "صور الفندق معتمدة؛ الحجز والتواصل الإلكتروني غير مفعلين بعد." : "نسخة العرض — الصور التوضيحية لا تمثل الفندق، والحجز والتواصل غير مفعلين.",
     credits:"صُمم بهدوء ليبقى في الذاكرة",
   } : {
     top:"BACK TO THE TOP",
@@ -216,7 +223,7 @@ export function PremiumFooter({locale,content:c}:Props) {
     title:"Beautiful stories", accent:"begin here.",
     pre:"Opal Legacy Hotel", discover:"EXPLORE", connect:"DISCOVER",
     next:"READY FOR YOUR NEXT STORY?", map:"FIND US ON THE MAP", language:"العربية",
-    demo:officialMediaActive ? "Approved hotel imagery. Booking and online contact remain disabled." : "Design preview. Imagery is illustrative; bookings and contact delivery are not enabled.",
+    demo:media.approved ? "Approved hotel imagery. Booking and online contact remain disabled." : "Design preview. Imagery is illustrative; bookings and contact delivery are not enabled.",
     credits:"CONSIDERED DETAILS. LASTING FEELINGS.",
   };
   const explore=(["overview","facilities","rooms","gallery"] as const);
@@ -229,8 +236,8 @@ export function PremiumFooter({locale,content:c}:Props) {
     </div>
     <div className="opal-end-footer-columns">
       <div className="opal-end-footer-brand">
-        {hotelBrand.officialLogoSrc
-          ? <img src={hotelBrand.officialLogoSrc} className="opal-end-brand-official" alt="" width={54} height={54} loading="lazy"/>
+        {logoSrc
+          ? <img src={logoSrc} className="opal-end-brand-official" alt="" width={54} height={54} loading="lazy"/>
           : <span className="opal-end-brand-emblem" aria-hidden="true">O</span>}
         <strong>OPAL LEGACY</strong>
         <span>L U X O R &nbsp; · &nbsp; E G Y P T</span>
@@ -238,15 +245,15 @@ export function PremiumFooter({locale,content:c}:Props) {
       </div>
       <nav aria-label={t.discover}>
         <h3>{t.discover}</h3>
-        {explore.map(key=><a href={`#${key}`} key={key}>{c.nav[key]}</a>)}
+        {explore.filter(key=>visible.has(key)).map(key=><a href={`#${key}`} key={key}>{c.nav[key]}</a>)}
       </nav>
       <nav aria-label={t.connect}>
         <h3>{t.connect}</h3>
-        {other.map(key=><a href={`#${key}`} key={key}>{c.nav[key]}</a>)}
+        {other.filter(key=>visible.has(key)).map(key=><a href={`#${key}`} key={key}>{c.nav[key]}</a>)}
       </nav>
       <div className="opal-end-footer-last">
         <span>{t.next}</span>
-        <a href={mapUrl} rel="noopener noreferrer" target="_blank">{t.map}<Arrow diagonal/></a>
+        <a href={mapUrl(c.address)} rel="noopener noreferrer" target="_blank">{t.map}<Arrow diagonal/></a>
         <Link href={ar?"/en":"/ar"} lang={ar?"en":"ar"} hrefLang={ar?"en":"ar"}>{t.language}</Link>
       </div>
     </div>

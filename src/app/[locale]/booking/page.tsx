@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { BookingExperience } from "@/components/BookingExperience";
 import { bookingCopy, parsePreviewParams } from "@/lib/booking-preview";
 import { isLocale } from "@/lib/hotel-content";
+import { readPublished } from "@/lib/cms-store";
+import { CmsProvider } from "@/components/CmsProvider";
+export const dynamic="force-dynamic";
 
 type PageProps={
   params:Promise<{locale:string}>;
@@ -27,5 +30,6 @@ export default async function BookingPage({params,searchParams}:PageProps){
   const {locale}=await params;
   if(!isLocale(locale))notFound();
   const input=parsePreviewParams(await searchParams);
-  return <BookingExperience locale={locale} initial={input}/>;
+  const published=await readPublished();
+  return <CmsProvider value={published}><BookingExperience locale={locale} initial={input}/></CmsProvider>;
 }

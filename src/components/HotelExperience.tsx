@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { SyntheticEvent } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
-import { galleryImages, photoAlt, responsivePhotoSrcSet } from "@/lib/gallery";
+import { photoAlt, responsivePhotoSrcSet } from "@/lib/gallery";
+import { useCmsSite,useCmsContent,useHotelMedia } from "@/components/CmsProvider";
+import type { CmsSectionId } from "@/lib/cms-schema";
 import { PremiumMasthead } from "@/components/PremiumMasthead";
 import { PremiumStory, PremiumFacilities, PremiumLocation, PremiumRooms, PremiumGallery } from "@/components/PremiumSections";
 import { PremiumReviews, PremiumContact, PremiumFooter } from "@/components/PremiumClosing";
@@ -18,8 +20,12 @@ function handleImageError(event:SyntheticEvent<HTMLImageElement>) {
   img.removeAttribute("srcset");
   img.src="/media/photo-placeholder.svg";
 }
-export function HotelExperience({locale,content:c}:Props) {
+export function HotelExperience({locale,content:baseContent}:Props) {
   const router=useRouter();
+  const c=useCmsContent(locale);
+  const cms=useCmsSite();
+  const media=useHotelMedia();
+  const galleryImages=media.images;
   const [photo,setPhoto]=useState<number|null>(null);
   const [checkin,setCheckin]=useState("");
   const [checkout,setCheckout]=useState("");
@@ -117,29 +123,31 @@ export function HotelExperience({locale,content:c}:Props) {
         }}
       />
       <main>
-        <section className="opal-stage-section opal-stage-story" id="overview" aria-label={c.labels.overviewTitle}>
-          <PremiumStory locale={locale} content={c} onOpenPhoto={openPhoto}/>
-        </section>
-        <section className="opal-stage-section opal-stage-facilities" id="facilities" aria-label={c.labels.facilitiesTitle}>
-          <PremiumFacilities locale={locale} content={c}/>
-        </section>
-        <section className="opal-stage-section opal-stage-location" id="location" aria-label={c.labels.locationTitle}>
-          <PremiumLocation locale={locale} content={c}/>
-        </section>
-        <section className="opal-stage-section opal-stage-rooms" id="rooms" aria-label={c.labels.roomsTitle}>
-          <PremiumRooms locale={locale} content={c} onOpenPhoto={openPhoto}
-            attemptedBooking={attemptedBooking} checkin={checkin} checkout={checkout}/>
-        </section>
-        <section className="opal-stage-section opal-stage-gallery" id="gallery" aria-label={c.nav.gallery}>
-          <PremiumGallery locale={locale} content={c} onOpenPhoto={openPhoto}/>
-        </section>
-
-        <section className="opal-stage-section opal-stage-reviews" id="reviews" aria-labelledby="reviews-heading">
-          <PremiumReviews locale={locale} content={c}/>
-        </section>
-        <section className="opal-stage-section opal-stage-contact" id="contact" aria-labelledby="contact-heading">
-          <PremiumContact locale={locale} content={c}/>
-        </section>
+        {cms.sections.filter(section=>section.visible).map(section=>{
+          const id:CmsSectionId=section.id;
+          if(id==="overview")return <section key={id} className="opal-stage-section opal-stage-story" id="overview" aria-label={c.labels.overviewTitle}>
+            <PremiumStory locale={locale} content={c} onOpenPhoto={openPhoto}/>
+          </section>;
+          if(id==="facilities")return <section key={id} className="opal-stage-section opal-stage-facilities" id="facilities" aria-label={c.labels.facilitiesTitle}>
+            <PremiumFacilities locale={locale} content={c}/>
+          </section>;
+          if(id==="location")return <section key={id} className="opal-stage-section opal-stage-location" id="location" aria-label={c.labels.locationTitle}>
+            <PremiumLocation locale={locale} content={c}/>
+          </section>;
+          if(id==="rooms")return <section key={id} className="opal-stage-section opal-stage-rooms" id="rooms" aria-label={c.labels.roomsTitle}>
+            <PremiumRooms locale={locale} content={c} onOpenPhoto={openPhoto}
+              attemptedBooking={attemptedBooking} checkin={checkin} checkout={checkout}/>
+          </section>;
+          if(id==="gallery")return <section key={id} className="opal-stage-section opal-stage-gallery" id="gallery" aria-label={c.nav.gallery}>
+            <PremiumGallery locale={locale} content={c} onOpenPhoto={openPhoto}/>
+          </section>;
+          if(id==="reviews")return <section key={id} className="opal-stage-section opal-stage-reviews" id="reviews" aria-labelledby="reviews-heading">
+            <PremiumReviews locale={locale} content={c}/>
+          </section>;
+          return <section key={id} className="opal-stage-section opal-stage-contact" id="contact" aria-labelledby="contact-heading">
+            <PremiumContact locale={locale} content={c}/>
+          </section>;
+        })}
       </main>
 
       <footer className="opal-end-footer">
@@ -153,7 +161,7 @@ export function HotelExperience({locale,content:c}:Props) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={galleryImages[photo].src} srcSet={responsivePhotoSrcSet(galleryImages[photo].src)}
             sizes="100vw" width={1200} height={900} decoding="async"
-            alt={photoAlt(photo,locale)} onError={handleImageError}/>
+            alt={media.approved?(locale==="ar"?galleryImages[photo].altAr:galleryImages[photo].alt):photoAlt(photo,locale)} onError={handleImageError}/>
           <p className="lightbox-counter" dir="ltr">{photo+1} / {galleryImages.length}</p>
         </div>
         <button type="button" className="lightbox-next" onClick={e=>{e.stopPropagation();setPhoto((photo+1)%galleryImages.length)}} aria-label={c.labels.next}>›</button>
