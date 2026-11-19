@@ -22,7 +22,7 @@ export async function GET(request:NextRequest,{params}:{params:Promise<{filename
   const range=request.headers.get("range");
   let start=0,end=size-1;
   if(range){
-    const match=/^bytes=(\\d*)-(\\d*)$/.exec(range.trim());
+    const match=/^bytes=(\d*)-(\d*)$/.exec(range.trim());
     if(!match||(!match[1]&&!match[2])){
       headers.set("Content-Range",`bytes */${size}`);
       return new Response(null,{status:416,headers});
