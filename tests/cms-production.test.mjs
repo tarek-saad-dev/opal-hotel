@@ -37,7 +37,8 @@ test("Unpublished photo uploads remain private and public images require all app
   const store = read("src/lib/cms-store.ts");
   const media = read("src/app/api/cms/media/[filename]/route.ts");
   assert.match(store, /export async function isPublishedCmsImage/);
-  assert.match(store, /if\(!hasCompleteCmsMedia\(published\)\)return false/);
+  assert.match(store, /return hasCompleteCmsMedia\(published\)/);
+  assert.match(store, /hasApprovedCmsLogo\(published\)&&published\.media\.logo===src/);
   assert.match(media, /if\(!published&&!await isCmsAuthenticated\(\)\)/);
   assert.match(media, /published\?"public, max-age=600":"private, no-store"/);
 });
