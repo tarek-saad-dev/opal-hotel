@@ -120,6 +120,57 @@ try{
     check(leaked.status()===404,"Unpublished draft image must not be publicly accessible");
   } finally { await anonymous.close(); }
 
+  // An owner-approved logo must activate independently from the still-
+  // incomplete six-photo library, but only after Save Draft + Publish.
+  const ownerCms=await context.request.get(origin+"/api/admin/cms");
+  check(ownerCms.status()===200,"Owner CMS snapshot must be readable");
+  const ownerDoc=(await ownerCms.json()).draft;
+  ownerDoc.media.logo=uploaded.src;
+  ownerDoc.media.logoApproved=true;
+  const saveLogo=await context.request.put(origin+"/api/admin/cms",{
+    headers:{Origin:origin,"Content-Type":"application/json"},
+    data:{document:ownerDoc,expectedRevision:ownerDoc.revision}
+  });
+  check(saveLogo.status()===200,"Approved logo draft should save");
+  const savedLogo=(await saveLogo.json()).draft;
+  const privateLogoPreview=await context.newPage();
+  try {
+    await privateLogoPreview.goto(origin+"/en/preview",{waitUntil:"domcontentloaded"});
+    await privateLogoPreview.locator(".premium-mark img.premium-mark-official").waitFor();
+    check(await privateLogoPreview.locator(".premium-mark img.premium-mark-official").getAttribute("src")===uploaded.src,
+      "Private preview should use owner-approved logo before public release");
+  } finally { await privateLogoPreview.close(); }
+
+  const anonBeforeLogo=await browser.newContext();
+  try {
+    const stillPrivate=await anonBeforeLogo.request.get(origin+uploaded.src);
+    check(stillPrivate.status()===404,"Saved draft logo must remain private before Publish");
+  } finally { await anonBeforeLogo.close(); }
+
+  const publishLogo=await context.request.post(origin+"/api/admin/cms/publish",{
+    headers:{Origin:origin,"Content-Type":"application/json"},
+    data:{expectedRevision:savedLogo.revision}
+  });
+  check(publishLogo.status()===200,"Owner logo publish should succeed");
+  check((await publishLogo.json()).mediaReady===false,
+    "Single approved logo must not prematurely approve demo photo replacements");
+  const publicLogoContext=await browser.newContext({viewport:{width:390,height:844}});
+  try {
+    check((await publicLogoContext.request.get(origin+uploaded.src)).status()===200,
+      "Published approved logo image must be readable without an owner session");
+    const publicLogo=await publicLogoContext.newPage();
+    await publicLogo.goto(origin+"/en",{waitUntil:"domcontentloaded"});
+    await publicLogo.locator(".premium-mark img.premium-mark-official").waitFor();
+    check(await publicLogo.locator(".premium-mark img.premium-mark-official").getAttribute("src")===uploaded.src,
+      "Published CMS logo must replace O emblem on mobile and desktop header");
+    check(await publicLogo.locator(".premium-hero-photo").getAttribute("data-media-origin")==="design-demo",
+      "Published logo must not activate unapproved hotel photos");
+    await publicLogo.locator(".premium-hamburger").click();
+    check(await publicLogo.locator(".premium-menu-brand img.premium-mark-official").getAttribute("src")===uploaded.src,
+      "Mobile navigation must use the same published CMS logo");
+    await publicLogo.close();
+  } finally { await publicLogoContext.close(); }
+
   await page.screenshot({path:path.join(dir,"owner-sections.png"),fullPage:true,animations:"disabled"});
 
   await page.getByRole("button",{name:/تسجيل الخروج/}).click();

@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext,useContext,useMemo,type ReactNode } from "react";
-import { defaultCmsSite,hasCompleteCmsMedia,mediaRoles,type CmsSite } from "@/lib/cms-schema";
+import { defaultCmsSite,hasApprovedCmsLogo,hasCompleteCmsMedia,mediaRoles,type CmsSite } from "@/lib/cms-schema";
 import { galleryImages,hotelBrand,officialMediaActive,type HotelImage } from "@/lib/gallery";
 import { getContent,type HotelContent,type Locale } from "@/lib/hotel-content";
 
@@ -32,7 +32,7 @@ export function useHotelMedia(){
         })
       :galleryImages;
     return {
-      images,logoSrc:ready?cms.media.logo:hotelBrand.officialLogoSrc,
+      images,logoSrc:hasApprovedCmsLogo(cms)?cms.media.logo:hotelBrand.officialLogoSrc,
       approved:ready||officialMediaActive,
     };
   },[cms]);

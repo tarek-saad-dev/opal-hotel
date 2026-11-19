@@ -80,3 +80,21 @@ test("CMS cannot turn hotel booking into a working reservation",()=>{
  const root=read("src/app/layout.tsx");
  assert.ok(root.includes("robots: { index: false"));
 });
+
+
+test("CMS can publish an independently approved header logo while photo gate stays intact",()=>{
+ const schema=read("src/lib/cms-schema.ts");
+ const store=read("src/lib/cms-store.ts");
+ const provider=read("src/components/CmsProvider.tsx");
+ const header=read("src/components/PremiumMasthead.tsx");
+ const admin=read("src/components/AdminCms.tsx");
+ assert.ok(schema.includes("export function hasApprovedCmsLogo"));
+ assert.ok(schema.includes("export function hasCompleteCmsMedia"));
+ assert.ok(provider.includes("hasApprovedCmsLogo(cms)?cms.media.logo"));
+ assert.ok(provider.includes("const ready=hasCompleteCmsMedia(cms)"));
+ assert.ok(store.includes("hasApprovedCmsLogo(published)&&published.media.logo===src"));
+ assert.ok(store.includes("hasCompleteCmsMedia(published)"));
+ assert.ok(header.includes('className="premium-mark-official"'));
+ assert.ok(header.includes('className="premium-mark-symbol"'));
+ assert.ok(admin.includes("hasApprovedCmsLogo(draft)"));
+});

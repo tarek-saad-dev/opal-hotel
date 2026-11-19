@@ -70,6 +70,10 @@ export function defaultCmsSite():CmsSite {
     }
   };
 }
+/** The owner's verified logo may go live independently of the six-photo gate. */
+export function hasApprovedCmsLogo(doc:CmsSite):boolean {
+  return isManagedImagePath(doc.media.logo)&&doc.media.logoApproved;
+}
 export function hasCompleteCmsMedia(doc:CmsSite):boolean{
   return isManagedImagePath(doc.media.logo)&&doc.media.logoApproved&&mediaRoles.every(role=>{
     const p=doc.media.photos[role];
