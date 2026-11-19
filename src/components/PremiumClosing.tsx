@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
@@ -254,7 +253,7 @@ export function PremiumFooter({locale,content:c}:Props) {
       <div className="opal-end-footer-last">
         <span>{t.next}</span>
         <a href={mapUrl(c.address)} rel="noopener noreferrer" target="_blank">{t.map}<Arrow diagonal/></a>
-        <Link href={ar?"/en":"/ar"} lang={ar?"en":"ar"} hrefLang={ar?"en":"ar"}>{t.language}</Link>
+        <a href={ar?"/en":"/ar"} lang={ar?"en":"ar"} hrefLang={ar?"en":"ar"}>{t.language}</a>
       </div>
     </div>
     <div className="opal-end-footer-bottom">
