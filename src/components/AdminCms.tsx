@@ -305,7 +305,7 @@ export function AdminCms(){
         body:JSON.stringify({document:draft,expectedRevision:saved.revision})});
       const data=await r.json() as {draft?:CmsSite;error?:string};
       if(!r.ok||!data.draft)throw new Error(data.error||"لم يتم حفظ المسودة");
-      setDraft(data.draft);setSaved(data.draft);setMessage("تم حفظ المسودة ✅ التعديل لسه مش ظاهر للزوار. راجع معاينة الموقع ثم اضغط «نشر على الموقع».");
+      setDraft(data.draft);setSaved(data.draft);setMessage("تم حفظ المسودة ✅ التعديل لسه مش ظاهر للزوار. لو عاوز تنشره اضغط «حفظ ونشر الآن».");
     }catch(e){setError(e instanceof Error?e.message:"فشل الحفظ");}
     finally{setBusy("");}
   }
@@ -429,7 +429,7 @@ export function AdminCms(){
         });
         count++;
       }
-      setMessage(`تم رفع ${count} ملف للمكتبة كمسودة. اختار كل ملف واكتب وصفه واعتمد الحقوق وحدد مكانه.`);
+      setMessage(`تم رفع ${count} ملف ✅ اختار الصور من الـThumbnails للأقسام واضغط «حفظ ونشر الآن». وصف الصور اختياري.`);
     }catch(e){
       setError((e instanceof Error?e.message:"تعذر رفع الوسائط")
         +(count?` — تم رفع ${count} ملف بالفعل، احفظ المسودة للاحتفاظ بهم.`:""));
