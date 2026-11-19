@@ -47,6 +47,7 @@ Use a new long random password. Changing it invalidates existing signed sessions
 ## Safety restrictions
 - This CMS is single-owner password based, **not** a multi-tenant role/permissions platform yet.
 - Uploads allow only PNG/JPEG/WebP magic signatures, max 4 MB; **no SVG, HTML or executable content**. Strip EXIF/geolocation from photos before uploading using an approved editor; V1 does not transcode or remove EXIF automatically.
+- Newly uploaded media stays accessible only to the signed-in owner. Anonymous visitors cannot retrieve draft image URLs until that image is part of the complete, owner-approved **published** set. Published media is cacheable for 10 minutes; previously viewed images may remain in browser caches briefly after withdrawal.
 - The shared media set activates only when all six owner-verified photos, localized alts and official logo are complete. The previous repo-based approval manifest still exists as a fallback until the owner CMS library is ready.
 - Owner content is escaped by React; no rich HTML injection or custom scripts. Security requires HTTPS, a strong owner secret and single-site origin checks.
 - Booking, payment, availability, guest review submission and contact delivery **remain disabled preview experiences**. The CMS never adds a real reservation or sends guest details.
@@ -62,3 +63,34 @@ Run `npm test && npm run typecheck && npm run build`. GitHub's Frontend Visual P
 
 ## Deferred by design
 Editable room inventory, capacity, pricing, actual availability, online payments, reviews or contact inboxes require approved backend schemas and a separate release gate. V1 does not claim those are implemented.
+
+
+## Production activation and acceptance (after code review)
+
+1. Confirm the DNS A record for `opal.drvotech.com` points to the intended VPS and HTTPS is working. Run the existing Opal-only deploy script **from the updated main checkout**:
+
+   ```bash
+   cd /var/www/opal-hotel
+   sudo -u opalhotel git fetch origin main
+   sudo -u opalhotel git reset --hard origin/main
+   sudo OPAL_SSL_EMAIL=you@example.com bash ops/deploy-vps.sh opal.drvotech.com
+   ```
+
+   Replace the email with the actual SSL contact. These commands only apply if the existing checkout/service uses the documented `opalhotel` account. If Opal has not been deployed, clone the repository first and run `sudo OPAL_SSL_EMAIL=you@example.com bash ops/deploy-vps.sh opal.drvotech.com` from the checkout. **Do not run this against a different application.**
+
+2. Check the app service and HTTPS without printing secrets:
+
+   ```bash
+   sudo systemctl --no-pager status opal-hotel.service
+   bash ops/check-cms-production.sh opal.drvotech.com
+   ```
+
+   The smoke check is read-only. It verifies EN/AR, the owner page, anonymous API denial, private preview denial and that the CMS environment has loaded. It does not log in, upload, publish, modify content, or confirm that a real publish works.
+
+3. From the owner dashboard, verify the end-to-end flow: log in with the VPS-generated password, change a harmless text field in EN and AR, **Save Draft**, check both private previews, verify the public page still shows the old text, then **Publish** and confirm that both public pages update without deploying. Test a restore-to-draft and then publish only if the restored content is correct.
+4. Upload one JPEG/PNG/WebP image with EXIF/location metadata removed, then confirm the approval gate works. Do not treat the site as publicly launch-ready until the approved photo set, hotel facts and business sign-offs are complete.
+5. Arrange an **encrypted backup on storage outside this VPS** for `/var/lib/opal-hotel-cms` before treating owner content as business-critical. Test restoring it to a safe location. History on the same disk does not protect against disk loss.
+
+### Existing Opal service migration
+
+The deploy script adds a managed `/etc/systemd/system/opal-hotel.service.d/20-opal-cms.conf` override for *only* the Opal service. It includes `OPAL_CMS_DATA_DIR`, the root-only env file path, and secure file creation mask, even if an older Opal unit has no `NEXT_TELEMETRY_DISABLED` line. A conflicting, unmanaged override causes deployment to stop instead of silently overwriting it. The public smoke check should pass **after** deployment and valid HTTPS configuration.
