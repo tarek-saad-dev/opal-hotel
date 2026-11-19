@@ -316,6 +316,8 @@ try{
   const galleryFilmSrc=await uploadMovie("gallery");
   const freshDocResponse=await context.request.get(origin+"/api/admin/cms");
   const v2Doc=(await freshDocResponse.json()).draft;
+  // Earlier CMS regression intentionally hid Gallery; restore it for V2 tests.
+  v2Doc.sections.find(section=>section.id==="gallery").visible=true;
   v2Doc.media.video.enabled=false; // test photo Hero independently from V1 movie
   v2Doc.media.visual.assets=[
     {src:v2Photo,kind:"image",title:"Opal overview",category:"exterior",
