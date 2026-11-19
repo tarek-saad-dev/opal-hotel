@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import type { ReactNode, SyntheticEvent } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
-import { photoAlt, responsivePhotoSrcSet } from "@/lib/gallery";
+import { responsivePhotoSrcSet } from "@/lib/gallery";
 import { useCmsSite,useHotelMedia } from "@/components/CmsProvider";
 import { roomConcepts } from "@/lib/room-concepts";
 
@@ -24,7 +24,7 @@ function PreviewImage({ index, locale, eager = false }: { index: number; locale:
   const img = useHotelMedia().images[index];
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img className="opal-editorial-photo" data-media-origin={img.origin} src={img.src} alt={img.origin==="hotel-approved"?(locale==="ar"?img.altAr:img.alt):photoAlt(index,locale)}
+    <img className="opal-editorial-photo" data-media-origin={img.origin} src={img.src} alt={locale==="ar"?img.altAr:img.alt}
       srcSet={responsivePhotoSrcSet(img.src)} sizes="(max-width: 600px) 100vw, (max-width: 900px) 65vw, 42vw"
       width={1200} height={900} decoding="async" loading={eager ? "eager" : "lazy"} onError={demoImageError}/>
   );
