@@ -3,13 +3,16 @@
 import { createContext,useContext,useMemo,type ReactNode } from "react";
 import { defaultCmsSite,hasApprovedCmsLogo,hasCompleteCmsMedia,mediaRoles,type CmsSite } from "@/lib/cms-schema";
 import { galleryImages,hotelBrand,officialMediaActive,type HotelImage } from "@/lib/gallery";
-import { approvedAsset } from "@/lib/cms-media";
+import { approvedAsset,visualAssetAlt } from "@/lib/cms-media";
 import { roomConcepts } from "@/lib/room-concepts";
 import { getContent,type HotelContent,type Locale } from "@/lib/hotel-content";
 
 const CmsContext=createContext<CmsSite|null>(null);
-export function CmsProvider({value,children}:{value:CmsSite;children:ReactNode}){
-  return <CmsContext.Provider value={value}>{children}</CmsContext.Provider>;
+const CmsPreviewContext=createContext(false);
+export function CmsProvider({value,children,preview=false}:{value:CmsSite;children:ReactNode;preview?:boolean}){
+  return <CmsPreviewContext.Provider value={preview}>
+    <CmsContext.Provider value={value}>{children}</CmsContext.Provider>
+  </CmsPreviewContext.Provider>;
 }
 export function useCmsSite():CmsSite{
   return useContext(CmsContext)||defaultCmsSite();
@@ -25,6 +28,7 @@ export function useCmsContent(locale:Locale):HotelContent{
 }
 export function useHotelMedia(){
   const cms=useCmsSite();
+  const preview=useContext(CmsPreviewContext);
   return useMemo(()=>{
     const ready=hasCompleteCmsMedia(cms);
     const images:HotelImage[]=ready
@@ -36,13 +40,16 @@ export function useHotelMedia(){
     const categories=["exterior","pool","rooms","rooms","exterior","rooms"];
     const visual=cms.media.visual;
     const placed=visual.placements;
-    const lookup=(src:string)=>approvedAsset(visual,src);
+    // Private owner preview may inspect draft selections before public rights
+    // confirmation. Uploaded bytes remain protected by the authenticated API.
+    const lookup=(src:string)=>preview
+      ?visual.assets.find(item=>item.src===src):approvedAsset(visual,src);
     const indexOf=(src:string):number|null=>{
       const asset=lookup(src);
       if(!asset||asset.kind!=="image")return null;
       const existing=images.findIndex(x=>x.src===src);
       if(existing>=0)return existing;
-      images.push({src:asset.src,alt:asset.altEn,altAr:asset.altAr,origin:"hotel-approved"});
+      images.push({src:asset.src,alt:visualAssetAlt(asset,"en"),altAr:visualAssetAlt(asset,"ar"),origin:"hotel-approved"});
       categories.push(asset.category);
       return images.length-1;
     };
@@ -54,7 +61,7 @@ export function useHotelMedia(){
       .filter((asset):asset is NonNullable<typeof asset>=>Boolean(asset&&asset.kind==="video"))
       .map(asset=>({
         src:asset.src,poster:asset.poster,title:asset.title,
-        alt:asset.altEn,altAr:asset.altAr,category:asset.category
+        alt:visualAssetAlt(asset,"en"),altAr:visualAssetAlt(asset,"ar"),category:asset.category
       }));
     const roomMedia=Object.fromEntries(roomConcepts.map(room=>{
       const assigned=placed.rooms[room.slug];
@@ -78,5 +85,5 @@ export function useHotelMedia(){
       locationImage:indexOf(placed.location),
       roomMedia
     };
-  },[cms]);
+  },[cms,preview]);
 }
