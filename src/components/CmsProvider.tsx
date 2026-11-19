@@ -63,6 +63,13 @@ export function useHotelMedia(){
         src:asset.src,poster:asset.poster,title:asset.title,
         alt:visualAssetAlt(asset,"en"),altAr:visualAssetAlt(asset,"ar"),category:asset.category
       }));
+    const overviewMovie=lookup(placed.overviewVideo);
+    const overviewFilm=overviewMovie?.kind==="video" ? {
+      src:overviewMovie.src,
+      title:overviewMovie.title,
+      poster:(overviewMovie.poster&&lookup(overviewMovie.poster)?.kind==="image")
+        ?overviewMovie.poster:images[resolve(placed.overviewMain,4)]?.src||""
+    }:null;
     const roomMedia=Object.fromEntries(roomConcepts.map(room=>{
       const assigned=placed.rooms[room.slug];
       const overrides=assigned?.gallery.map(indexOf).filter((n):n is number=>n!==null)??[];
@@ -82,6 +89,7 @@ export function useHotelMedia(){
       heroIndices:heroIndices.length?heroIndices:[0,1,2],
       galleryIndices:galleryImagesIndices.length||galleryVideos.length?galleryImagesIndices:images.map((_,i)=>i).slice(0,6),
       galleryVideos,
+      overviewVideo:overviewFilm,
       overviewMain:resolve(placed.overviewMain,4),
       overviewInset:resolve(placed.overviewInset,1),
       facilitiesImage:indexOf(placed.facilities),
