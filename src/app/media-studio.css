@@ -239,3 +239,32 @@
 .opal-cms-visual-tip{margin-bottom:18px}
 .opal-picker-preview>.opal-picker-publish-note{color:#335a3f;font-size:11px}
 @media(max-width:600px){.opal-media-optional-details{padding:10px}.opal-cms-visual-tip{padding:10px 12px}}
+
+
+/* Direct, owner-friendly Overview film upload: no multi-step workflow. */
+.opal-overview-video-editor{
+  background:#f5f4ed;border:1px solid #d8d3c4;padding:clamp(18px,2.6vw,28px);
+  margin:4px 0 27px;color:#274a39;
+}
+.opal-overview-video-editor-heading{
+  display:flex;gap:14px;align-items:start;justify-content:space-between;
+}
+.opal-overview-video-editor-heading strong{font-size:17px}
+.opal-overview-video-editor-heading p{font-size:12px;line-height:1.85;color:#687c6c;margin:9px 0 15px;max-width:720px}
+.opal-overview-video-selected{font-size:11px;color:#286244;padding:7px 10px;background:#e1ece2;white-space:nowrap}
+.opal-overview-video-actions{display:grid;grid-template-columns:minmax(170px,.8fr) minmax(260px,1.2fr);gap:14px;align-items:stretch;margin:12px 0 20px}
+.opal-overview-video-upload{min-height:86px;display:flex;align-items:center;justify-content:center;flex-direction:column;
+  gap:5px;cursor:pointer;background:#2c513c;color:#fff;text-align:center;padding:12px 16px;
+  font:700 13px "Cairo",Tahoma,sans-serif}
+.opal-overview-video-upload small{font-size:10px;font-weight:400;color:#d9e2d9}
+.opal-overview-video-upload input{width:100%;max-width:255px;font:11px Arial,sans-serif;color:#e4e9e3}
+.opal-overview-video-upload:focus-within{outline:3px solid #bda57c;outline-offset:2px}
+.opal-overview-video-existing .opal-picker-trigger{min-height:86px}
+.opal-overview-video-admin-preview{display:block;width:100%;max-width:680px;aspect-ratio:16/9;
+  background:#172720;object-fit:contain;margin-top:18px}
+.opal-overview-photo-fallback-heading{font-size:14px;color:#5c725d;padding:0 0 14px;margin:18px 0 13px;border-bottom:1px solid #e2ddd2}
+@media(max-width:720px){
+ .opal-overview-video-actions{grid-template-columns:minmax(0,1fr)}
+ .opal-overview-video-editor-heading{flex-wrap:wrap}
+ .opal-overview-video-upload{min-height:92px}
+}
