@@ -1,4 +1,5 @@
 import { NextRequest,NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { isCmsAuthenticated,noStoreHeaders,validCmsMutationOrigin } from "@/lib/cms-auth";
 import { publishDraft } from "@/lib/cms-store";
 
@@ -10,6 +11,9 @@ export async function POST(request:NextRequest){
     const data=await request.json() as {expectedRevision?:number};
     if(!Number.isSafeInteger(data.expectedRevision))return NextResponse.json({error:"BAD_REVISION"},{status:400});
     const result=await publishDraft(data.expectedRevision!);
+    // Invalidate both localized homepage routes after the atomic CMS publish.
+    revalidatePath("/en");
+    revalidatePath("/ar");
     return NextResponse.json(result,{headers:noStoreHeaders});
   }catch(err){
     const error=err instanceof Error?err.message:"UNKNOWN_ERROR";
