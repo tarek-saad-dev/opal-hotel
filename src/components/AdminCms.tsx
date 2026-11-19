@@ -393,8 +393,9 @@ export function AdminCms(){
     }catch(e){setError(e instanceof Error?e.message:"خطأ رفع الفيديو");}
     finally{setUploading("");}
   }
-  async function uploadLibrary(files:File[]){
-    if(!draft||uploading)return;
+  async function uploadLibrary(files:File[]):Promise<string[]>{
+    if(!draft||uploading)return [];
+    const uploaded:string[]=[];
     setError("");setMessage("");
     let count=0;
     try{
@@ -427,6 +428,7 @@ export function AdminCms(){
           });
           return next;
         });
+        uploaded.push(src);
         count++;
       }
       setMessage(`تم رفع ${count} ملف ✅ اختار الصور من الـThumbnails للأقسام واضغط «حفظ ونشر الآن». وصف الصور اختياري.`);
@@ -434,6 +436,7 @@ export function AdminCms(){
       setError((e instanceof Error?e.message:"تعذر رفع الوسائط")
         +(count?` — تم رفع ${count} ملف بالفعل، احفظ المسودة للاحتفاظ بهم.`:""));
     }finally{setUploading("");}
+    return uploaded;
   }
   async function restore(revision:number){
     if(!saved)return;
