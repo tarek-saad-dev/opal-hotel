@@ -9,6 +9,7 @@ import "./media-studio.css";
 import "./mobile-navigation.css";
 import "./route-polish.css";
 import "./section-rhythm.css";
+import "./overview-video.css";
 
 export const metadata: Metadata = {
   title: { default: "Opal Legacy Luxor Hotel", template: "%s | Opal Legacy" },
