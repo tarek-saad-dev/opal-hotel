@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { HotelExperience } from "@/components/HotelExperience";
 import { getContent, isLocale } from "@/lib/hotel-content";
 import { readPublished } from "@/lib/cms-store";
+import { CmsProvider } from "@/components/CmsProvider";
+export const dynamic="force-dynamic";
 
 export function generateStaticParams() { return [{ locale: "en" }, { locale: "ar" }]; }
 
@@ -16,5 +18,6 @@ export async function generateMetadata({params}: {params: Promise<{locale:string
 export default async function HotelPage({params}: {params: Promise<{locale:string}>}) {
   const {locale} = await params;
   if (!isLocale(locale)) notFound();
-  return <HotelExperience locale={locale} content={getContent(locale)} />;
+  const published=await readPublished();
+  return <CmsProvider value={published}><HotelExperience locale={locale} content={getContent(locale)} /></CmsProvider>;
 }
