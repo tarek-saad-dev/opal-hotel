@@ -108,7 +108,7 @@ export async function restoreAsDraft(revision:number,expectedRevision:number):Pr
 /** Public requests must not access images uploaded into an unpublished draft.
  * Only the complete owner-approved set in the published snapshot is public. */
 export async function isPublishedCmsImage(filename:string):Promise<boolean>{
-  if(!/^[0-9a-f]{32}\\.(?:webp|jpg|png)$/.test(filename))return false;
+  if(!/^[0-9a-f]{32}\.(?:webp|jpg|png)$/.test(filename))return false;
   const published=await readPublished();
   if(!hasCompleteCmsMedia(published))return false;
   const path="/api/cms/media/"+filename;
