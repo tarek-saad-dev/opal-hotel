@@ -5,6 +5,9 @@ import { isLocale } from "@/lib/hotel-content";
 import { roomConcepts, getRoomConcept } from "@/lib/room-concepts";
 
 type Props={params:Promise<{locale:string;slug:string}>};
+// Unknown concept slugs must be rejected by routing itself with HTTP 404,
+// not streamed as a soft-404 response after the dynamic CMS layout starts.
+export const dynamicParams=false;
 export function generateStaticParams(){
   return (["en","ar"] as const).flatMap(locale=>
     roomConcepts.map(concept=>({locale,slug:concept.slug})));
