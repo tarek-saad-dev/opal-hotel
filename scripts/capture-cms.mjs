@@ -64,8 +64,8 @@ try{
   await preview.close();
 
   page.once("dialog",dialog=>void dialog.accept());
-  await page.getByRole("button",{name:/نشر على الموقع/}).click();
-  await page.getByText("تم نشر النسخة الجديدة ✅",{exact:false}).waitFor();
+  await page.getByRole("button",{name:/حفظ ونشر الآن/}).click();
+  await page.getByText("تم الحفظ والنشر ✅",{exact:false}).waitFor();
   const published=await context.newPage();
   await published.goto(origin+"/en",{waitUntil:"domcontentloaded"});
   await published.locator("#hotel-name").getByText("An owner-managed Luxor story").waitFor();
@@ -82,8 +82,8 @@ try{
   await page.getByRole("button",{name:"حفظ المسودة"}).click();
   await page.getByText("تم حفظ المسودة ✅",{exact:false}).waitFor();
   page.once("dialog",dialog=>void dialog.accept());
-  await page.getByRole("button",{name:/نشر على الموقع/}).click();
-  await page.getByText("تم نشر النسخة الجديدة ✅",{exact:false}).waitFor();
+  await page.getByRole("button",{name:/حفظ ونشر الآن/}).click();
+  await page.getByText("تم الحفظ والنشر ✅",{exact:false}).waitFor();
   const hidden=await context.newPage();
   await hidden.goto(origin+"/en",{waitUntil:"domcontentloaded"});
   check(await hidden.locator("#gallery").count()===0,"Hidden section still renders");
