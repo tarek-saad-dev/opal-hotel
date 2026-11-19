@@ -125,9 +125,42 @@ export function normalizeVisualLibrary(raw:unknown):CmsVisualLibrary{
     rooms
   }};
 }
+/** An asset assigned in the owner UI isn't necessarily eligible for the site.
+ * V2 must require explicit publishing rights plus real alt text in BOTH locales.
+ * Keep diagnostics in sync with the same gate the public site uses. */
+export function visualAssetIssues(visual:CmsVisualLibrary,src:string):string[]{
+  if(!src)return [];
+  const asset=visual.assets.find(item=>item.src===src);
+  if(!asset)return ["الملف مش موجود في مكتبة الوسائط"];
+  const issues:string[]=[];
+  if(!asset.altAr.trim())issues.push("الوصف العربي ناقص");
+  if(!asset.altEn.trim())issues.push("الوصف الإنجليزي ناقص");
+  if(!asset.approved)issues.push("حقوق النشر لم يتم تأكيدها");
+  return issues;
+}
+export type UnreadyVisualPlacement={src:string;label:string;issues:string[]};
+export function unreadyVisualPlacements(visual:CmsVisualLibrary):UnreadyVisualPlacement[]{
+  const p=visual.placements;
+  const refs:{src:string;label:string}[]=[
+    ...p.hero.map((src,i)=>({src,label:"Hero "+(i+1)})),
+    {src:p.overviewMain,label:"Overview — الصورة الكبيرة"},
+    {src:p.overviewInset,label:"Overview — الصورة الصغيرة"},
+    {src:p.facilities,label:"Facilities"},
+    {src:p.location,label:"Location"},
+    ...p.gallery.map((src,i)=>({src,label:"Gallery "+(i+1)})),
+    ...Object.entries(p.rooms).flatMap(([slug,r])=>([
+      {src:r.cover,label:"Room "+slug+" — cover"},
+      ...r.gallery.map((src,i)=>({src,label:"Room "+slug+" — photo "+(i+1)})),
+      {src:r.video,label:"Room "+slug+" — video"}
+    ]))
+  ];
+  return refs.filter(ref=>ref.src).map(ref=>({
+    ...ref,issues:visualAssetIssues(visual,ref.src)
+  })).filter(ref=>ref.issues.length>0);
+}
 export function approvedAsset(visual:CmsVisualLibrary,src:string):VisualAsset|undefined{
   const asset=visual.assets.find(item=>item.src===src);
-  if(!asset?.approved||!asset.altEn||!asset.altAr)return undefined;
+  if(!asset||visualAssetIssues(visual,src).length>0)return undefined;
   return asset;
 }
 /** Exactly which referenced media is public, including posters for assigned videos. */
