@@ -7,6 +7,8 @@ import type { FormEvent, SVGProps, MouseEvent as ReactMouseEvent } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
 import { hotelBrand, responsivePhotoSrcSet } from "@/lib/gallery";
 import { useCmsSite,useHotelMedia } from "@/components/CmsProvider";
+import { hasApprovedCmsHeroVideo,hasApprovedCmsFullFilm } from "@/lib/cms-schema";
+import { HeroVideoBackground,FullHotelFilm } from "@/components/HeroVideo";
 
 type Props = {
   locale: Locale;
@@ -50,6 +52,14 @@ function dayAfter(input: string) {
 export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGallery }: Props) {
   const cms=useCmsSite();
   const media=useHotelMedia();
+  const showVideo=hasApprovedCmsHeroVideo(cms);
+  const fullFilmSrc=hasApprovedCmsFullFilm(cms)?cms.media.video.fullFilmSrc:"";
+  const [filmOpen,setFilmOpen]=useState(false);
+  const filmTriggerRef=useRef<HTMLButtonElement>(null);
+  const closeFilm=()=>{
+    setFilmOpen(false);
+    requestAnimationFrame(()=>filmTriggerRef.current?.focus({preventScroll:true}));
+  };
   const heroScenes=media.images.slice(0,3).map((image,i)=>({...image,label:String(i+1).padStart(2,"0")}));
   const logoSrc=media.logoSrc??hotelBrand.officialLogoSrc;
   const heroCopy=cms.locales[locale].hero;
@@ -338,14 +348,17 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
 
       <section className="premium-hero" aria-labelledby="hotel-name">
         <div className="premium-hero-visual">
-          {!imageFailed
-            ? <img key={slide} className="premium-hero-photo" data-media-origin={heroScenes[slide].origin} src={heroScenes[slide].src}
-              srcSet={responsivePhotoSrcSet(heroScenes[slide].src)} sizes="100vw"
-              width={1920} height={1080} loading="eager" decoding="async" fetchPriority={slide===0?"high":"auto"}
-              alt={ar ? heroScenes[slide].altAr : heroScenes[slide].alt} onError={() => setImageFailed(true)} />
-            : <div className="premium-hero-fallback" role="img" aria-label="Decorative boutique architecture illustration">
-                <span className="arch arch-one"/><span className="arch arch-two"/><span className="arch arch-three"/>
-              </div>}
+          {showVideo
+            ? <HeroVideoBackground desktop={cms.media.video.desktopSrc}
+                mobile={cms.media.video.mobileSrc} poster={cms.media.video.posterSrc} locale={locale}/>
+            : !imageFailed
+              ? <img key={slide} className="premium-hero-photo" data-media-origin={heroScenes[slide].origin} src={heroScenes[slide].src}
+                  srcSet={responsivePhotoSrcSet(heroScenes[slide].src)} sizes="100vw"
+                  width={1920} height={1080} loading="eager" decoding="async" fetchPriority={slide===0?"high":"auto"}
+                  alt={ar ? heroScenes[slide].altAr : heroScenes[slide].alt} onError={() => setImageFailed(true)} />
+              : <div className="premium-hero-fallback" role="img" aria-label="Decorative boutique architecture illustration">
+                  <span className="arch arch-one"/><span className="arch arch-two"/><span className="arch arch-three"/>
+                </div>}
         </div>
         <div className="premium-hero-shade" />
         <div className="premium-hero-layout">
@@ -358,6 +371,8 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
               <button type="button" className="premium-photo-button" onClick={onOpenGallery}>
                 <span><Glyph name="camera"/></span>{t.photos}
               </button>
+              {fullFilmSrc&&<button type="button" className="opal-hero-watch" ref={filmTriggerRef}
+                onClick={()=>setFilmOpen(true)}>{ar?"▶ شاهد فيلم الفندق":"▶ Watch Our Film"}</button>}
             </div>
           </div>
           <div className="premium-hero-aside" aria-hidden="true">
@@ -369,16 +384,19 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
           <a href={`#${firstVisible}`} className="premium-scroll-cue">
             <span className="premium-scroll-mark" /><span>{t.scroll}</span>
           </a>
-          <div className="premium-hero-scene-navigation">
+          {!showVideo&&<div className="premium-hero-scene-navigation">
             <span className="premium-scene-number" aria-label={ar ? `الصورة ${slide+1} من ${heroScenes.length}` : `Image ${slide + 1} of ${heroScenes.length}`}>
               {heroScenes[slide].label} <i/> 0{heroScenes.length}
             </span>
             <button type="button" aria-label={c.labels.previous} onClick={() => moveSlide(-1)}><Glyph name="arrow" /></button>
             <button type="button" aria-label={c.labels.next} onClick={() => moveSlide(1)}><Glyph name="arrow" /></button>
-          </div>
+          </div>}
         </div>
-        <p className="premium-photo-disclaimer">{t.preview}</p>
+        <p className="premium-photo-disclaimer">{showVideo
+          ?(ar?"فيديو الفندق معتمد · الحجز الإلكتروني غير مفعل":"Approved hotel film · Online booking is not yet enabled")
+          :t.preview}</p>
       </section>
+      {filmOpen&&fullFilmSrc&&<FullHotelFilm src={fullFilmSrc} locale={locale} onClose={closeFilm}/>}
 
       <section className="premium-booking-zone" id="booking" aria-labelledby="booking-heading">
         <div className="premium-booking-container">
