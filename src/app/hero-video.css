@@ -1,0 +1,33 @@
+/* Independent video layer: poster is the first paint, stream overlays only after playback. */
+.opal-hero-video-background{position:absolute;inset:0;overflow:hidden;background:#173a34}
+.opal-hero-video-poster{animation:none!important;transform:none!important;object-fit:cover}
+.opal-hero-video-player{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  opacity:0;transition:opacity .65s ease;pointer-events:none}
+.opal-hero-video-player.is-playing{opacity:1}
+.opal-hero-video-toggle{position:absolute;z-index:5;inset-inline-end:clamp(25px,7vw,113px);
+  top:130px;width:42px;height:42px;display:grid;place-items:center;
+  background:#11291fb8;border:1px solid #ffffffa6;color:#fff;
+  font-size:17px;cursor:pointer;border-radius:50%}
+.opal-hero-video-toggle:focus-visible,.opal-hero-watch:focus-visible,
+.opal-film-top button:focus-visible{outline:3px solid #e8d8bd;outline-offset:4px}
+.opal-hero-watch{display:inline-flex;align-items:center;gap:10px;
+  background:#142c24b8;border:1px solid #fff8;color:#fff;
+  padding:12px 18px;font:600 12px var(--premium-sans,Arial,sans-serif);
+  cursor:pointer;min-height:46px;letter-spacing:.03em}
+.opal-hero-watch:hover{background:#254536}
+.opal-film-backdrop{position:fixed;inset:0;z-index:200;background:#06150ff2;
+  display:grid;place-items:center;padding:clamp(12px,4vw,45px)}
+.opal-film-panel{width:min(100%,1150px);background:#10231c;border:1px solid #fff4}
+.opal-film-top{display:flex;justify-content:space-between;align-items:center;
+  color:#f5e8d5;padding:12px 20px;font-size:12px;letter-spacing:.1em}
+.opal-film-top button{border:1px solid #ffffff55;background:transparent;color:#fff;
+  font-size:30px;line-height:1;width:45px;height:45px;cursor:pointer}
+.opal-full-film-player{display:block;width:100%;max-height:min(75svh,740px);background:#000;aspect-ratio:16/9}
+@media(max-width:800px){
+  .opal-hero-video-toggle{top:108px;inset-inline-end:25px}
+  .opal-hero-watch{padding:10px 12px;font-size:11px;min-height:44px}
+  .opal-film-top{padding:10px 13px}
+}
+@media(prefers-reduced-motion:reduce){
+  .opal-hero-video-player{transition:none}
+}

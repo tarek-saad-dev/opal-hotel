@@ -18,12 +18,34 @@ export type CmsLocale={
   attractions:{name:string;distance:string}[];
 };
 export type CmsPhoto={src:string;altEn:string;altAr:string;rightsConfirmed:boolean};
+export type CmsHeroVideo={
+  enabled:boolean;
+  desktopSrc:string;
+  mobileSrc:string;
+  posterSrc:string;
+  fullFilmSrc:string;
+  heroApproved:boolean;
+  filmApproved:boolean;
+};
+export const emptyCmsHeroVideo=():CmsHeroVideo=>({
+  enabled:false,desktopSrc:"",mobileSrc:"",posterSrc:"",fullFilmSrc:"",
+  heroApproved:false,filmApproved:false
+});
+export const isManagedVideoPath=(src:string):boolean=>
+  /^\/api\/cms\/video\/[0-9a-f]{32}\.mp4$/.test(src);
+export const hasApprovedCmsHeroVideo=(doc:CmsSite):boolean=>{
+  const v=doc.media.video;
+  return v.enabled&&v.heroApproved&&isManagedVideoPath(v.desktopSrc)
+    &&isManagedImagePath(v.posterSrc)&&(!v.mobileSrc||isManagedVideoPath(v.mobileSrc));
+};
+export const hasApprovedCmsFullFilm=(doc:CmsSite):boolean=>
+  doc.media.video.filmApproved&&isManagedVideoPath(doc.media.video.fullFilmSrc);
 export type CmsSite={
   revision:number;
   updatedAt:string;
   locales:Record<Locale,CmsLocale>;
   sections:{id:CmsSectionId;visible:boolean}[];
-  media:{logo:string;logoApproved:boolean;photos:Record<CmsMediaRole,CmsPhoto>};
+  media:{logo:string;logoApproved:boolean;photos:Record<CmsMediaRole,CmsPhoto>;video:CmsHeroVideo};
 };
 const defaultHeadings:Record<Locale,Record<CmsSectionId,CmsHeading>>={
   en:{
@@ -65,7 +87,7 @@ export function defaultCmsSite():CmsSite {
     revision:0,updatedAt:"",locales:{en:locale("en"),ar:locale("ar")},
     sections:cmsSectionIds.map(id=>({id,visible:true})),
     media:{
-      logo:"",logoApproved:false,
+      logo:"",logoApproved:false,video:emptyCmsHeroVideo(),
       photos:Object.fromEntries(mediaRoles.map(id=>[id,{src:"",altEn:"",altAr:"",rightsConfirmed:false}])) as Record<CmsMediaRole,CmsPhoto>
     }
   };
@@ -169,6 +191,23 @@ export function validateCmsSite(input:unknown):CmsSite{
     photos[role]={src,altEn:cleanText(photo.altEn,role+".altEn",160,true),
       altAr:cleanText(photo.altAr,role+".altAr",160,true),rightsConfirmed:photo.rightsConfirmed};
   }
+  // Older stored CMS snapshots have no video field. Load them safely without
+  // migrating or resetting any existing owner content.
+  const videoRaw=media.video===undefined?emptyCmsHeroVideo():media.video;
+  if(!videoRaw||typeof videoRaw!=="object")throw new Error("Invalid hero video settings");
+  const v=videoRaw as Record<string,unknown>;
+  const desktopSrc=cleanText(v.desktopSrc,"video.desktopSrc",100,true);
+  const mobileSrc=cleanText(v.mobileSrc,"video.mobileSrc",100,true);
+  const posterSrc=cleanText(v.posterSrc,"video.posterSrc",100,true);
+  const fullFilmSrc=cleanText(v.fullFilmSrc,"video.fullFilmSrc",100,true);
+  if(desktopSrc&&!isManagedVideoPath(desktopSrc))throw new Error("Hero video must be an uploaded MP4");
+  if(mobileSrc&&!isManagedVideoPath(mobileSrc))throw new Error("Mobile hero video must be an uploaded MP4");
+  if(fullFilmSrc&&!isManagedVideoPath(fullFilmSrc))throw new Error("Full film must be an uploaded MP4");
+  if(posterSrc&&!isManagedImagePath(posterSrc))throw new Error("Hero poster must be an uploaded image");
+  if(typeof v.enabled!=="boolean"||typeof v.heroApproved!=="boolean"||typeof v.filmApproved!=="boolean")
+    throw new Error("Invalid hero video approval");
+  const video:CmsHeroVideo={enabled:v.enabled,desktopSrc,mobileSrc,posterSrc,fullFilmSrc,
+    heroApproved:v.heroApproved,filmApproved:v.filmApproved};
   return {revision:Number(d.revision),updatedAt:typeof d.updatedAt==="string"?d.updatedAt.slice(0,50):"",
-    locales:cleaned,sections,media:{logo,logoApproved:media.logoApproved as boolean,photos}};
+    locales:cleaned,sections,media:{logo,logoApproved:media.logoApproved as boolean,photos,video}};
 }

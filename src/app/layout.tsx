@@ -4,6 +4,7 @@ import "./premium.css";
 import "./premium-sections.css";
 import "./premium-closing.css";
 import "./visual-polish.css";
+import "./hero-video.css";
 import "./mobile-navigation.css";
 import "./route-polish.css";
 

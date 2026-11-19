@@ -110,3 +110,35 @@ test("Publishing invalidates both locales and cross-language navigation refreshe
  assert.ok(masthead.includes('<a href={ar ? "/en" : "/ar"} className="premium-menu-lang"'));
  assert.ok(footer.includes('<a href={ar?"/en":"/ar"} lang={ar?"en":"ar"}'));
 });
+
+
+test("Owner video CMS preserves old snapshots and keeps film outside initial page load",()=>{
+  const schema=read("src/lib/cms-schema.ts");
+  const store=read("src/lib/cms-store.ts");
+  const hero=read("src/components/PremiumMasthead.tsx");
+  const video=read("src/components/HeroVideo.tsx");
+  const admin=read("src/components/AdminCms.tsx");
+  const upload=read("src/app/api/admin/cms/upload-video/route.ts");
+  const route=read("src/app/api/cms/video/[filename]/route.ts");
+  assert.ok(schema.includes("media.video===undefined?emptyCmsHeroVideo()"));
+  assert.ok(schema.includes("hasApprovedCmsHeroVideo"));
+  assert.ok(schema.includes("hasApprovedCmsFullFilm"));
+  assert.ok(store.includes("saveUploadedVideo"));
+  assert.ok(store.includes("isPublishedCmsVideo"));
+  assert.ok(store.includes('doc.media.video.posterSrc'));
+  assert.ok(hero.includes("HeroVideoBackground"));
+  assert.ok(hero.includes("FullHotelFilm"));
+  assert.ok(video.includes('preload="none"'));
+  assert.ok(video.includes("prefers-reduced-motion"));
+  assert.ok(video.includes("saveData"));
+  assert.ok(video.includes("IntersectionObserver"));
+  assert.ok(admin.includes("upload-video"));
+  assert.ok(admin.includes("heroApproved"));
+  assert.ok(upload.includes("isCmsAuthenticated"));
+  assert.ok(upload.includes("validCmsMutationOrigin"));
+  assert.ok(upload.includes('buffer.toString("ascii",4,8)!=="ftyp"'));
+  assert.ok(route.includes("Content-Range"));
+  assert.ok(route.includes("isCmsAuthenticated"));
+  assert.ok(route.includes("getCmsVideoStream"));
+  assert.ok(read("ops/deploy-vps.sh").includes("client_max_body_size 55m;"));
+});
