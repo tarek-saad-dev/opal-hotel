@@ -208,6 +208,7 @@ export function RoomDetail({locale,concept}:{locale:Locale;concept:RoomConcept})
   const t=roomUI(locale);
   const media=useHotelMedia();
   const others=roomConcepts.filter(item=>item.slug!==concept.slug);
+  const roomVideo=media.roomMedia[concept.slug]?.video;
   return <>
     <a href="#room-main" className="opal-skip-link">{t.skip}</a>
     <RoomHeader locale={locale} slug={concept.slug}/>
@@ -225,12 +226,12 @@ export function RoomDetail({locale,concept}:{locale:Locale;concept:RoomConcept})
           <ConceptBadge locale={locale}/>
         </div>
         <RoomPhotoExplorer concept={concept} locale={locale}/>
-        {media.roomMedia[concept.slug]?.video&&<div className="room-exp-feature-film">
+        {roomVideo&&<div className="room-exp-feature-film">
           <h2>{locale==="ar"?"شاهد تفاصيل المكان":"Watch this space"}</h2>
-          <video src={media.roomMedia[concept.slug].video.src}
-            poster={media.roomMedia[concept.slug].video.poster||undefined}
+          <video src={roomVideo.src}
+            poster={roomVideo.poster||undefined}
             controls playsInline preload="none"
-            aria-label={media.roomMedia[concept.slug].video.title}/>
+            aria-label={roomVideo.title}/>
         </div>}
       </section>
       <section className="room-exp-detail-story" aria-labelledby="room-story-heading">
