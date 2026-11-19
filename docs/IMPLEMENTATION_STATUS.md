@@ -143,3 +143,11 @@ Quality gate: GitHub Actions build/typecheck/tests + EN/AR desktop/tablet/mobile
 - `scripts/verify-official-media.mjs` checks safe local paths, file types, actual image headers, dimensions, size budget and approval fields; CI runs `npm run media:check`. The separate `npm run media:launch-check` intentionally blocks while photo/logo/license/content approval is pending.
 - Documentation lives in `docs/HOTEL_MEDIA_HANDOFF.md` and `public/media/hotel/README.md`, including privacy-safe instructions and handoff roles. No unauthorized hotel logo or property photograph has been created or uploaded.
 - All website robots remain noindex. Room inventory, rates, live availability, booking and contact delivery remain preview-only regardless of whether actual hotel imagery is eventually approved. A separate management go-live decision is still required.
+
+## Dynamic Owner CMS V1 — 2026-11-19
+
+- Owner self-service admin at `/admin` with password-protected controls, bilingual editor, seven show/hide/reorder sections, media uploads/rights checks, draft preview, explicit publish, and history restore.
+- Published data and uploaded images persist outside Git in `/var/lib/opal-hotel-cms`; environment credentials are root-only in `/etc/opal-hotel/cms.env`, created by the existing isolated VPS installer.
+- The public site reads published content on each request, updates SEO metadata and image/section content without a new GitHub merge or redeploy; preview route `/{locale}/preview` is owner-authenticated.
+- Input schema validation, optimistic revisions, atomic writes, signed HttpOnly same-site sessions, strict expected Origin, authentication on all writes, login throttling, immutable upload URLs and no SVG uploads.
+- Does not add real booking, guest inquiries, rates or public indexing; see `docs/CMS_SETUP.md` for operation and external backup requirements.
