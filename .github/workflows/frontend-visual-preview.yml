@@ -41,10 +41,14 @@ jobs:
           echo $! > /tmp/opal-next.pid
       - name: Validate screenshot utility syntax
         run: node --check scripts/capture-preview.mjs
-      - name: Capture own frontend EN/AR screenshots
-        run: npm run capture:preview
       - name: Run CMS owner dashboard integration
         run: npm run capture:cms
+      - name: Reset isolated CMS test data before frontend screenshots
+        run: |
+          test "$OPAL_CMS_DATA_DIR" = "$RUNNER_TEMP/opal-cms-test-data"
+          rm -rf -- "$OPAL_CMS_DATA_DIR"
+      - name: Capture own frontend EN/AR screenshots
+        run: npm run capture:preview
       - name: Show Next server output on failure
         if: failure()
         run: cat /tmp/opal-next.log || true
