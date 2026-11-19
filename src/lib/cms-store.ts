@@ -165,6 +165,5 @@ export async function getCmsVideoStat(filename:string):Promise<number|null>{
 }
 export function getCmsVideoStream(filename:string,start:number,end:number):ReadableStream<Uint8Array>{
   // Caller validates and authorizes the fixed-format filename and byte range.
-  return Readable.toWeb(createReadStream(path.join(videoDir(),filename),{start,end}))
-    as unknown as ReadableStream<Uint8Array>;
+  return Readable.toWeb(createReadStream(path.join(videoDir(),filename),{start,end})) as unknown as ReadableStream<Uint8Array>;
 }
