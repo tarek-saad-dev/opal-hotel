@@ -98,3 +98,15 @@ test("CMS can publish an independently approved header logo while photo gate sta
  assert.ok(header.includes('className="premium-mark-symbol"'));
  assert.ok(admin.includes("hasApprovedCmsLogo(draft)"));
 });
+
+
+test("Publishing invalidates both locales and cross-language navigation refreshes public CMS",()=>{
+ const publish=read("src/app/api/admin/cms/publish/route.ts");
+ const masthead=read("src/components/PremiumMasthead.tsx");
+ const footer=read("src/components/PremiumClosing.tsx");
+ assert.ok(publish.includes('revalidatePath("/en")'));
+ assert.ok(publish.includes('revalidatePath("/ar")'));
+ assert.ok(masthead.includes('<a href={ar ? "/en" : "/ar"} className="premium-locale"'));
+ assert.ok(masthead.includes('<a href={ar ? "/en" : "/ar"} className="premium-menu-lang"'));
+ assert.ok(footer.includes('<a href={ar?"/en":"/ar"} lang={ar?"en":"ar"}'));
+});
