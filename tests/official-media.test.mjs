@@ -62,7 +62,12 @@ test("All photo-bearing views label provenance and provide bilingual alt text",(
     assert.ok(src.includes("useHotelMedia")||src.includes("photoAlt"),file);
   }
   const home=read("src/components/HotelExperience.tsx");
-  assert.ok(home.includes("photoAlt(photo,locale)"));
+  // Per-item bilingual descriptions supersede the six-position demo helper
+  // when the owner selects images from the new visual library.
+  assert.ok(home.includes('alt={locale==="ar"?galleryImages[photo].altAr:galleryImages[photo].alt}'));
+  assert.ok(read("src/lib/cms-media.ts").includes("approvedAsset"));
+  assert.ok(read("src/lib/cms-media.ts").includes("altEn"));
+  assert.ok(read("src/lib/cms-media.ts").includes("altAr"));
   const docs=read("docs/HOTEL_MEDIA_HANDOFF.md");
   assert.ok(docs.includes("rightsConfirmed"));
   assert.ok(docs.includes("media:launch-check"));
