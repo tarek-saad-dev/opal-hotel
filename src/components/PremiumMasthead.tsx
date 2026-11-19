@@ -278,9 +278,10 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
             )}
           </nav>
           <div className="premium-header-controls">
-            <Link href={ar ? "/en" : "/ar"} className="premium-locale" lang={ar ? "en" : "ar"} hrefLang={ar ? "en" : "ar"}>
+            {/* Full document navigation reads the latest published CMS snapshot in either locale. */}
+            <a href={ar ? "/en" : "/ar"} className="premium-locale" lang={ar ? "en" : "ar"} hrefLang={ar ? "en" : "ar"}>
               {ar ? "EN" : "عربي"}
-            </Link>
+            </a>
             <a className="premium-header-cta" href="#booking">{t.reserve}<Glyph name="arrow" /></a>
             <button className="premium-hamburger" type="button" ref={menuTriggerRef}
               aria-controls="premium-mobile-menu" aria-expanded={menuOpen}
@@ -303,8 +304,8 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
               <span className="premium-menu-brand-wordmark"><strong>OPAL LEGACY</strong><small>LUXOR · EGYPT</small></span>
             </span>
             <div className="premium-menu-top-controls">
-              <Link href={ar ? "/en" : "/ar"} className="premium-menu-lang" lang={ar ? "en" : "ar"}
-                hrefLang={ar ? "en" : "ar"}>{ar ? "EN" : "عربي"}</Link>
+              <a href={ar ? "/en" : "/ar"} className="premium-menu-lang" lang={ar ? "en" : "ar"
+                hrefLang={ar ? "en" : "ar"}>{ar ? "EN" : "عربي"}</a>
               <button type="button" className="premium-menu-close" ref={menuCloseRef}
                 onClick={() => { restoreMenuFocus.current = true; setMenuOpen(false); }}
                 aria-label={c.labels.close}><Glyph name="close"/></button>
