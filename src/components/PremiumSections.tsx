@@ -62,6 +62,10 @@ export function PremiumStory({ locale, content: c, onOpenPhoto }: StoryProps) {
       <h2>{heading.title} <em>{heading.accent}</em></h2>
       <p className="opal-story-lead">{heading.description}</p>
       <p className="opal-story-detail">{c.overview[0]}</p>
+      {c.overview.length>1&&<details className="opal-cms-more-story">
+        <summary>{ar?"تعرف على المكان أكثر":"More about the property"}</summary>
+        {c.overview.slice(1).map((paragraph,i)=><p key={i}>{paragraph}</p>)}
+      </details>}
       <a className="opal-text-link" href={`#${cms.sections.find(x=>x.id!=="overview"&&x.visible)?.id||"booking"}`}>{t.line}<span aria-hidden="true">↗</span></a>
       <div className="opal-story-signature"><span className="opal-signature-line"/><span>{t.slow}</span></div>
     </div>
@@ -109,6 +113,9 @@ export function PremiumFacilities({ locale, content: c }: SharedProps) {
   };
   return <div className="opal-facilities-layout">
     <Header number="02" kicker={heading.kicker} title={heading.title} italic={heading.accent} note={heading.description}/>
+    {c.quick.length>0&&<ul className="opal-cms-quick-facts">
+      {c.quick.map((item,i)=><li key={i}>{item}</li>)}
+    </ul>}
     <div className="opal-facility-features">
       {t.items.map((item, i) => <article className="opal-feature" key={item.number}>
         <span className="opal-feature-number">{item.number} / 03</span>
