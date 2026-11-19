@@ -194,6 +194,109 @@ try{
     await publicLogo.close();
   } finally { await publicLogoContext.close(); }
 
+
+  // Video & poster are uploaded to the private owner library first; the public
+  // media URLs must remain inaccessible until the explicit Publish action.
+  const posterUpload=await context.request.post(origin+"/api/admin/cms/upload",{
+    headers:{Origin:origin},multipart:{image:{name:"hero-poster.png",mimeType:"image/png",buffer:tinyPng}}
+  });
+  check(posterUpload.status()===200,"Owner should be able to upload a poster");
+  const posterSrc=(await posterUpload.json()).src;
+  // Tiny structurally-valid ISO MP4 headers are sufficient for upload/range
+  // tests; no browser decoding claim is made for this synthetic fixture.
+  const mp4Fixture=Buffer.alloc(128);
+  Buffer.from("ftypisom").copy(mp4Fixture,4);
+  const uploadMovie=async role=>{
+    const response=await context.request.post(origin+"/api/admin/cms/upload-video",{
+      headers:{Origin:origin},multipart:{
+        role,
+        video:{name:"opal-test.mp4",mimeType:"video/mp4",buffer:mp4Fixture}
+      }
+    });
+    check(response.status()===200,"Owner "+role+" video should upload");
+    return (await response.json()).src;
+  };
+  const heroSrc=await uploadMovie("desktop");
+  const filmSrc=await uploadMovie("film");
+  const stranger=await browser.newContext();
+  try{
+    for(const src of [posterSrc,heroSrc,filmSrc]){
+      check((await stranger.request.get(origin+src)).status()===404,
+        "Draft poster/video must not leak to anonymous visitors");
+    }
+    check((await stranger.request.post(origin+"/api/admin/cms/upload-video",{
+      headers:{Origin:origin},multipart:{
+        role:"desktop",video:{name:"unauthorized.mp4",mimeType:"video/mp4",buffer:mp4Fixture}
+      }
+    })).status()===401,"Video uploading must be owner-only");
+  }finally{await stranger.close();}
+  const currentCms=await context.request.get(origin+"/api/admin/cms");
+  const videoDoc=(await currentCms.json()).draft;
+  videoDoc.media.video={
+    enabled:true,desktopSrc:heroSrc,mobileSrc:"",posterSrc,
+    fullFilmSrc:filmSrc,heroApproved:true,filmApproved:true
+  };
+  const savedMovieResponse=await context.request.put(origin+"/api/admin/cms",{
+    headers:{Origin:origin,"Content-Type":"application/json"},
+    data:{document:videoDoc,expectedRevision:videoDoc.revision}
+  });
+  check(savedMovieResponse.status()===200,"Hero video draft must save");
+  const savedMovie=(await savedMovieResponse.json()).draft;
+  const privateMovie=await context.newPage();
+  try{
+    await privateMovie.goto(origin+"/ar/preview",{waitUntil:"domcontentloaded"});
+    check(await privateMovie.locator('[data-hero-mode="video"]').count()===1,
+      "Owner must preview video background before publication");
+    check(await privateMovie.locator(".opal-hero-video-poster").getAttribute("src")===posterSrc,
+      "Hero preview must use uploaded poster");
+    const beforePublication=await browser.newContext();
+    try{
+      const beforePage=await beforePublication.newPage();
+      await beforePage.goto(origin+"/en",{waitUntil:"domcontentloaded"});
+      check(await beforePage.locator('[data-hero-mode="video"]').count()===0,
+        "Unsaved/unpublished video must not appear publicly");
+    }finally{await beforePublication.close();}
+  }finally{await privateMovie.close();}
+  const publishMovie=await context.request.post(origin+"/api/admin/cms/publish",{
+    headers:{Origin:origin,"Content-Type":"application/json"},
+    data:{expectedRevision:savedMovie.revision}
+  });
+  check(publishMovie.status()===200,"Owner should publish approved video");
+  check((await publishMovie.json()).mediaReady===false,
+    "Independent hero publishing must not auto-approve six hotel photographs");
+  const visitor=await browser.newContext();
+  try{
+    for(const src of [posterSrc,heroSrc,filmSrc]){
+      check((await visitor.request.get(origin+src)).status()===200,
+        "Approved video and poster should become publicly readable");
+    }
+    const partial=await visitor.request.get(origin+filmSrc,{headers:{Range:"bytes=0-15"}});
+    check(partial.status()===206,"Full film byte-range request should return 206");
+    check((await partial.body()).length===16,"Byte-range response must not read whole film");
+    check(partial.headers()["content-range"]==="bytes 0-15/128",
+      "Full film response must contain a correct Content-Range");
+    check((await visitor.request.get(origin+filmSrc,{headers:{Range:"bytes=200-300"}})).status()===416,
+      "Unsatisfiable film ranges should be rejected");
+    for(const code of ["ar","en"]){
+      const vpage=await visitor.newPage();
+      await vpage.goto(origin+"/"+code,{waitUntil:"domcontentloaded"});
+      check(await vpage.locator('[data-hero-mode="video"]').count()===1,
+        "Published video background should appear in "+code);
+      check(await vpage.locator(".opal-hero-video-poster").getAttribute("src")===posterSrc,
+        "Poster must match published media in "+code);
+      check(await vpage.locator(".premium-hero-scene-navigation").count()===0,
+        "Still-photo carousel should be hidden when video is active");
+      const film=vpage.locator(".opal-hero-watch");
+      check(await film.count()===1,"Full film must have an explicit watch button");
+      check(await vpage.locator("#opal-hotel-film-dialog").count()===0,
+        "Four-minute film modal must not preload at page load");
+      await film.click();
+      await vpage.locator("#opal-hotel-film-dialog video[controls]").waitFor();
+      await vpage.locator(".opal-film-top button").click();
+      await vpage.close();
+    }
+  }finally{await visitor.close();}
+
   await page.screenshot({path:path.join(dir,"owner-sections.png"),fullPage:true,animations:"disabled"});
 
   await page.getByRole("button",{name:/تسجيل الخروج/}).click();
@@ -204,7 +307,7 @@ try{
   check(logout.status()===401,"Logout must revoke private content access");
   check(errors.length===0,"Browser errors: "+errors.join("; "));
   console.log(JSON.stringify({cmsPassed:true,publicStableBeforePublish:true,
-    draftPreview:true,publishedInstantly:true,sectionControl:true,history:true,uploadSecurity:true,logoLocales:true,logout:true}));
+    draftPreview:true,publishedInstantly:true,sectionControl:true,history:true,uploadSecurity:true,logoLocales:true,heroFilm:true,filmRange:true,logout:true}));
 }catch(error){
   console.error("CMS integration failed:",error);
   process.exitCode=1;
