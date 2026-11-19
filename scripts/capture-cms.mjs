@@ -582,7 +582,8 @@ try{
       await vpage.close();
     }
   }finally{await filmVisitor.close();}
-  const filmMobile=await context.newPage({viewport:{width:390,height:844}});
+  const filmMobile=await context.newPage();
+  await filmMobile.setViewportSize({width:390,height:844});
   try{
     await filmMobile.goto(origin+"/ar/preview",{waitUntil:"domcontentloaded"});
     check(await filmMobile.locator(".opal-story-film-frame").isVisible(),
