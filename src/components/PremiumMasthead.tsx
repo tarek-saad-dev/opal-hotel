@@ -304,7 +304,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
               <span className="premium-menu-brand-wordmark"><strong>OPAL LEGACY</strong><small>LUXOR · EGYPT</small></span>
             </span>
             <div className="premium-menu-top-controls">
-              <a href={ar ? "/en" : "/ar"} className="premium-menu-lang" lang={ar ? "en" : "ar"
+              <a href={ar ? "/en" : "/ar"} className="premium-menu-lang" lang={ar ? "en" : "ar"}
                 hrefLang={ar ? "en" : "ar"}>{ar ? "EN" : "عربي"}</a>
               <button type="button" className="premium-menu-close" ref={menuCloseRef}
                 onClick={() => { restoreMenuFocus.current = true; setMenuOpen(false); }}
