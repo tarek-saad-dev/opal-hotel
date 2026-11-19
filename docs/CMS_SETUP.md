@@ -47,6 +47,7 @@ Use a new long random password. Changing it invalidates existing signed sessions
 ## Safety restrictions
 - This CMS is single-owner password based, **not** a multi-tenant role/permissions platform yet.
 - Uploads allow only PNG/JPEG/WebP magic signatures, max 4 MB; **no SVG, HTML or executable content**. Strip EXIF/geolocation from photos before uploading using an approved editor; V1 does not transcode or remove EXIF automatically.
+- Newly uploaded media stays accessible only to the signed-in owner. Anonymous visitors cannot retrieve draft image URLs until that image is part of the complete, owner-approved **published** set. Published media is cacheable for 10 minutes; previously viewed images may remain in browser caches briefly after withdrawal.
 - The shared media set activates only when all six owner-verified photos, localized alts and official logo are complete. The previous repo-based approval manifest still exists as a fallback until the owner CMS library is ready.
 - Owner content is escaped by React; no rich HTML injection or custom scripts. Security requires HTTPS, a strong owner secret and single-site origin checks.
 - Booking, payment, availability, guest review submission and contact delivery **remain disabled preview experiences**. The CMS never adds a real reservation or sends guest details.
