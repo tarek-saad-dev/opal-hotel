@@ -26,7 +26,7 @@ test("CMS production smoke script is read-only and checks private endpoints", ()
   const src = read("ops/check-cms-production.sh");
   assert.match(src, /BASE="https:\/\/\$DOMAIN"/);
   assert.match(src, /expect \/api\/admin\/cms 401/);
-  assert.match(src, /expect \/en\/preview 404/);
+  assert.match(src, /check_preview \/en\/preview/);
   assert.match(src, /data\.configured !== true/);
   assert.match(src, /data\.authenticated !== false/);
   assert.doesNotMatch(src, /(--insecure| -k |OPAL_CMS_ADMIN_PASSWORD|curl .*--data|curl .*--request POST)/);
