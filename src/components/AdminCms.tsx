@@ -2,7 +2,7 @@
 
 import { useCallback,useEffect,useState,type ChangeEvent,type ReactNode } from "react";
 import type { CmsLocale,CmsMediaRole,CmsSectionId,CmsSite } from "@/lib/cms-schema";
-import { cmsSectionIds,hasCompleteCmsMedia,mediaRoles } from "@/lib/cms-schema";
+import { cmsSectionIds,hasApprovedCmsLogo,hasCompleteCmsMedia,mediaRoles } from "@/lib/cms-schema";
 import type { Locale } from "@/lib/hotel-content";
 
 type Tab="content"|"sections"|"media"|"history";
@@ -139,9 +139,9 @@ function MediaEditor({draft,change,onUpload,uploading}:{
       event.currentTarget.value="";
     }}/>;
   return <div className="opal-cms-stack">
-    <div className="opal-cms-note">ارفع الصور الحقيقية المصرح باستخدامها فقط (JPEG / WebP / PNG، بحد أقصى 4MB). الصور بتتحفظ بشكل دائم على السيرفر. علشان نمنع خلط صور حقيقية وتجريبية، لازم تجهز الصور الست واللوجو وتوافق على الحقوق كلها قبل تفعيلها على الموقع.</div>
+    <div className="opal-cms-note">ارفع الصور الحقيقية المصرح باستخدامها فقط (JPEG / WebP / PNG، بحد أقصى 4MB). الصور بتتحفظ بشكل دائم على السيرفر. اللوجو بيتنشر بشكل مستقل بعد اعتماد حقوقه وحفظ المسودة والضغط على «نشر على الموقع». الصور الست بتتفعّل كمجموعة واحدة بعد اعتمادها بالكامل لتجنب خلط الصور الحقيقية بالتجريبية.</div>
     <section className="opal-cms-editor-card">
-      <div className="opal-cms-editor-head"><span>01 / الهوية</span><h3>اللوجو الرسمي</h3></div>
+      <div className="opal-cms-editor-head"><span>01 / الهوية</span><h3>اللوجو الرسمي — الهيدر والموبايل</h3></div>
       <div className="opal-cms-media-line">
         <div className="opal-cms-upload-preview">{draft.media.logo?
           // eslint-disable-next-line @next/next/no-img-element
@@ -151,6 +151,9 @@ function MediaEditor({draft,change,onUpload,uploading}:{
             onChange={e=>edit(d=>{d.media.logoApproved=e.target.checked;})}/> أؤكد امتلاك حق استخدام هذا اللوجو</label>
         </div>
       </div>
+      <p className="opal-cms-note">{hasApprovedCmsLogo(draft)
+        ?"✓ اللوجو معتمد وجاهز للظهور في الهيدر بعد حفظ المسودة والنشر."
+        :"ارفع اللوجو وفعّل موافقة الحقوق، ثم احفظ المسودة واضغط نشر. لا يلزم رفع باقي الصور."}</p>
     </section>
     <section className="opal-cms-editor-card">
       <div className="opal-cms-editor-head"><span>02 / الصور</span><h3>مكتبة الصور الست الأساسية</h3></div>
@@ -173,7 +176,7 @@ function MediaEditor({draft,change,onUpload,uploading}:{
       </div>
     </section>
     <div className="opal-cms-photo-status"><strong>{hasCompleteCmsMedia(draft)?"✓ مكتبة الصور جاهزة للنشر":"الصور غير مكتملة بعد"}</strong>
-      <p>تعديل النصوص والأقسام يمكن نشره الآن، لكن تغيير صور الموقع العام لن يحدث إلا بعد اكتمال واعتماد الست صور واللوجو.</p></div>
+      <p>الصور الست مش هتظهر على الموقع قبل اكتمال اعتماد المجموعة كلها. اللوجو مستقل عنها، وبيظهر في الهيدر بمجرد اعتماده ونشر التعديل.</p></div>
     {uploading&&<div role="status" className="opal-cms-note">جاري رفع {uploading}…</div>}
   </div>;
 }
@@ -253,7 +256,9 @@ export function AdminCms(){
       if(!r.ok||!data.published)throw new Error(data.error||"فشل النشر");
       setDraft(data.published);setSaved(data.published);setPublished(data.published);
       await fetchHistory();
-      setMessage("تم النشر بنجاح. الموقع العام بيعرض المحتوى الجديد الآن."+(data.mediaReady?" الصور المعتمدة اتفعلت.":" صور المعاينة ما زالت ظاهرة لعدم اكتمال الصور الرسمية."));
+      setMessage("تم النشر بنجاح. الموقع العام بيعرض المحتوى الجديد الآن."
+        +(hasApprovedCmsLogo(data.published)?" اللوجو المعتمد ظاهر في الهيدر.":"")
+        +(data.mediaReady?" الصور المعتمدة اتفعلت.":" صور المعاينة هتفضل لحد اكتمال الصور الست."));
     }catch(e){setError(e instanceof Error?e.message:"تعذر النشر");}
     finally{setBusy("");}
   }
