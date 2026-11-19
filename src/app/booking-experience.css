@@ -280,3 +280,49 @@
 @media(prefers-reduced-motion:reduce){
   .opal-book-page *, .opal-book-header *, .opal-book-footer *{animation:none!important;transition:none!important}
 }
+
+
+/* V3 RHYTHM AUDIT — BOOKING PREVIEW
+   This is a task-based form, not a cinematic screen. Forcing each step to
+   100vh would hide validation, fields and summary on small devices. */
+.opal-book-page{min-height:calc(100svh - 175px)}
+.opal-book-introduction{
+  padding-block:clamp(43px,6svh,84px) clamp(25px,4svh,48px);
+}
+.opal-book-stepbar{min-height:0}
+.opal-book-layout{
+  min-height:0;
+  padding-block:clamp(35px,5svh,66px) clamp(57px,7svh,106px);
+}
+.opal-book-summary{top:clamp(18px,3svh,28px)}
+.opal-book-summary-image{height:clamp(150px,23svh,260px)}
+.opal-book-bottom-note{padding-bottom:clamp(32px,6svh,65px)}
+.opal-book-room-media{height:clamp(165px,25svh,260px)}
+@media(max-height:780px) and (min-width:801px){
+  /* Prefer natural scrolling to an internally clipped sticky summary on a
+     short laptop display. */
+  .opal-book-summary{position:static}
+}
+@media(max-width:800px){
+  .opal-book-page{min-height:calc(100svh - 155px)}
+  .opal-book-introduction{
+    padding:clamp(35px,5svh,59px) 25px clamp(22px,4svh,36px);
+  }
+  .opal-book-layout{
+    padding-block:clamp(30px,4svh,48px) clamp(47px,6svh,85px);
+  }
+  .opal-book-summary{position:static}
+  .opal-book-summary-image{height:clamp(170px,27svh,245px)}
+}
+@media(max-width:600px){
+  .opal-book-introduction{padding:clamp(30px,5svh,53px) 19px 27px}
+  .opal-book-layout{padding:clamp(27px,4svh,41px) 19px clamp(42px,7svh,69px)}
+  .opal-book-room-media{height:clamp(170px,33svh,245px)}
+  .opal-book-summary-image{height:clamp(165px,26svh,225px)}
+  .opal-book-bottom-note{padding-bottom:clamp(30px,5svh,47px)}
+}
+@media(max-width:360px){
+  .opal-book-introduction{padding-inline:16px}
+  .opal-book-layout{padding-inline:15px}
+  .opal-book-room-media{height:clamp(150px,30svh,210px)}
+}
