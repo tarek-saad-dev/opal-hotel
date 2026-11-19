@@ -300,7 +300,7 @@
   min-height:0;
   padding-block:clamp(58px,8svh,112px);
 }
-.room-exp-card-visual{aspect-ratio:clamp(.85,1,1.03)}
+.room-exp-card-visual{aspect-ratio:.96}
 .room-exp-detail-hero{
   min-height:min(81svh,830px);
   align-items:start;
