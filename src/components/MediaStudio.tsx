@@ -175,7 +175,10 @@ export function MediaStudio({draft,change,upload,uploading}:Props){
           {a.kind==="image"
             // eslint-disable-next-line @next/next/no-img-element
             ?<img src={a.src} alt={a.altAr||a.title} loading="lazy"/>
-            :<div className="opal-media-video-icon">▶<small>VIDEO</small></div>}
+            :a.poster
+              // eslint-disable-next-line @next/next/no-img-element
+              ?<div className="opal-media-video-cover"><img src={a.poster} alt="" loading="lazy"/><span>▶ VIDEO</span></div>
+              :<div className="opal-media-video-icon">▶<small>VIDEO</small></div>}
           <strong title={a.title}>{a.title}</strong>
           <span>{labels[a.category]} · {a.approved?"✓ معتمد":"○ بانتظار الاعتماد"}</span>
           {used.has(a.src)&&<small>مرتبط بقسم</small>}
