@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { FormEvent, SyntheticEvent } from "react";
 import type { Locale } from "@/lib/hotel-content";
-import { hotelBrand, photoAlt, responsivePhotoSrcSet } from "@/lib/gallery";
+import { hotelBrand, responsivePhotoSrcSet } from "@/lib/gallery";
 import { useHotelMedia } from "@/components/CmsProvider";
 import { roomConcepts } from "@/lib/room-concepts";
 import {
@@ -26,7 +26,7 @@ function PreviewPhoto({index,locale}:{index:number;locale:Locale}) {
   // eslint-disable-next-line @next/next/no-img-element
   return <img className="opal-book-photo" data-media-origin={image.origin} src={image.src}
     srcSet={responsivePhotoSrcSet(image.src)} sizes="(max-width: 700px) 100vw, 40vw"
-    width={900} height={650} alt={image.origin==="hotel-approved"?(locale==="ar"?image.altAr:image.alt):photoAlt(index,locale)} loading="lazy" decoding="async" onError={fallback}/>;
+    width={900} height={650} alt={locale==="ar"?image.altAr:image.alt} loading="lazy" decoding="async" onError={fallback}/>;
 }
 
 function StepNumber({number,step,label,onNavigate}:{number:Step;step:Step;label:string;onNavigate:(step:Step)=>void}) {
@@ -194,7 +194,7 @@ export function BookingExperience({locale,initial}:Props) {
                   aria-label={`${t.choose}: ${room.name[locale]}`}
                   onClick={()=>setSelectedRoom(room.slug)}>
                   <div className="opal-book-room-media">
-                    <PreviewPhoto locale={locale} index={room.imageIndices[0]}/>
+                    <PreviewPhoto locale={locale} index={media.roomMedia[room.slug]?.cover??room.imageIndices[0]}/>
                     <span className="opal-book-room-index">{String(i+1).padStart(2,"0")} / 03</span>
                     <span className="opal-book-room-check" aria-hidden="true">{selectedRoom===room.slug?"✓":"+"}</span>
                   </div>
@@ -256,7 +256,7 @@ export function BookingExperience({locale,initial}:Props) {
             <span className="opal-book-summary-ornament" aria-hidden="true">✳</span>
           </div>
           <div className="opal-book-summary-image">
-            <PreviewPhoto locale={locale} index={chosen?chosen.imageIndices[0]:2}/>
+            <PreviewPhoto locale={locale} index={chosen?(media.roomMedia[chosen.slug]?.cover??chosen.imageIndices[0]):(media.roomMedia[roomConcepts[0].slug]?.cover??2)}/>
             <span>{media.approved ? (ar?"صور الفندق المعتمدة":"HOTEL-APPROVED PHOTOS") : t.source}</span>
           </div>
           <h2>{chosen?chosen.name[locale]:t.datePlaceholder}</h2>
