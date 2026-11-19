@@ -22,7 +22,10 @@ jobs:
       - name: Install project dependencies
         run: npm install --no-audit --no-fund
       - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+        # GitHub-hosted Ubuntu already has the shared Chromium runtime libraries.
+        # Avoid downloading large optional Ubuntu font/dependency packages from
+        # security.ubuntu.com, which have intermittently returned 503 in CI.
+        run: npx playwright install chromium
       - name: Prepare isolated owner CMS test credentials
         run: |
           PASS="$(node -e "process.stdout.write(require('crypto').randomBytes(24).toString('base64url'))")"
