@@ -105,6 +105,16 @@ export async function restoreAsDraft(revision:number,expectedRevision:number):Pr
     return doc;
   });
 }
+/** Public requests must not access images uploaded into an unpublished draft.
+ * Only the complete owner-approved set in the published snapshot is public. */
+export async function isPublishedCmsImage(filename:string):Promise<boolean>{
+  if(!/^[0-9a-f]{32}\\.(?:webp|jpg|png)$/.test(filename))return false;
+  const published=await readPublished();
+  if(!hasCompleteCmsMedia(published))return false;
+  const path="/api/cms/media/"+filename;
+  return published.media.logo===path||mediaRoles.some(role=>published.media.photos[role].src===path);
+}
+
 export async function saveUploadedImage(buffer:Buffer,ext:"png"|"jpg"|"webp"):Promise<string>{
   await fs.mkdir(mediaDir(),{recursive:true,mode:0o700});
   const name=randomUUID().replaceAll("-","")+"."+ext;
