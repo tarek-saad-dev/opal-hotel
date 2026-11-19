@@ -25,7 +25,11 @@ test("Rooms are clearly concepts, with no fake inventory or rates", () => {
 
 test("Premium gallery has interactive filters and opens the existing lightbox", () => {
   const src=read("src/components/PremiumSections.tsx");
-  for(const key of ['"all"','"spaces"','"moments"'])assert.ok(src.includes(key));
+  for(const key of ['all:{en:"All media"','pool:{en:"Pool"','rooms:{en:"Rooms"','exterior:{en:"Exterior"'])
+    assert.ok(src.includes(key),key);
+  assert.ok(src.includes("media.galleryIndices"));
+  assert.ok(src.includes("media.galleryVideos"));
+  assert.ok(src.includes('preload="none"'));
   assert.ok(src.includes('aria-pressed={filter===key}'));
   assert.ok(src.includes('onOpenPhoto(img.index)'));
 });

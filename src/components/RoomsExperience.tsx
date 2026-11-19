@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, SyntheticEvent } from "react";
 import type { Locale } from "@/lib/hotel-content";
-import { hotelBrand, photoAlt, responsivePhotoSrcSet } from "@/lib/gallery";
+import { hotelBrand, responsivePhotoSrcSet } from "@/lib/gallery";
 import { useHotelMedia } from "@/components/CmsProvider";
 import { type RoomConcept, roomConcepts, roomUI } from "@/lib/room-concepts";
 
@@ -24,7 +24,7 @@ function ConceptPhoto({ index, locale, eager = false, sizes = "(max-width: 700px
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img className="room-exp-image" data-media-origin={photo.origin} src={photo.src} srcSet={responsivePhotoSrcSet(photo.src)}
-      sizes={sizes} width={1400} height={1050} alt={photo.origin==="hotel-approved"?(locale==="ar"?photo.altAr:photo.alt):photoAlt(index,locale)}
+      sizes={sizes} width={1400} height={1050} alt={locale==="ar"?photo.altAr:photo.alt}
       decoding="async" loading={eager?"eager":"lazy"}
       fetchPriority={eager?"high":"auto"} onError={handleFail}/>
   );
@@ -92,7 +92,7 @@ export function RoomCollection({locale}:ShellProps) {
             <Link className="room-exp-back-link" href={`/${locale}`}>{t.backHome} <span aria-hidden="true">↗</span></Link>
           </div>
         </div>
-        <div className="room-exp-hero-media"><ConceptPhoto locale={locale} index={2} eager sizes="(max-width: 700px) 100vw, 48vw"/>
+        <div className="room-exp-hero-media"><ConceptPhoto locale={locale} index={media.roomMedia[roomConcepts[0].slug]?.cover??2} eager sizes="(max-width: 700px) 100vw, 48vw"/>
           <span className="room-exp-photo-number">01 / 03</span>
         </div>
       </section>
@@ -103,7 +103,7 @@ export function RoomCollection({locale}:ShellProps) {
         <div className="room-exp-catalogue-grid">
           {roomConcepts.map((concept,i)=><article className="room-exp-catalogue-card" key={concept.slug}>
             <Link href={`/${locale}/rooms/${concept.slug}`} className="room-exp-card-visual" aria-label={`${t.explore}: ${concept.name[locale]}`}>
-              <ConceptPhoto locale={locale} index={concept.imageIndices[0]}/>
+              <ConceptPhoto locale={locale} index={media.roomMedia[concept.slug]?.cover??concept.imageIndices[0]}/>
               <span className="room-exp-card-pill">{concept.label[locale]}</span>
               <span className="room-exp-card-arrow" aria-hidden="true">↗</span>
             </Link>
@@ -130,11 +130,13 @@ export function RoomCollection({locale}:ShellProps) {
 
 function RoomPhotoExplorer({concept,locale}:{concept:RoomConcept;locale:Locale}) {
   const t=roomUI(locale);
+  const media=useHotelMedia();
+  const imageIndices=media.roomMedia[concept.slug]?.gallery??[...concept.imageIndices];
   const [selected,setSelected]=useState(0);
   const [zoom,setZoom]=useState(false);
   const opener=useRef<HTMLButtonElement>(null);
   const closeRef=useRef<HTMLButtonElement>(null);
-  const total=concept.imageIndices.length;
+  const total=imageIndices.length;
   const move=(delta:number)=>setSelected(index=>(index+delta+total)%total);
 
   useEffect(()=>{
@@ -173,7 +175,7 @@ function RoomPhotoExplorer({concept,locale}:{concept:RoomConcept;locale:Locale})
     <div className="room-exp-gallery-main">
       <button className="room-exp-gallery-open" type="button" ref={opener}
         onClick={()=>setZoom(true)} aria-label={t.image+" "+(selected+1)+" "+t.of+" "+total}>
-        <ConceptPhoto locale={locale} index={concept.imageIndices[selected]} eager sizes="(max-width: 800px) 100vw, 60vw"/>
+        <ConceptPhoto locale={locale} index={imageIndices[selected]} eager sizes="(max-width: 800px) 100vw, 60vw"/>
         <span className="room-exp-gallery-zoom" aria-hidden="true">↗</span>
       </button>
       <div className="room-exp-gallery-counter" dir="ltr" aria-live="polite">{String(selected+1).padStart(2,"0")} / {String(total).padStart(2,"0")}</div>
@@ -181,7 +183,7 @@ function RoomPhotoExplorer({concept,locale}:{concept:RoomConcept;locale:Locale})
     <div className="room-exp-gallery-bottom">
       <span className="room-exp-gallery-label">{t.perspectives}</span>
       <div className="room-exp-gallery-controls" role="group" aria-label={t.perspectives} onKeyDown={onGalleryKey}>
-        {concept.imageIndices.map((image,index)=><button type="button" key={index}
+        {imageIndices.map((image,index)=><button type="button" key={index}
           id={`room-thumb-${concept.slug}-${index}`} aria-label={`${t.image} ${index+1}`}
           aria-pressed={selected===index} className={selected===index?"is-selected":""}
           onClick={()=>setSelected(index)}><ConceptPhoto locale={locale} index={image}/></button>)}
@@ -195,7 +197,7 @@ function RoomPhotoExplorer({concept,locale}:{concept:RoomConcept;locale:Locale})
       <button type="button" className="room-exp-lightbox-close" ref={closeRef}
         aria-label={locale==="ar"?"إغلاق الصورة":"Close image"} onClick={()=>setZoom(false)}>×</button>
       <button type="button" className="room-exp-lightbox-prev" aria-label={t.previous} onClick={()=>move(-1)}>‹</button>
-      <div className="room-exp-lightbox-image"><ConceptPhoto locale={locale} index={concept.imageIndices[selected]} eager sizes="100vw"/>
+      <div className="room-exp-lightbox-image"><ConceptPhoto locale={locale} index={imageIndices[selected]} eager sizes="100vw"/>
         <p dir="ltr" aria-live="polite">{selected+1} / {total}</p></div>
       <button type="button" className="room-exp-lightbox-next" aria-label={t.next} onClick={()=>move(1)}>›</button>
     </div>}
@@ -206,6 +208,7 @@ export function RoomDetail({locale,concept}:{locale:Locale;concept:RoomConcept})
   const t=roomUI(locale);
   const media=useHotelMedia();
   const others=roomConcepts.filter(item=>item.slug!==concept.slug);
+  const roomVideo=media.roomMedia[concept.slug]?.video;
   return <>
     <a href="#room-main" className="opal-skip-link">{t.skip}</a>
     <RoomHeader locale={locale} slug={concept.slug}/>
@@ -223,6 +226,13 @@ export function RoomDetail({locale,concept}:{locale:Locale;concept:RoomConcept})
           <ConceptBadge locale={locale}/>
         </div>
         <RoomPhotoExplorer concept={concept} locale={locale}/>
+        {roomVideo&&<div className="room-exp-feature-film">
+          <h2>{locale==="ar"?"شاهد تفاصيل المكان":"Watch this space"}</h2>
+          <video src={roomVideo.src}
+            poster={roomVideo.poster||undefined}
+            controls playsInline preload="none"
+            aria-label={roomVideo.title}/>
+        </div>}
       </section>
       <section className="room-exp-detail-story" aria-labelledby="room-story-heading">
         <div>
@@ -243,7 +253,7 @@ export function RoomDetail({locale,concept}:{locale:Locale;concept:RoomConcept})
         <div className="room-exp-related-heading"><h2>{t.other}</h2><Link href={`/${locale}/rooms`}>{t.all} <span aria-hidden="true">↗</span></Link></div>
         <div className="room-exp-related-grid">
           {others.map(room=><Link href={`/${locale}/rooms/${room.slug}`} className="room-exp-related-card" key={room.slug}>
-            <div><ConceptPhoto locale={locale} index={room.imageIndices[0]}/></div>
+            <div><ConceptPhoto locale={locale} index={media.roomMedia[room.slug]?.cover??room.imageIndices[0]}/></div>
             <span>{room.label[locale]}</span>
             <strong>{room.name[locale]}</strong>
             <span className="room-exp-related-arrow" aria-hidden="true">↗</span>

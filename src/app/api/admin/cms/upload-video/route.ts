@@ -4,7 +4,7 @@ import { saveUploadedVideo } from "@/lib/cms-store";
 export const runtime="nodejs";
 
 // A 4-minute owner film is accepted on demand. Short Hero assets have tight budgets.
-const limits={desktop:6*1024*1024,mobile:4*1024*1024,film:50*1024*1024} as const;
+const limits={desktop:6*1024*1024,mobile:4*1024*1024,film:50*1024*1024,gallery:50*1024*1024} as const;
 export async function POST(request:NextRequest){
   if(!await isCmsAuthenticated())return NextResponse.json({error:"UNAUTHORIZED"},{status:401,headers:noStoreHeaders});
   if(!validCmsMutationOrigin(request))return NextResponse.json({error:"INVALID_ORIGIN"},{status:403,headers:noStoreHeaders});
@@ -14,7 +14,7 @@ export async function POST(request:NextRequest){
     const data=await request.formData();
     const role=data.get("role");
     const video=data.get("video");
-    if(role!=="desktop"&&role!=="mobile"&&role!=="film")
+    if(role!=="desktop"&&role!=="mobile"&&role!=="film"&&role!=="gallery")
       return NextResponse.json({error:"INVALID_VIDEO_ROLE"},{status:400,headers:noStoreHeaders});
     if(!(video instanceof File)||!video.size||video.size>limits[role])
       return NextResponse.json({error:"VIDEO_TOO_LARGE"},{status:413,headers:noStoreHeaders});

@@ -297,6 +297,114 @@ try{
     }
   }finally{await visitor.close();}
 
+  // Media-first V2: owner chooses independent real media per section and room.
+  // Merely uploading or assigning an unapproved image must not expose it publicly.
+  const v2PhotoResponse=await context.request.post(origin+"/api/admin/cms/upload",{
+    headers:{Origin:origin},multipart:{
+      image:{name:"real-hotel-photo.png",mimeType:"image/png",buffer:tinyPng}
+    }
+  });
+  check(v2PhotoResponse.status()===200,"V2 owner library image should upload");
+  const v2Photo=(await v2PhotoResponse.json()).src;
+  const v2Photo2Response=await context.request.post(origin+"/api/admin/cms/upload",{
+    headers:{Origin:origin},multipart:{
+      image:{name:"pool-photo.png",mimeType:"image/png",buffer:tinyPng}
+    }
+  });
+  check(v2Photo2Response.status()===200,"V2 secondary library image should upload");
+  const v2Photo2=(await v2Photo2Response.json()).src;
+  const galleryFilmSrc=await uploadMovie("gallery");
+  const freshDocResponse=await context.request.get(origin+"/api/admin/cms");
+  const v2Doc=(await freshDocResponse.json()).draft;
+  // Earlier CMS regression intentionally hid Gallery; restore it for V2 tests.
+  v2Doc.sections.find(section=>section.id==="gallery").visible=true;
+  v2Doc.media.video.enabled=false; // test photo Hero independently from V1 movie
+  v2Doc.media.visual.assets=[
+    {src:v2Photo,kind:"image",title:"Opal overview",category:"exterior",
+      altEn:"Real hotel exterior",altAr:"صورة حقيقية لواجهة الفندق",approved:false,poster:""},
+    {src:v2Photo2,kind:"image",title:"Opal pool",category:"pool",
+      altEn:"Real hotel pool",altAr:"مسبح الفندق الحقيقي",approved:true,poster:""},
+    {src:galleryFilmSrc,kind:"video",title:"Hotel pool film",category:"pool",
+      altEn:"Hotel pool video",altAr:"فيديو مسبح الفندق",approved:true,poster:v2Photo2}
+  ];
+  v2Doc.media.visual.placements.hero=[v2Photo,v2Photo2];
+  v2Doc.media.visual.placements.overviewMain=v2Photo;
+  v2Doc.media.visual.placements.overviewInset=v2Photo2;
+  v2Doc.media.visual.placements.facilities=v2Photo2;
+  v2Doc.media.visual.placements.location=v2Photo;
+  v2Doc.media.visual.placements.gallery=[v2Photo2,galleryFilmSrc];
+  v2Doc.media.visual.placements.rooms["light-and-stillness"]={
+    cover:v2Photo,gallery:[v2Photo,v2Photo2],video:galleryFilmSrc
+  };
+  const saveVisual=await context.request.put(origin+"/api/admin/cms",{
+    headers:{Origin:origin,"Content-Type":"application/json"},
+    data:{document:v2Doc,expectedRevision:v2Doc.revision}
+  });
+  check(saveVisual.status()===200,"V2 library and section assignments should save");
+  const unapprovedDraft=(await saveVisual.json()).draft;
+  const previewVisual=await context.newPage();
+  await previewVisual.goto(origin+"/ar/preview",{waitUntil:"domcontentloaded"});
+  check(await previewVisual.locator(".opal-story-main-photo img").getAttribute("src")!==v2Photo,
+    "Unapproved assigned photo must not render even to owner as final published media");
+  await previewVisual.close();
+  const publishPartial=await context.request.post(origin+"/api/admin/cms/publish",{
+    headers:{Origin:origin,"Content-Type":"application/json"},
+    data:{expectedRevision:unapprovedDraft.revision}
+  });
+  check(publishPartial.status()===200,"Partially approved V2 collection should publish safely");
+  const partialVisitor=await browser.newContext();
+  try {
+    check((await partialVisitor.request.get(origin+v2Photo)).status()===404,
+      "Assigned but unapproved image must not be public");
+    check((await partialVisitor.request.get(origin+v2Photo2)).status()===200,
+      "Approved published gallery image should be public");
+  }finally{await partialVisitor.close();}
+  const afterPartial=await context.request.get(origin+"/api/admin/cms");
+  const approvedDoc=(await afterPartial.json()).draft;
+  approvedDoc.media.visual.assets.find(a=>a.src===v2Photo).approved=true;
+  const saveFinal=await context.request.put(origin+"/api/admin/cms",{
+    headers:{Origin:origin,"Content-Type":"application/json"},
+    data:{document:approvedDoc,expectedRevision:approvedDoc.revision}
+  });
+  check(saveFinal.status()===200,"Owner should approve previously private photo");
+  const afterSave=(await saveFinal.json()).draft;
+  const finalVisual=await context.request.post(origin+"/api/admin/cms/publish",{
+    headers:{Origin:origin,"Content-Type":"application/json"},
+    data:{expectedRevision:afterSave.revision}
+  });
+  check(finalVisual.status()===200,"Approved V2 mapping should publish without deploying code");
+  const approvedVisitor=await browser.newContext();
+  try{
+    check((await approvedVisitor.request.get(origin+v2Photo)).status()===200,
+      "Approved assigned overview image should become public");
+    check((await approvedVisitor.request.get(origin+galleryFilmSrc,{headers:{Range:"bytes=0-15"}})).status()===206,
+      "Approved gallery film must stream on demand");
+    for(const code of ["en","ar"]){
+      const vpage=await approvedVisitor.newPage();
+      await vpage.goto(origin+"/"+code,{waitUntil:"domcontentloaded"});
+      check(await vpage.locator(".opal-story-main-photo img").getAttribute("src")===v2Photo,
+        "Independent real overview main image must render in "+code);
+      check(await vpage.locator(".opal-story-small-photo img").getAttribute("src")===v2Photo2,
+        "Independent real overview inset image must render in "+code);
+      check(await vpage.locator(".premium-hero-photo").getAttribute("src")===v2Photo,
+        "Owner selected first still hero should render in "+code);
+      check(await vpage.locator(".opal-gallery-film video").count()===1,
+        "Gallery should show the approved video in "+code);
+      check(await vpage.locator(".opal-gallery-mosaic img").count()===1,
+        "Gallery should use only selected images, not six old demos in "+code);
+      check(await vpage.locator(".opal-media-section-figure img").count()===2,
+        "Location and facilities section images should render in "+code);
+      await vpage.close();
+      const room=await approvedVisitor.newPage();
+      await room.goto(origin+"/"+code+"/rooms/light-and-stillness",{waitUntil:"domcontentloaded"});
+      check(await room.locator(".room-exp-gallery-main img").getAttribute("src")===v2Photo,
+        "Room gallery should use its own cover image in "+code);
+      check(await room.locator(".room-exp-feature-film video").getAttribute("src")===galleryFilmSrc,
+        "Room detail should use its assigned hotel film in "+code);
+      await room.close();
+    }
+  }finally{await approvedVisitor.close();}
+
   await page.screenshot({path:path.join(dir,"owner-sections.png"),fullPage:true,animations:"disabled"});
 
   await page.getByRole("button",{name:/تسجيل الخروج/}).click();
@@ -307,7 +415,7 @@ try{
   check(logout.status()===401,"Logout must revoke private content access");
   check(errors.length===0,"Browser errors: "+errors.join("; "));
   console.log(JSON.stringify({cmsPassed:true,publicStableBeforePublish:true,
-    draftPreview:true,publishedInstantly:true,sectionControl:true,history:true,uploadSecurity:true,logoLocales:true,heroFilm:true,filmRange:true,logout:true}));
+    draftPreview:true,publishedInstantly:true,sectionControl:true,history:true,uploadSecurity:true,logoLocales:true,heroFilm:true,filmRange:true,mediaV2:true,logout:true}));
 }catch(error){
   console.error("CMS integration failed:",error);
   process.exitCode=1;

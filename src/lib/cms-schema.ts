@@ -1,4 +1,5 @@
 import { getContent, type FacilityGroup, type Locale } from "@/lib/hotel-content";
+import { defaultVisualLibrary,normalizeVisualLibrary,type CmsVisualLibrary } from "@/lib/cms-media";
 
 export const cmsSectionIds=["overview","facilities","location","rooms","gallery","reviews","contact"] as const;
 export type CmsSectionId=typeof cmsSectionIds[number];
@@ -45,7 +46,7 @@ export type CmsSite={
   updatedAt:string;
   locales:Record<Locale,CmsLocale>;
   sections:{id:CmsSectionId;visible:boolean}[];
-  media:{logo:string;logoApproved:boolean;photos:Record<CmsMediaRole,CmsPhoto>;video:CmsHeroVideo};
+  media:{logo:string;logoApproved:boolean;photos:Record<CmsMediaRole,CmsPhoto>;video:CmsHeroVideo;visual:CmsVisualLibrary};
 };
 const defaultHeadings:Record<Locale,Record<CmsSectionId,CmsHeading>>={
   en:{
@@ -87,7 +88,7 @@ export function defaultCmsSite():CmsSite {
     revision:0,updatedAt:"",locales:{en:locale("en"),ar:locale("ar")},
     sections:cmsSectionIds.map(id=>({id,visible:true})),
     media:{
-      logo:"",logoApproved:false,video:emptyCmsHeroVideo(),
+      logo:"",logoApproved:false,video:emptyCmsHeroVideo(),visual:defaultVisualLibrary(),
       photos:Object.fromEntries(mediaRoles.map(id=>[id,{src:"",altEn:"",altAr:"",rightsConfirmed:false}])) as Record<CmsMediaRole,CmsPhoto>
     }
   };
@@ -208,6 +209,7 @@ export function validateCmsSite(input:unknown):CmsSite{
     throw new Error("Invalid hero video approval");
   const video:CmsHeroVideo={enabled:v.enabled,desktopSrc,mobileSrc,posterSrc,fullFilmSrc,
     heroApproved:v.heroApproved,filmApproved:v.filmApproved};
+  const visual=normalizeVisualLibrary(media.visual);
   return {revision:Number(d.revision),updatedAt:typeof d.updatedAt==="string"?d.updatedAt.slice(0,50):"",
-    locales:cleaned,sections,media:{logo,logoApproved:media.logoApproved as boolean,photos,video}};
+    locales:cleaned,sections,media:{logo,logoApproved:media.logoApproved as boolean,photos,video,visual}};
 }

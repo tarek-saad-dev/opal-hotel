@@ -2,6 +2,7 @@ import { promises as fs,createReadStream } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { Readable } from "node:stream";
+import { approvedPublishedPaths } from "@/lib/cms-media";
 import { defaultCmsSite, hasApprovedCmsLogo, hasApprovedCmsHeroVideo, hasApprovedCmsFullFilm, hasCompleteCmsMedia, isManagedImagePath, isManagedVideoPath, mediaRoles, validateCmsSite, type CmsSite } from "@/lib/cms-schema";
 
 const root=()=>process.env.OPAL_CMS_DATA_DIR||
@@ -45,7 +46,8 @@ export async function readCmsVersions():Promise<{draft:CmsSite;published:CmsSite
   return {draft,published};
 }
 async function assertMediaFiles(doc:CmsSite):Promise<void>{
-  const sources=[doc.media.logo,doc.media.video.posterSrc,...mediaRoles.map(role=>doc.media.photos[role].src)].filter(Boolean);
+  const visual=doc.media.visual.assets;
+  const sources=[doc.media.logo,doc.media.video.posterSrc,...mediaRoles.map(role=>doc.media.photos[role].src),...visual.flatMap(a=>a.kind==="image"?[a.src]:[a.poster])].filter(Boolean);
   for(const src of sources){
     if(!isManagedImagePath(src))throw new Error("Only managed images can be published");
     const filename=src.split("/").at(-1)!;
@@ -54,7 +56,7 @@ async function assertMediaFiles(doc:CmsSite):Promise<void>{
       if(!stat.isFile())throw new Error("Not an image file");
     }catch{throw new Error("CMS media file missing: "+filename);}
   }
-  for(const src of [doc.media.video.desktopSrc,doc.media.video.mobileSrc,doc.media.video.fullFilmSrc].filter(Boolean)){
+  for(const src of [doc.media.video.desktopSrc,doc.media.video.mobileSrc,doc.media.video.fullFilmSrc,...visual.filter(a=>a.kind==="video").map(a=>a.src)].filter(Boolean)){
     if(!isManagedVideoPath(src))throw new Error("Only uploaded CMS videos can be published");
     const filename=src.split("/").at(-1)!;
     const stat=await fs.stat(path.join(videoDir(),filename)).catch(()=>null);
@@ -121,6 +123,7 @@ export async function isPublishedCmsImage(filename:string):Promise<boolean>{
   const src="/api/cms/media/"+filename;
   if(hasApprovedCmsLogo(published)&&published.media.logo===src)return true;
   if(hasApprovedCmsHeroVideo(published)&&published.media.video.posterSrc===src)return true;
+  if(approvedPublishedPaths(published.media.visual).has(src))return true;
   return hasCompleteCmsMedia(published)
     &&mediaRoles.some(role=>published.media.photos[role].src===src);
 }
@@ -156,7 +159,8 @@ export async function isPublishedCmsVideo(filename:string):Promise<boolean>{
   const src="/api/cms/video/"+filename;
   const v=doc.media.video;
   return (hasApprovedCmsHeroVideo(doc)&&(v.desktopSrc===src||v.mobileSrc===src))
-    ||(hasApprovedCmsFullFilm(doc)&&v.fullFilmSrc===src);
+    ||(hasApprovedCmsFullFilm(doc)&&v.fullFilmSrc===src)
+    ||approvedPublishedPaths(doc.media.visual).has(src);
 }
 export async function getCmsVideoStat(filename:string):Promise<number|null>{
   if(!/^[0-9a-f]{32}\.mp4$/.test(filename))return null;

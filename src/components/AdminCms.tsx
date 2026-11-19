@@ -4,8 +4,9 @@ import { useCallback,useEffect,useState,type ChangeEvent,type ReactNode } from "
 import type { CmsLocale,CmsMediaRole,CmsSectionId,CmsSite } from "@/lib/cms-schema";
 import { cmsSectionIds,hasApprovedCmsLogo,hasApprovedCmsHeroVideo,hasApprovedCmsFullFilm,hasCompleteCmsMedia,mediaRoles } from "@/lib/cms-schema";
 import type { Locale } from "@/lib/hotel-content";
+import { MediaStudio,optimizeMediaPhoto } from "@/components/MediaStudio";
 
-type Tab="content"|"sections"|"media"|"history";
+type Tab="content"|"sections"|"media"|"visual"|"history";
 type HistoryRow={revision:number;updatedAt:string};
 const sectionNames:Record<CmsSectionId,{en:string;ar:string}>={
   overview:{en:"Story",ar:"القصة"},facilities:{en:"Facilities",ar:"المرافق"},
@@ -140,7 +141,7 @@ function MediaEditor({draft,change,onUpload,onVideoUpload,uploading}:{
       event.currentTarget.value="";
     }}/>;
   return <div className="opal-cms-stack">
-    <div className="opal-cms-note">ارفع الصور الحقيقية المصرح باستخدامها فقط (JPEG / WebP / PNG، بحد أقصى 4MB). الصور بتتحفظ بشكل دائم على السيرفر. اللوجو بيتنشر بشكل مستقل بعد اعتماد حقوقه وحفظ المسودة والضغط على «نشر على الموقع». الصور الست بتتفعّل كمجموعة واحدة بعد اعتمادها بالكامل لتجنب خلط الصور الحقيقية بالتجريبية.</div>
+    <div className="opal-cms-note">ارفع الصور الحقيقية المصرح باستخدامها فقط (JPEG / WebP / PNG، بحد أقصى 4MB). الصور بتتحفظ بشكل دائم على السيرفر. اللوجو بيتنشر بشكل مستقل بعد اعتماد حقوقه وحفظ المسودة والضغط على «نشر على الموقع». الصور الست هنا هي النظام القديم؛ لو عاوز تتحكم في كل صورة وفيديو بشكل مستقل استخدم «مكتبة الوسائط V2» من القائمة.</div>
     <section className="opal-cms-editor-card">
       <div className="opal-cms-editor-head"><span>01 / الهوية</span><h3>اللوجو الرسمي — الهيدر والموبايل</h3></div>
       <div className="opal-cms-media-line">
@@ -177,7 +178,7 @@ function MediaEditor({draft,change,onUpload,onVideoUpload,uploading}:{
       </div>
     </section>
     <div className="opal-cms-photo-status"><strong>{hasCompleteCmsMedia(draft)?"✓ مكتبة الصور جاهزة للنشر":"الصور غير مكتملة بعد"}</strong>
-      <p>الصور الست مش هتظهر على الموقع قبل اكتمال اعتماد المجموعة كلها. اللوجو مستقل عنها، وبيظهر في الهيدر بمجرد اعتماده ونشر التعديل.</p></div>
+      <p>النظام القديم بيشترط اكتمال الصور الست معًا. أما مكتبة الوسائط V2 فتسمح بتغيير كل قسم أو غرفة أو جاليري بشكل مستقل بعد الاعتماد والنشر.</p></div>
     <section className="opal-cms-editor-card">
       <div className="opal-cms-editor-head"><span>03 / HERO VIDEO</span><h3>فيديو خلفية الموقع والفيلم الكامل</h3></div>
       <p className="opal-cms-note">فيديو الـHero يكون MP4 / H.264 بصيغة Web Optimized (faststart)، صامت ويفضل 10–15 ثانية.
@@ -369,6 +370,48 @@ export function AdminCms(){
     }catch(e){setError(e instanceof Error?e.message:"خطأ رفع الفيديو");}
     finally{setUploading("");}
   }
+  async function uploadLibrary(files:File[]){
+    if(!draft||uploading)return;
+    setError("");setMessage("");
+    let count=0;
+    try{
+      for(const input of files){
+        if(count>=160)throw new Error("الحد الأقصى للوسائط في المكتبة هو 160 ملف.");
+        const video=input.type==="video/mp4"||input.name.toLowerCase().endsWith(".mp4");
+        const image=input.type==="image/jpeg"||input.type==="image/png"||input.type==="image/webp";
+        if(!video&&!image)throw new Error("الصيغ المسموحة: JPG, PNG, WebP وMP4 فقط.");
+        if(video&&input.size>50*1024*1024)throw new Error("الفيديو "+input.name+" أكبر من 50MB. اضغطه قبل الرفع.");
+        setUploading(`رفع ${count+1} من ${files.length}: ${input.name}`);
+        const file=video?input:await optimizeMediaPhoto(input);
+        const form=new FormData();
+        form.append(video?"video":"image",file);
+        if(video)form.append("role","gallery");
+        const response=await fetch(video?"/api/admin/cms/upload-video":"/api/admin/cms/upload",{
+          method:"POST",body:form
+        });
+        const data=await response.json() as {src?:string;error?:string};
+        if(!response.ok||!data.src)throw new Error(data.error||"فشل رفع "+file.name);
+        const src=data.src;
+        const name=input.name.replace(/\\.[^.]+$/,"").slice(0,95)||"New media";
+        setDraft(old=>{
+          if(!old)return old;
+          const next=deepCopy(old);
+          if(next.media.visual.assets.some(item=>item.src===src))return next;
+          if(next.media.visual.assets.length>=160)return next;
+          next.media.visual.assets.push({
+            src,kind:video?"video":"image",title:name,category:"other",
+            altEn:name,altAr:"",approved:false,poster:""
+          });
+          return next;
+        });
+        count++;
+      }
+      setMessage(`تم رفع ${count} ملف للمكتبة كمسودة. اختار كل ملف واكتب وصفه واعتمد الحقوق وحدد مكانه.`);
+    }catch(e){
+      setError((e instanceof Error?e.message:"تعذر رفع الوسائط")
+        +(count?` — تم رفع ${count} ملف بالفعل، احفظ المسودة للاحتفاظ بهم.`:""));
+    }finally{setUploading("");}
+  }
   async function restore(revision:number){
     if(!saved)return;
     if(!window.confirm("استرجاع النسخة "+revision+" كمسودة فقط؟ النشر العام لن يتغير."))return;
@@ -408,7 +451,7 @@ export function AdminCms(){
       <p className="opal-cms-sidebar-eyebrow">MANAGEMENT</p>
       <nav aria-label="أقسام لوحة الإدارة">
         {([{id:"content",name:"المحتوى والنصوص",icon:"✎"},{id:"sections",name:"الأقسام والترتيب",icon:"▦"},
-          {id:"media",name:"مكتبة الصور واللوجو",icon:"▧"},{id:"history",name:"النسخ السابقة",icon:"↶"}] as {id:Tab;name:string;icon:string}[])
+          {id:"media",name:"الصور واللوجو الأساسية",icon:"▧"},{id:"visual",name:"مكتبة الوسائط V2",icon:"▣"},{id:"history",name:"النسخ السابقة",icon:"↶"}] as {id:Tab;name:string;icon:string}[])
           .map(item=><button key={item.id} type="button" className={tab===item.id?"is-active":""}
             onClick={()=>{setTab(item.id);if(item.id==="history")void fetchHistory();}}>
             <span>{item.icon}</span>{item.name}</button>)}
@@ -420,7 +463,7 @@ export function AdminCms(){
     </aside>
     <main className="opal-cms-main">
       <header className="opal-cms-topbar"><div><p className="opal-cms-eyebrow">OWNER CONTENT STUDIO</p>
-        <h1>{tab==="content"?"المحتوى والنصوص":tab==="sections"?"الأقسام والترتيب":tab==="media"?"الصور والهوية":"سجل النسخ"}</h1>
+        <h1>{tab==="content"?"المحتوى والنصوص":tab==="sections"?"الأقسام والترتيب":tab==="media"?"الصور والهوية":tab==="visual"?"مكتبة الوسائط والربط":"سجل النسخ"}</h1>
         <p className="opal-cms-subtitle">تحكم في الموقع مباشرة. كل تعديل بيتحفظ كمسودة الأول، وبعدها أنت تقرر النشر.</p>
       </div>
       <div className="opal-cms-status"><span className={dirty?"is-unsaved":"is-saved"}>{dirty?"● تعديلات غير محفوظة":"● المسودة محفوظة"}</span>
@@ -444,6 +487,7 @@ export function AdminCms(){
       {tab==="content"&&<ContentEditor draft={draft} locale={locale} change={setDraft}/>}
       {tab==="sections"&&<SectionEditor draft={draft} locale={locale} change={setDraft}/>}
       {tab==="media"&&<MediaEditor draft={draft} change={setDraft} onUpload={upload} onVideoUpload={uploadVideo} uploading={uploading}/>}
+      {tab==="visual"&&<MediaStudio draft={draft} change={setDraft} upload={uploadLibrary} uploading={uploading}/>}
       {tab==="history"&&<div className="opal-cms-stack">
         <div className="opal-cms-note">يمكنك استرجاع نسخة سابقة كمسودة، ومراجعتها ثم نشرها. النسخة العامة لا تتغير عند الاسترجاع.</div>
         {history.length===0?<div className="opal-cms-editor-card">مفيش نسخ سابقة لسه.</div>:
