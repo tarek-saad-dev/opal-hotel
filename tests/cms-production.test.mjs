@@ -31,3 +31,13 @@ test("CMS production smoke script is read-only and checks private endpoints", ()
   assert.match(src, /data\.authenticated !== false/);
   assert.doesNotMatch(src, /(--insecure| -k |OPAL_CMS_ADMIN_PASSWORD|curl .*--data|curl .*--request POST)/);
 });
+
+
+test("Unpublished photo uploads remain private and public images require all approvals", () => {
+  const store = read("src/lib/cms-store.ts");
+  const media = read("src/app/api/cms/media/[filename]/route.ts");
+  assert.match(store, /export async function isPublishedCmsImage/);
+  assert.match(store, /if\(!hasCompleteCmsMedia\(published\)\)return false/);
+  assert.match(media, /if\(!published&&!await isCmsAuthenticated\(\)\)/);
+  assert.match(media, /published\?"public, max-age=600":"private, no-store"/);
+});
