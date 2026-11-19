@@ -52,6 +52,8 @@ jobs:
           rm -rf -- "$OPAL_CMS_DATA_DIR"
       - name: Capture own frontend EN/AR screenshots
         run: npm run capture:preview
+      - name: Measure section height and overflow on all public routes
+        run: npm run audit:sections
       - name: Show Next server output on failure
         if: failure()
         run: cat /tmp/opal-next.log || true
