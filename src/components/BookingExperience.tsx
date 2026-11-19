@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { FormEvent, SyntheticEvent } from "react";
 import type { Locale } from "@/lib/hotel-content";
-import { galleryImages, hotelBrand, officialMediaActive, photoAlt, responsivePhotoSrcSet } from "@/lib/gallery";
+import { hotelBrand, photoAlt, responsivePhotoSrcSet } from "@/lib/gallery";
+import { useHotelMedia } from "@/components/CmsProvider";
 import { roomConcepts } from "@/lib/room-concepts";
 import {
   type BookingPreviewInput, bookingCopy, nightsBetween, nextDay, parseDateStamp, todayLocal,
@@ -14,7 +15,7 @@ type Props={locale:Locale;initial:BookingPreviewInput};
 type Step=1|2|3;
 
 function PreviewPhoto({index,locale}:{index:number;locale:Locale}) {
-  const image=galleryImages[index];
+  const image=useHotelMedia().images[index];
   const fallback=(e:SyntheticEvent<HTMLImageElement>)=>{
     const img=e.currentTarget;
     if(img.dataset.placeholder==="true")return;
@@ -25,7 +26,7 @@ function PreviewPhoto({index,locale}:{index:number;locale:Locale}) {
   // eslint-disable-next-line @next/next/no-img-element
   return <img className="opal-book-photo" data-media-origin={image.origin} src={image.src}
     srcSet={responsivePhotoSrcSet(image.src)} sizes="(max-width: 700px) 100vw, 40vw"
-    width={900} height={650} alt={photoAlt(index,locale)} loading="lazy" decoding="async" onError={fallback}/>;
+    width={900} height={650} alt={image.origin==="hotel-approved"?(locale==="ar"?image.altAr:image.alt):photoAlt(index,locale)} loading="lazy" decoding="async" onError={fallback}/>;
 }
 
 function StepNumber({number,step,label,onNavigate}:{number:Step;step:Step;label:string;onNavigate:(step:Step)=>void}) {
@@ -56,6 +57,8 @@ function Counter({label,value,min,max,update}:{
 }
 
 export function BookingExperience({locale,initial}:Props) {
+  const media=useHotelMedia();
+  const logoSrc=media.logoSrc??hotelBrand.officialLogoSrc;
   const ar=locale==="ar";
   const t=bookingCopy(locale);
   const [step,setStep]=useState<Step>(1);
@@ -120,9 +123,9 @@ export function BookingExperience({locale,initial}:Props) {
     <header className="opal-book-header">
       <div className="opal-book-header-inner">
         <Link href={`/${locale}`} className="opal-book-brand" aria-label={t.home}>
-          {hotelBrand.officialLogoSrc
+          {logoSrc
             // eslint-disable-next-line @next/next/no-img-element
-            ? <img src={hotelBrand.officialLogoSrc} alt="" width={43} height={43}/>
+            ? <img src={logoSrc} alt="" width={43} height={43}/>
             : <span className="opal-book-mark" aria-hidden="true">O</span>}
           <strong>OPAL LEGACY</strong>
           <small>LUXOR · EGYPT</small>
@@ -254,7 +257,7 @@ export function BookingExperience({locale,initial}:Props) {
           </div>
           <div className="opal-book-summary-image">
             <PreviewPhoto locale={locale} index={chosen?chosen.imageIndices[0]:2}/>
-            <span>{officialMediaActive ? (ar?"صور الفندق المعتمدة":"HOTEL-APPROVED PHOTOS") : t.source}</span>
+            <span>{media.approved ? (ar?"صور الفندق المعتمدة":"HOTEL-APPROVED PHOTOS") : t.source}</span>
           </div>
           <h2>{chosen?chosen.name[locale]:t.datePlaceholder}</h2>
           <p className="opal-book-summary-room">{chosen?chosen.introduction[locale]:t.selectionHint}</p>
