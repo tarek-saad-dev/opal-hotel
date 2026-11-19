@@ -4,6 +4,7 @@ import { useMemo,useState,type ChangeEvent,type DragEvent } from "react";
 import type { CmsSite } from "@/lib/cms-schema";
 import { approvedAsset,visualCategories,type VisualAsset,type CmsVisualLibrary } from "@/lib/cms-media";
 import { roomConcepts } from "@/lib/room-concepts";
+import { MediaPicker } from "@/components/MediaPicker";
 
 const labels:Record<string,string>={
   exterior:"واجهة الفندق",pool:"المسبح",rooms:"الغرف",restaurant:"المطعم",
@@ -59,7 +60,6 @@ export function MediaStudio({draft,change,upload,uploading}:Props){
   const [query,setQuery]=useState("");
   const [category,setCategory]=useState("all");
   const [selected,setSelected]=useState("");
-  const [pending,setPending]=useState("");
   const visual=draft.media.visual;
   const assets=visual.assets;
   const photos=assets.filter(a=>a.kind==="image");
@@ -85,19 +85,12 @@ export function MediaStudio({draft,change,upload,uploading}:Props){
     const target=v.assets.find(a=>a.src===src);
     if(target)fn(target);
   });
-  const choice=(value:string,onChange:(src:string)=>void,kind:"image"|"video"="image",label="اختار من المكتبة")=>
-    <select className="opal-media-select" value={value}
-      onChange={e=>onChange(e.currentTarget.value)} aria-label={label}>
-      <option value="">— بدون / استخدم الصورة الحالية —</option>
-      {assets.filter(a=>a.kind===kind).map(a=><option key={a.src} value={a.src}>
-        {a.approved?"✓":"○"} {a.title}
-      </option>)}
-    </select>;
-  const append=(target:"hero"|"gallery",src:string)=>{
-    if(!src)return;
+  const append=(target:"hero"|"gallery",sources:string[])=>{
     edit(v=>{
       const list=v.placements[target];
-      if(!list.includes(src)&&list.length<(target==="hero"?6:100))list.push(src);
+      for(const src of sources){
+        if(!list.includes(src)&&list.length<(target==="hero"?6:100))list.push(src);
+      }
     });
   };
   const renderOrder=(target:"hero"|"gallery")=>{
@@ -120,6 +113,15 @@ export function MediaStudio({draft,change,upload,uploading}:Props){
             });
           }}>
           <span>{String(i+1).padStart(2,"0")}</span>
+          <span className="opal-media-order-thumb">
+            {asset?.kind==="image"
+              // eslint-disable-next-line @next/next/no-img-element
+              ?<img src={asset.src} alt="" loading="lazy"/>
+              :asset?.kind==="video"&&asset.poster
+                // eslint-disable-next-line @next/next/no-img-element
+                ?<img src={asset.poster} alt="" loading="lazy"/>
+                :<span aria-hidden="true">▶</span>}
+          </span>
           <strong>{asset?.title||"Media"}</strong>
           <span className="opal-media-order-buttons">
             <button type="button" disabled={i===0} onClick={()=>edit(v=>{v.placements[target]=move(v.placements[target],i,-1);})} aria-label="رفع الترتيب">↑</button>
@@ -199,9 +201,11 @@ export function MediaStudio({draft,change,upload,uploading}:Props){
             onChange={e=>updateAsset(active.src,a=>{a.altAr=e.target.value;})}/></label>
           <label>English alt / description <input value={active.altEn} maxLength={160} dir="ltr"
             onChange={e=>updateAsset(active.src,a=>{a.altEn=e.target.value;})}/></label>
-          {active.kind==="video"&&<label>Poster للفيديو
-            {choice(active.poster,src=>updateAsset(active.src,a=>{a.poster=src;}),"image","صورة بوستر للفيديو")}
-          </label>}
+          {active.kind==="video"&&<div className="opal-media-mapping">
+            <span>Poster للفيديو</span>
+            <MediaPicker assets={assets} label="صورة بوستر للفيديو" kind="image"
+              value={active.poster} onChange={src=>updateAsset(active.src,a=>{a.poster=src;})}/>
+          </div>}
           <label className="opal-cms-checkline"><input type="checkbox" checked={active.approved}
             onChange={e=>updateAsset(active.src,a=>{a.approved=e.target.checked;})}/>
             أؤكد أن الصورة/الفيديو حقيقي ومصرح بنشره على موقع الفندق
@@ -217,8 +221,8 @@ export function MediaStudio({draft,change,upload,uploading}:Props){
     <section className="opal-cms-editor-card">
       <div className="opal-cms-editor-head"><span>01 / HERO</span><h3>اختار صور الـHero بالترتيب</h3></div>
       <div className="opal-media-add">
-        {choice(pending,src=>setPending(src),"image","اختيار صورة للـHero")}
-        <button type="button" onClick={()=>{append("hero",pending);setPending("");}} disabled={!pending}>+ إضافة</button>
+        <MediaPicker assets={assets} label="إضافة صور للـHero" kind="image" multiple max={6}
+          selected={visual.placements.hero} onAdd={sources=>append("hero",sources)}/>
       </div>
       {renderOrder("hero")}
     </section>
@@ -229,21 +233,19 @@ export function MediaStudio({draft,change,upload,uploading}:Props){
         ["overviewInset","Overview — الصورة الصغيرة"],
         ["facilities","Facilities — صورة المرافق"],
         ["location","Location — صورة الموقع"]
-      ] as const).map(([slot,label])=><label key={slot} className="opal-media-mapping">
+      ] as const).map(([slot,label])=><div key={slot} className="opal-media-mapping">
         <span>{label}</span>
-        {choice(visual.placements[slot],src=>edit(v=>{v.placements[slot]=src;}),"image",label)}
-      </label>)}
+        <MediaPicker assets={assets} label={label} kind="image"
+          value={visual.placements[slot]} onChange={src=>edit(v=>{v.placements[slot]=src;})}/>
+      </div>)}
     </section>
     <section className="opal-cms-editor-card">
       <div className="opal-cms-editor-head"><span>03 / GALLERY</span><h3>معرض صور وفيديوهات الفندق</h3></div>
       <p className="opal-cms-help">اختار الوسائط المعتمدة ورتبها بالسحب أو الأسهم. الجاليري يقدر يعرض صور وفيديوهات معًا، والفيديو لا يتحمل قبل التشغيل.</p>
       <div className="opal-media-add">
-        <select className="opal-media-select" value={pending} onChange={e=>setPending(e.currentTarget.value)}
-          aria-label="اختيار صورة أو فيديو للجاليري">
-          <option value="">— اختار وسائط الجاليري —</option>
-          {assets.map(a=><option key={a.src} value={a.src}>{a.kind==="video"?"▶":"▧"} {a.title}</option>)}
-        </select>
-        <button type="button" disabled={!pending} onClick={()=>{append("gallery",pending);setPending("");}}>+ إضافة</button>
+        <MediaPicker assets={assets} label="إضافة صور وفيديوهات للجاليري"
+          kind="all" multiple max={100} selected={visual.placements.gallery}
+          onAdd={sources=>append("gallery",sources)}/>
       </div>
       {renderOrder("gallery")}
     </section>
@@ -254,31 +256,31 @@ export function MediaStudio({draft,change,upload,uploading}:Props){
         const mapping=visual.placements.rooms[room.slug];
         return <div key={room.slug} className="opal-media-room-map">
           <h4>{room.name.ar} <small>{room.name.en}</small></h4>
-          <label>صورة الغرفة الأساسية
-            {choice(mapping.cover,src=>edit(v=>{v.placements.rooms[room.slug].cover=src;}),"image","غلاف الغرفة")}
-          </label>
-          <label>فيديو اختياري
-            {choice(mapping.video,src=>edit(v=>{v.placements.rooms[room.slug].video=src;}),"video","فيديو الغرفة")}
-          </label>
+          <div className="opal-media-mapping">
+            <span>صورة الغرفة الأساسية</span>
+            <MediaPicker assets={assets} label={"غلاف "+room.name.ar} kind="image"
+              value={mapping.cover} onChange={src=>edit(v=>{v.placements.rooms[room.slug].cover=src;})}/>
+          </div>
+          <div className="opal-media-mapping">
+            <span>فيديو اختياري</span>
+            <MediaPicker assets={assets} label={"فيديو "+room.name.ar} kind="video"
+              value={mapping.video} onChange={src=>edit(v=>{v.placements.rooms[room.slug].video=src;})}/>
+          </div>
           <div className="opal-media-add">
-            <select className="opal-media-select" defaultValue="" key={mapping.gallery.join("|")}
-              aria-label="إضافة صورة لمعرض الغرفة"
-              onChange={e=>{
-                const src=e.currentTarget.value;
-                if(!src)return;
-                edit(v=>{
-                  const list=v.placements.rooms[room.slug].gallery;
-                  if(!list.includes(src)&&list.length<16)list.push(src);
-                });
-                e.currentTarget.value="";
-              }}>
-              <option value="">+ أضف صور إضافية للغرفة</option>
-              {photos.filter(a=>!mapping.gallery.includes(a.src)).map(a=><option value={a.src} key={a.src}>{a.title}</option>)}
-            </select>
+            <MediaPicker assets={assets} label={"إضافة صور لمعرض "+room.name.ar} kind="image"
+              multiple max={16} selected={mapping.gallery} onAdd={sources=>edit(v=>{
+                const list=v.placements.rooms[room.slug].gallery;
+                for(const src of sources){if(!list.includes(src)&&list.length<16)list.push(src);}
+              })}/>
           </div>
           <div className="opal-media-order">
             {mapping.gallery.map((src,i)=><div key={src} className="opal-media-order-row">
-              <span>{i+1}</span><strong>{assets.find(a=>a.src===src)?.title}</strong>
+              <span>{i+1}</span>
+              <span className="opal-media-order-thumb">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt="" loading="lazy"/>
+              </span>
+              <strong>{assets.find(a=>a.src===src)?.title}</strong>
               <span className="opal-media-order-buttons">
                 <button type="button" disabled={i===0} onClick={()=>edit(v=>{
                   const list=v.placements.rooms[room.slug].gallery;
