@@ -5,12 +5,12 @@ import { defaultCmsSite,hasCompleteCmsMedia,mediaRoles,type CmsSite } from "@/li
 import { galleryImages,hotelBrand,officialMediaActive,type HotelImage } from "@/lib/gallery";
 import { getContent,type HotelContent,type Locale } from "@/lib/hotel-content";
 
-const context=createContext<CmsSite|null>(null);
+const CmsContext=createContext<CmsSite|null>(null);
 export function CmsProvider({value,children}:{value:CmsSite;children:ReactNode}){
-  return <context.Provider value={value}>{children}</context.Provider>;
+  return <CmsContext.Provider value={value}>{children}</CmsContext.Provider>;
 }
 export function useCmsSite():CmsSite{
-  return useContext(context)||defaultCmsSite();
+  return useContext(CmsContext)||defaultCmsSite();
 }
 export function useCmsContent(locale:Locale):HotelContent{
   const cms=useCmsSite();
