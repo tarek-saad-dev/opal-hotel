@@ -90,6 +90,8 @@ export function normalizeVisualLibrary(raw:unknown):CmsVisualLibrary{
   const allowed=new Set(assets.map(a=>a.src));
   const images=new Set(assets.filter(a=>a.kind==="image").map(a=>a.src));
   const videos=new Set(assets.filter(a=>a.kind==="video").map(a=>a.src));
+  if(assets.some(a=>a.kind==="video"&&a.poster&&!images.has(a.poster)))
+    throw new Error("Video poster must be a library image");
   const single=(raw:unknown,name:string,kind:"image"|"video"="image")=>{
     const src=text(raw,100,name,true);
     if(src&&!(kind==="image"?images:videos).has(src))
@@ -140,7 +142,7 @@ export function approvedPublishedPaths(visual:CmsVisualLibrary):Set<string>{
     const a=approvedAsset(visual,src);
     if(!a)continue;
     out.add(src);
-    if(a.kind==="video"&&a.poster)out.add(a.poster);
+    if(a.kind==="video"&&a.poster&&approvedAsset(visual,a.poster))out.add(a.poster);
   }
   return out;
 }
