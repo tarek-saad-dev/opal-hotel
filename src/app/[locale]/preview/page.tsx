@@ -11,7 +11,7 @@ export default async function PrivateCmsPreview({params}:{params:Promise<{locale
   const {locale}=await params;
   if(!isLocale(locale)||!await isCmsAuthenticated())notFound();
   const draft=await readDraft();
-  return <CmsProvider value={draft}>
+  return <CmsProvider value={draft} preview>
     <HotelExperience locale={locale} content={getContent(locale)}/>
   </CmsProvider>;
 }
