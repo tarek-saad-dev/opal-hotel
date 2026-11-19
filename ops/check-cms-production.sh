@@ -28,8 +28,21 @@ expect /ar 200
 expect /admin 200
 expect /api/admin/cms 401
 expect /api/admin/cms/history 401
-expect /en/preview 404
-expect /ar/preview 404
+# Next.js streaming can sometimes return HTTP 200 with a not-found boundary.
+# In either case, the anonymous response must not render owner draft content.
+check_preview(){
+  local code html
+  code="$(status "$1")"
+  if [[ "$code" == "404" ]]; then ok "$1 denied (404)"; return; fi
+  [[ "$code" == "200" ]] || fail "$1 unexpectedly returned HTTP $code"
+  html="$(curl --silent --show-error --fail --max-time 15 "$BASE$1")" ||
+    fail "Cannot inspect private preview denial at $1"
+  [[ "$html" == *"404"* && "$html" != *'class="premium-hero"'* ]] ||
+    fail "$1 may expose private preview content"
+  ok "$1 denied by a streamed not-found boundary"
+}
+check_preview /en/preview
+check_preview /ar/preview
 
 SESSION="$(curl --silent --show-error --fail --max-time 15 "$BASE/api/admin/cms/session")" ||
   fail "Cannot read owner CMS session health"
