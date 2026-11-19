@@ -59,7 +59,7 @@ test("All photo-bearing views label provenance and provide bilingual alt text",(
   for(const file of files){
     const src=read(file);
     assert.ok(src.includes("data-media-origin="),file);
-    assert.ok(src.includes("officialMediaActive")||src.includes("photoAlt"),file);
+    assert.ok(src.includes("useHotelMedia")||src.includes("photoAlt"),file);
   }
   const home=read("src/components/HotelExperience.tsx");
   assert.ok(home.includes("photoAlt(photo,locale)"));
