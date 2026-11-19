@@ -168,6 +168,29 @@ try{
     await publicLogo.locator(".premium-hamburger").click();
     check(await publicLogo.locator(".premium-menu-brand img.premium-mark-official").getAttribute("src")===uploaded.src,
       "Mobile navigation must use the same published CMS logo");
+    await publicLogo.locator(".premium-menu-close").click();
+
+    // A published asset must be consistent on both languages, on cold loads
+    // and after an actual locale toggle that fetches fresh CMS content.
+    for(const locale of ["ar","en"]) {
+      await publicLogo.goto(origin+"/"+locale,{waitUntil:"domcontentloaded"});
+      await publicLogo.locator(".premium-mark img.premium-mark-official").waitFor();
+      check(await publicLogo.locator(".premium-mark img.premium-mark-official").getAttribute("src")===uploaded.src,
+        "Owner logo must render on a fresh "+locale+" homepage visit");
+    }
+    await publicLogo.goto(origin+"/ar",{waitUntil:"domcontentloaded"});
+    await publicLogo.locator(".premium-locale").click();
+    await publicLogo.waitForURL("**/en");
+    check(await publicLogo.locator(".premium-mark img.premium-mark-official").getAttribute("src")===uploaded.src,
+      "Switching from Arabic to English must retain the latest published logo");
+    await publicLogo.locator(".opal-end-footer a[hreflang]").click();
+    await publicLogo.waitForURL("**/ar");
+    check(await publicLogo.locator(".premium-mark img.premium-mark-official").getAttribute("src")===uploaded.src,
+      "Switching from English to Arabic via footer must retain the latest logo");
+    await publicLogo.setViewportSize({width:1440,height:900});
+    await publicLogo.goto(origin+"/en",{waitUntil:"domcontentloaded"});
+    check(await publicLogo.locator(".premium-mark img.premium-mark-official").getAttribute("src")===uploaded.src,
+      "Desktop English header must use the published logo");
     await publicLogo.close();
   } finally { await publicLogoContext.close(); }
 
@@ -181,7 +204,7 @@ try{
   check(logout.status()===401,"Logout must revoke private content access");
   check(errors.length===0,"Browser errors: "+errors.join("; "));
   console.log(JSON.stringify({cmsPassed:true,publicStableBeforePublish:true,
-    draftPreview:true,publishedInstantly:true,sectionControl:true,history:true,uploadSecurity:true,logout:true}));
+    draftPreview:true,publishedInstantly:true,sectionControl:true,history:true,uploadSecurity:true,logoLocales:true,logout:true}));
 }catch(error){
   console.error("CMS integration failed:",error);
   process.exitCode=1;
