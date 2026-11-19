@@ -2,7 +2,7 @@ import { promises as fs,createReadStream } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { Readable } from "node:stream";
-import { approvedPublishedPaths } from "@/lib/cms-media";
+import { approvedPublishedPaths,approveAssignedVisualMedia } from "@/lib/cms-media";
 import { defaultCmsSite, hasApprovedCmsLogo, hasApprovedCmsHeroVideo, hasApprovedCmsFullFilm, hasCompleteCmsMedia, isManagedImagePath, isManagedVideoPath, mediaRoles, validateCmsSite, type CmsSite } from "@/lib/cms-schema";
 
 const root=()=>process.env.OPAL_CMS_DATA_DIR||
@@ -74,13 +74,18 @@ export async function saveDraft(input:unknown,expectedRevision:number):Promise<C
     return value;
   });
 }
-export async function publishDraft(expectedRevision:number):Promise<{published:CmsSite;mediaReady:boolean}>{
+export async function publishDraft(expectedRevision:number,confirmAssignedMediaRights=false):Promise<{published:CmsSite;mediaReady:boolean}>{
   return serialized(async()=>{
     const draft=await readDraft();
     if(draft.revision!==expectedRevision)throw new Error("REVISION_CONFLICT");
     const published=await readPublished();
     await assertMediaFiles(draft);
-    const next:CmsSite={...draft,revision:Math.max(draft.revision,published.revision)+1,
+    // Batch confirmation is explicit in the authenticated owner publish request.
+    // Keep unselected uploaded files private and never alter past snapshots.
+    const visual=confirmAssignedMediaRights
+      ?approveAssignedVisualMedia(draft.media.visual):draft.media.visual;
+    const next:CmsSite={...draft,media:{...draft.media,visual},
+      revision:Math.max(draft.revision,published.revision)+1,
       updatedAt:new Date().toISOString()};
     if(published.revision>0){
       await atomicJson(path.join(historyDir(),clean(String(published.revision))+".json"),published);
