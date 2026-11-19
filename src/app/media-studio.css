@@ -184,3 +184,43 @@
 .opal-media-video-cover img{display:block;width:100%;height:100%;object-fit:cover}
 .opal-media-video-cover span{position:absolute;bottom:7px;inset-inline-start:7px;
  background:#0d2921de;color:#fff;padding:5px 9px;font:700 9px Arial,sans-serif;letter-spacing:.09em}
+
+
+/* Clear, actionable readiness feedback: selection != approval != publication. */
+.opal-cms-visual-warning,.opal-media-readiness-summary{
+  border:1px solid #d6c8ab;border-inline-start:3px solid #aa8b56;
+  background:#f7f4eb;padding:14px 19px;color:#614d31;
+  font:600 12px/1.9 "Cairo",Tahoma,sans-serif;
+}
+.opal-cms-visual-warning{margin:0 0 18px}
+.opal-media-readiness-summary{margin:15px 0 20px}
+.opal-media-readiness-summary strong{display:block;font-size:13px;color:#614d31}
+.opal-media-readiness-summary p{font-size:11px;font-weight:400;margin:6px 0 12px;color:#75674f}
+.opal-media-readiness-summary button,.opal-media-not-ready button,.opal-media-fix-link{
+  border:1px solid #bbaa88;background:#fffdf7;color:#274937;
+  padding:7px 12px;font:700 11px/1.6 "Cairo",Tahoma,sans-serif;
+  cursor:pointer;min-height:36px;
+}
+.opal-media-readiness-summary button:hover,.opal-media-not-ready button:hover,.opal-media-fix-link:hover{
+  background:#e5e9df;border-color:#6a826b;
+}
+.opal-media-approval-editor{scroll-margin-top:90px}
+.opal-media-mapping .opal-media-not-ready{
+  display:flex;flex-direction:column;align-items:flex-start;gap:7px;
+  padding:12px 14px;background:#f9f6ee;border:1px solid #ded4c1;
+  border-inline-start:3px solid #b09568;margin-top:8px;
+}
+.opal-media-not-ready strong{font-size:11px;color:#785535}
+.opal-media-not-ready span{font-size:11px;line-height:1.7;color:#86755a}
+.opal-media-ready{font:600 11px/1.8 "Cairo",Tahoma,sans-serif;color:#456b52;margin:6px 0 0}
+.opal-media-warning{font:600 11px/1.9 "Cairo",Tahoma,sans-serif;color:#8d6639}
+.opal-media-order-row{flex-wrap:wrap}
+.opal-media-order-row .opal-media-fix-link{min-width:0;max-width:100%;white-space:normal}
+.opal-media-room-map>.opal-media-mapping>.opal-media-fix-link{
+  align-self:flex-start;margin:0 0 6px;
+}
+@media(max-width:600px){
+  .opal-cms-visual-warning,.opal-media-readiness-summary{padding:12px 13px;font-size:11px}
+  .opal-media-readiness-summary button,.opal-media-not-ready button{width:100%}
+  .opal-media-order-row .opal-media-fix-link{flex-basis:100%}
+}

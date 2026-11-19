@@ -5,6 +5,7 @@ import type { CmsLocale,CmsMediaRole,CmsSectionId,CmsSite } from "@/lib/cms-sche
 import { cmsSectionIds,hasApprovedCmsLogo,hasApprovedCmsHeroVideo,hasApprovedCmsFullFilm,hasCompleteCmsMedia,mediaRoles } from "@/lib/cms-schema";
 import type { Locale } from "@/lib/hotel-content";
 import { MediaStudio,optimizeMediaPhoto } from "@/components/MediaStudio";
+import { unreadyVisualPlacements } from "@/lib/cms-media";
 
 type Tab="content"|"sections"|"media"|"visual"|"history";
 type HistoryRow={revision:number;updatedAt:string};
@@ -258,6 +259,8 @@ export function AdminCms(){
   const [error,setError]=useState("");
   const [history,setHistory]=useState<HistoryRow[]>([]);
   const dirty=Boolean(draft&&saved&&JSON.stringify(draft)!==JSON.stringify(saved));
+  const unpublished=Boolean(saved&&published&&saved.revision!==published.revision);
+  const pendingVisual=draft?unreadyVisualPlacements(draft.media.visual):[];
 
   const fetchContent=useCallback(async()=>{
     const response=await fetch("/api/admin/cms",{cache:"no-store"});
@@ -302,13 +305,19 @@ export function AdminCms(){
         body:JSON.stringify({document:draft,expectedRevision:saved.revision})});
       const data=await r.json() as {draft?:CmsSite;error?:string};
       if(!r.ok||!data.draft)throw new Error(data.error||"لم يتم حفظ المسودة");
-      setDraft(data.draft);setSaved(data.draft);setMessage("تم حفظ المسودة بنجاح. لم تتغير النسخة العامة بعد.");
+      setDraft(data.draft);setSaved(data.draft);setMessage("تم حفظ المسودة ✅ التعديل لسه مش ظاهر للزوار. راجع معاينة الموقع ثم اضغط «نشر على الموقع».");
     }catch(e){setError(e instanceof Error?e.message:"فشل الحفظ");}
     finally{setBusy("");}
   }
   async function publish(){
     if(!saved||dirty)return;
-    if(!window.confirm("تأكيد نشر المحتوى المحفوظ على الموقع العام؟ التغييرات ستظهر فورًا."))return;
+    const blocked=unreadyVisualPlacements(saved.media.visual);
+    const warning=blocked.length>0
+      ? "تنبيه: عندك "+blocked.length+" اختيار وسائط غير جاهز للنشر (وصف بالعربي/الإنجليزي أو تأكيد الحقوق ناقص). الصور دي مش هتتغير للزوار وهتفضل الصور القديمة مكانها.\n\n"
+        +"أول أماكن محتاجة مراجعة: "+blocked.slice(0,3).map(x=>x.label).join("، ")+"\n\n"
+        +"اختار «إلغاء» وكمّل اعتماد الصور من مكتبة الوسائط. أو «موافق» لو عاوز تنشر النصوص وباقي الصور الجاهزة فقط."
+      : "تأكيد نشر المحتوى المحفوظ على الموقع العام؟ التغييرات المعتمدة هتظهر للزوار.";
+    if(!window.confirm(warning))return;
     setBusy("publishing");setError("");setMessage("");
     try{
       const r=await fetch("/api/admin/cms/publish",{method:"POST",headers:{"Content-Type":"application/json"},
@@ -317,9 +326,14 @@ export function AdminCms(){
       if(!r.ok||!data.published)throw new Error(data.error||"فشل النشر");
       setDraft(data.published);setSaved(data.published);setPublished(data.published);
       await fetchHistory();
-      setMessage("تم النشر بنجاح. الموقع العام بيعرض المحتوى الجديد الآن."
+      const skipped=unreadyVisualPlacements(data.published.media.visual);
+      const v2InUse=data.published.media.visual.assets.length>0;
+      setMessage("تم نشر النسخة الجديدة ✅"
+        +(skipped.length>0
+          ?" لكن "+skipped.length+" صورة/فيديو مرتبط غير جاهز ومش هيظهر للزوار؛ هيستمر ظهور الصور القديمة في مكانه. استكمل الوصف بالعربي والإنجليزي وتأكيد الحقوق، وبعدها احفظ وانشر من جديد."
+          :v2InUse?" صور V2 المعتمدة والمرتبطة بالأقسام أصبحت ضمن النسخة المنشورة."
+          :data.mediaReady?" الصور الأساسية المعتمدة اتفعلت.":" الصور التجريبية هتفضل لحد ما ترفع وتعتمد الصور الحقيقية.")
         +(hasApprovedCmsLogo(data.published)?" اللوجو المعتمد ظاهر في الهيدر.":"")
-        +(data.mediaReady?" الصور المعتمدة اتفعلت.":" صور المعاينة هتفضل لحد اكتمال الصور الست.")
         +(hasApprovedCmsHeroVideo(data.published)?" فيديو الـHero اتفعل.":"")
         +(hasApprovedCmsFullFilm(data.published)?" الفيلم الكامل متاح للمشاهدة.":""));
     }catch(e){setError(e instanceof Error?e.message:"تعذر النشر");}
@@ -466,7 +480,9 @@ export function AdminCms(){
         <h1>{tab==="content"?"المحتوى والنصوص":tab==="sections"?"الأقسام والترتيب":tab==="media"?"الصور والهوية":tab==="visual"?"مكتبة الوسائط والربط":"سجل النسخ"}</h1>
         <p className="opal-cms-subtitle">تحكم في الموقع مباشرة. كل تعديل بيتحفظ كمسودة الأول، وبعدها أنت تقرر النشر.</p>
       </div>
-      <div className="opal-cms-status"><span className={dirty?"is-unsaved":"is-saved"}>{dirty?"● تعديلات غير محفوظة":"● المسودة محفوظة"}</span>
+      <div className="opal-cms-status"><span className={dirty||unpublished?"is-unsaved":"is-saved"}>
+          {dirty?"● فيه تعديلات لسه مش محفوظة":unpublished?"● المسودة محفوظة لكن لسه مش منشورة":"● آخر تعديلات محفوظة ومنشورة"}
+        </span>
         <small>المنشور: #{published?.revision??0}</small></div></header>
       <div className="opal-cms-toolbar">
         <div className="opal-cms-locale" role="group" aria-label="لغة المحتوى">
@@ -481,13 +497,17 @@ export function AdminCms(){
             onClick={()=>void publish()}>{busy==="publishing"?"جاري النشر…":"نشر على الموقع"} <span>↗</span></button>
         </div>
       </div>
+      {tab==="visual"&&pendingVisual.length>0&&<div role="status" className="opal-cms-visual-warning">
+        فيه {pendingVisual.length} صورة/فيديو متحدد للأقسام لكنه غير جاهز للنشر؛ ده سبب ظهور الصور القديمة في الموقع.
+        لازم تكمل الوصف باللغتين وتأكيد حق النشر، وبعدها تحفظ المسودة وتنشرها.
+      </div>}
       {message&&<div role="status" className="opal-cms-message">{message}</div>}
       {error&&<div role="alert" className="opal-cms-alert">{error}{error==="REVISION_CONFLICT"&&
         <button type="button" onClick={()=>void fetchContent()}>إعادة تحميل أحدث مسودة</button>}</div>}
       {tab==="content"&&<ContentEditor draft={draft} locale={locale} change={setDraft}/>}
       {tab==="sections"&&<SectionEditor draft={draft} locale={locale} change={setDraft}/>}
       {tab==="media"&&<MediaEditor draft={draft} change={setDraft} onUpload={upload} onVideoUpload={uploadVideo} uploading={uploading}/>}
-      {tab==="visual"&&<MediaStudio draft={draft} change={setDraft} upload={uploadLibrary} uploading={uploading}/>}
+      {tab==="visual"&&<MediaStudio draft={draft} published={published} change={setDraft} upload={uploadLibrary} uploading={uploading}/>}
       {tab==="history"&&<div className="opal-cms-stack">
         <div className="opal-cms-note">يمكنك استرجاع نسخة سابقة كمسودة، ومراجعتها ثم نشرها. النسخة العامة لا تتغير عند الاسترجاع.</div>
         {history.length===0?<div className="opal-cms-editor-card">مفيش نسخ سابقة لسه.</div>:

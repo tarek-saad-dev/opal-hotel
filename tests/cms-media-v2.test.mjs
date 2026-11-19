@@ -80,3 +80,37 @@ test("Media assignments use thumbnail dialogs instead of unreadable filename dro
   assert.match(css,/opal-picker-tile.is-selected/);
   assert.match(css,/opal-picker-backdrop/);
 });
+
+
+test("Assigned media must be rights-approved and bilingual before public image resolution",()=>{
+  const gate=read("src/lib/cms-media.ts");
+  const provider=read("src/components/CmsProvider.tsx");
+  assert.match(gate,/export function visualAssetIssues/);
+  assert.match(gate,/!asset\.altAr\.trim\(\)/);
+  assert.match(gate,/!asset\.altEn\.trim\(\)/);
+  assert.match(gate,/!asset\.approved/);
+  assert.match(gate,/export function unreadyVisualPlacements/);
+  assert.match(gate,/visualAssetIssues\(visual,src\)\.length>0/);
+  assert.match(provider,/const lookup=\(src:string\)=>approvedAsset\(visual,src\)/);
+  assert.match(provider,/overviewMain:resolve\(placed\.overviewMain,4\)/);
+});
+
+test("Owner sees why selected images remain old, and can jump to approval and publish",()=>{
+  const studio=read("src/components/MediaStudio.tsx");
+  const picker=read("src/components/MediaPicker.tsx");
+  const admin=read("src/components/AdminCms.tsx");
+  for(const needle of ["unreadyVisualPlacements","visualAssetIssues",
+    "renderReadiness(visual.placements[slot],slot)","prepareAsset",
+    "استكمال بيانات الصورة واعتماد النشر","الوصف العربي ناقص","selected"])
+    assert.ok((studio+read("src/lib/cms-media.ts")).includes(needle),needle);
+  assert.match(studio,/detailsRef\.current\?\.scrollIntoView/);
+  assert.match(studio,/published:CmsSite\|null/);
+  assert.match(studio,/if\(issues\.length===0\)/);
+  assert.match(picker,/غير جاهز للنشر/);
+  assert.match(picker,/تأكيد حق النشر/);
+  assert.match(admin,/unreadyVisualPlacements\(saved\.media\.visual\)/);
+  assert.match(admin,/unreadyVisualPlacements\(data\.published\.media\.visual\)/);
+  assert.match(admin,/setMessage\("تم نشر النسخة الجديدة/);
+  assert.match(admin,/unpublished\?"● المسودة محفوظة لكن لسه مش منشورة"/);
+  assert.match(admin,/published={published}/);
+});
