@@ -2,7 +2,7 @@
 
 import { useCallback,useEffect,useState,type ChangeEvent,type ReactNode } from "react";
 import type { CmsLocale,CmsMediaRole,CmsSectionId,CmsSite } from "@/lib/cms-schema";
-import { cmsSectionIds,hasApprovedCmsLogo,hasCompleteCmsMedia,mediaRoles } from "@/lib/cms-schema";
+import { cmsSectionIds,hasApprovedCmsLogo,hasApprovedCmsHeroVideo,hasApprovedCmsFullFilm,hasCompleteCmsMedia,mediaRoles } from "@/lib/cms-schema";
 import type { Locale } from "@/lib/hotel-content";
 
 type Tab="content"|"sections"|"media"|"history";
@@ -127,12 +127,13 @@ function ContentEditor({draft,locale,change}:{draft:CmsSite;locale:Locale;change
     </section>
   </div>;
 }
-function MediaEditor({draft,change,onUpload,uploading}:{
+function MediaEditor({draft,change,onUpload,onVideoUpload,uploading}:{
   draft:CmsSite;change:(doc:CmsSite)=>void;
-  onUpload:(file:File,role:CmsMediaRole|"logo")=>Promise<void>;uploading:string
+  onUpload:(file:File,role:CmsMediaRole|"logo"|"poster")=>Promise<void>;
+  onVideoUpload:(file:File,role:"desktop"|"mobile"|"film")=>Promise<void>;uploading:string
 }){
   const edit=(fn:(doc:CmsSite)=>void)=>{const next=deepCopy(draft);fn(next);change(next);};
-  const imagePicker=(role:CmsMediaRole|"logo")=><input type="file" accept="image/png,image/jpeg,image/webp"
+  const imagePicker=(role:CmsMediaRole|"logo"|"poster")=><input type="file" accept="image/png,image/jpeg,image/webp"
     disabled={Boolean(uploading)} aria-label={`رفع ${role}`}
     onChange={(event:ChangeEvent<HTMLInputElement>)=>{
       const file=event.currentTarget.files?.[0];if(file)void onUpload(file,role);
@@ -177,6 +178,65 @@ function MediaEditor({draft,change,onUpload,uploading}:{
     </section>
     <div className="opal-cms-photo-status"><strong>{hasCompleteCmsMedia(draft)?"✓ مكتبة الصور جاهزة للنشر":"الصور غير مكتملة بعد"}</strong>
       <p>الصور الست مش هتظهر على الموقع قبل اكتمال اعتماد المجموعة كلها. اللوجو مستقل عنها، وبيظهر في الهيدر بمجرد اعتماده ونشر التعديل.</p></div>
+    <section className="opal-cms-editor-card">
+      <div className="opal-cms-editor-head"><span>03 / HERO VIDEO</span><h3>فيديو خلفية الموقع والفيلم الكامل</h3></div>
+      <p className="opal-cms-note">فيديو الـHero يكون MP4 / H.264 بصيغة Web Optimized (faststart)، صامت ويفضل 10–15 ثانية.
+        حد الكمبيوتر 6 MB والموبايل 4 MB. الفيلم الكامل اختياري وبحد أقصى 50 MB.
+        الفيديو بيشتغل تلقائيًا بصمت عند توفر اتصال مناسب؛ صورة الـPoster بتظهر أولًا.</p>
+      <label className="opal-cms-checkline">
+        <input type="checkbox" checked={draft.media.video.enabled}
+          onChange={e=>edit(d=>{d.media.video.enabled=e.target.checked;})}/>
+        تفعيل فيديو الخلفية بدل صور الـHero بعد الاعتماد والنشر
+      </label>
+      <div className="opal-cms-video-grid">
+        {([["desktop","فيديو الكمبيوتر (MP4) — حتى 6 MB"],
+           ["mobile","نسخة موبايل اختيارية (MP4) — حتى 4 MB"],
+           ["film","الفيلم الكامل (MP4) — حتى 50 MB"]] as const).map(([role,label])=>{
+          const src=role==="desktop"?draft.media.video.desktopSrc
+            :role==="mobile"?draft.media.video.mobileSrc:draft.media.video.fullFilmSrc;
+          return <div className="opal-cms-video-card" key={role}>
+            <CopyLabel>{label}</CopyLabel>
+            <input type="file" accept="video/mp4,.mp4" disabled={Boolean(uploading)}
+              aria-label={`رفع فيديو ${role}`}
+              onChange={(event:ChangeEvent<HTMLInputElement>)=>{
+                const file=event.currentTarget.files?.[0];if(file)void onVideoUpload(file,role);
+                event.currentTarget.value="";
+              }}/>
+            {src&&<>
+              <video src={src} controls preload="none" playsInline
+                aria-label={label} poster={draft.media.video.posterSrc||undefined}/>
+              <small>تم رفع الملف · المعاينة لا تعني النشر</small>
+            </>}
+          </div>;
+        })}
+      </div>
+      <div className="opal-cms-video-poster">
+        <div className="opal-cms-photo-visual">
+          {draft.media.video.posterSrc
+            // eslint-disable-next-line @next/next/no-img-element
+            ?<img src={draft.media.video.posterSrc} alt="صورة خلفية الفيديو قبل التشغيل"/>
+            :<span>HERO POSTER</span>}
+        </div>
+        <div><CopyLabel>Poster — صورة تظهر فور فتح الموقع (WebP / JPG / PNG، حتى 4 MB)</CopyLabel>
+          {imagePicker("poster")}
+          <p className="opal-cms-help">يفضل مقاس 16:9، وحجم أقل من 250 KB. بدون Poster معتمد، الموقع يحتفظ بالخلفية المصورة الحالية.</p>
+        </div>
+      </div>
+      <label className="opal-cms-checkline">
+        <input type="checkbox" checked={draft.media.video.heroApproved}
+          onChange={e=>edit(d=>{d.media.video.heroApproved=e.target.checked;})}/>
+        أؤكد إن فيديو الـHero وصورة الـPoster حقيقيين ومصرح باستخدامهما
+      </label>
+      <label className="opal-cms-checkline">
+        <input type="checkbox" checked={draft.media.video.filmApproved}
+          onChange={e=>edit(d=>{d.media.video.filmApproved=e.target.checked;})}/>
+        أؤكد حقوق استخدام الفيلم الكامل (زر Watch Our Film)
+      </label>
+      <div className="opal-cms-photo-status" role="status">
+        <strong>{hasApprovedCmsHeroVideo(draft)?"✓ فيديو الـHero جاهز للنشر":"الـHero هيفضل صورة لحد اكتمال الفيديو والـPoster واعتمادهم"}</strong>
+        <p>{hasApprovedCmsFullFilm(draft)?"الفيلم الكامل معتمد وجاهز للظهور بزر المشاهدة.":"الفيلم الكامل لن يظهر إلا بعد رفعه واعتماده."}</p>
+      </div>
+    </section>
     {uploading&&<div role="status" className="opal-cms-note">جاري رفع {uploading}…</div>}
   </div>;
 }
@@ -258,11 +318,13 @@ export function AdminCms(){
       await fetchHistory();
       setMessage("تم النشر بنجاح. الموقع العام بيعرض المحتوى الجديد الآن."
         +(hasApprovedCmsLogo(data.published)?" اللوجو المعتمد ظاهر في الهيدر.":"")
-        +(data.mediaReady?" الصور المعتمدة اتفعلت.":" صور المعاينة هتفضل لحد اكتمال الصور الست."));
+        +(data.mediaReady?" الصور المعتمدة اتفعلت.":" صور المعاينة هتفضل لحد اكتمال الصور الست.")
+        +(hasApprovedCmsHeroVideo(data.published)?" فيديو الـHero اتفعل.":"")
+        +(hasApprovedCmsFullFilm(data.published)?" الفيلم الكامل متاح للمشاهدة.":""));
     }catch(e){setError(e instanceof Error?e.message:"تعذر النشر");}
     finally{setBusy("");}
   }
-  async function upload(file:File,role:CmsMediaRole|"logo"){
+  async function upload(file:File,role:CmsMediaRole|"logo"|"poster"){
     if(!draft)return;
     setUploading(role);setError("");setMessage("");
     try{
@@ -275,11 +337,36 @@ export function AdminCms(){
         if(!old)return old;
         const next=deepCopy(old);
         if(role==="logo"){next.media.logo=src;next.media.logoApproved=false;}
+        else if(role==="poster"){next.media.video.posterSrc=src;next.media.video.heroApproved=false;}
         else{next.media.photos[role].src=src;next.media.photos[role].rightsConfirmed=false;}
         return next;
       });
       setMessage("تم رفع الصورة للسيرفر. احفظ المسودة ثم راجعها قبل النشر.");
     }catch(e){setError(e instanceof Error?e.message:"خطأ الرفع");}
+    finally{setUploading("");}
+  }
+  async function uploadVideo(file:File,role:"desktop"|"mobile"|"film"){
+    if(!draft)return;
+    const limit=role==="desktop"?6*1024*1024:role==="mobile"?4*1024*1024:50*1024*1024;
+    if(!file.name.toLowerCase().endsWith(".mp4")||file.size>limit||file.size===0){
+      setError("اختار ملف MP4 ضمن الحجم المسموح به للدور المختار.");return;
+    }
+    setUploading("video:"+role);setError("");setMessage("");
+    try{
+      const form=new FormData();form.append("video",file);form.append("role",role);
+      const response=await fetch("/api/admin/cms/upload-video",{method:"POST",body:form});
+      const data=await response.json() as {src?:string;error?:string};
+      if(!response.ok||!data.src)throw new Error(data.error||"تعذر رفع الفيديو");
+      setDraft(old=>{
+        if(!old)return old;
+        const next=deepCopy(old);
+        if(role==="desktop"){next.media.video.desktopSrc=data.src!;next.media.video.heroApproved=false;}
+        else if(role==="mobile"){next.media.video.mobileSrc=data.src!;next.media.video.heroApproved=false;}
+        else{next.media.video.fullFilmSrc=data.src!;next.media.video.filmApproved=false;}
+        return next;
+      });
+      setMessage("تم رفع الفيديو للسيرفر. اعتمده واحفظ المسودة وعاينه قبل النشر.");
+    }catch(e){setError(e instanceof Error?e.message:"خطأ رفع الفيديو");}
     finally{setUploading("");}
   }
   async function restore(revision:number){
@@ -356,7 +443,7 @@ export function AdminCms(){
         <button type="button" onClick={()=>void fetchContent()}>إعادة تحميل أحدث مسودة</button>}</div>}
       {tab==="content"&&<ContentEditor draft={draft} locale={locale} change={setDraft}/>}
       {tab==="sections"&&<SectionEditor draft={draft} locale={locale} change={setDraft}/>}
-      {tab==="media"&&<MediaEditor draft={draft} change={setDraft} onUpload={upload} uploading={uploading}/>}
+      {tab==="media"&&<MediaEditor draft={draft} change={setDraft} onUpload={upload} onVideoUpload={uploadVideo} uploading={uploading}/>}
       {tab==="history"&&<div className="opal-cms-stack">
         <div className="opal-cms-note">يمكنك استرجاع نسخة سابقة كمسودة، ومراجعتها ثم نشرها. النسخة العامة لا تتغير عند الاسترجاع.</div>
         {history.length===0?<div className="opal-cms-editor-card">مفيش نسخ سابقة لسه.</div>:
