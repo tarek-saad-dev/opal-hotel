@@ -141,7 +141,7 @@ function MediaEditor({draft,change,onUpload,onVideoUpload,uploading}:{
       event.currentTarget.value="";
     }}/>;
   return <div className="opal-cms-stack">
-    <div className="opal-cms-note">ارفع الصور الحقيقية المصرح باستخدامها فقط (JPEG / WebP / PNG، بحد أقصى 4MB). الصور بتتحفظ بشكل دائم على السيرفر. اللوجو بيتنشر بشكل مستقل بعد اعتماد حقوقه وحفظ المسودة والضغط على «نشر على الموقع». الصور الست بتتفعّل كمجموعة واحدة بعد اعتمادها بالكامل لتجنب خلط الصور الحقيقية بالتجريبية.</div>
+    <div className="opal-cms-note">ارفع الصور الحقيقية المصرح باستخدامها فقط (JPEG / WebP / PNG، بحد أقصى 4MB). الصور بتتحفظ بشكل دائم على السيرفر. اللوجو بيتنشر بشكل مستقل بعد اعتماد حقوقه وحفظ المسودة والضغط على «نشر على الموقع». الصور الست هنا هي النظام القديم؛ لو عاوز تتحكم في كل صورة وفيديو بشكل مستقل استخدم «مكتبة الوسائط V2» من القائمة.</div>
     <section className="opal-cms-editor-card">
       <div className="opal-cms-editor-head"><span>01 / الهوية</span><h3>اللوجو الرسمي — الهيدر والموبايل</h3></div>
       <div className="opal-cms-media-line">
@@ -178,7 +178,7 @@ function MediaEditor({draft,change,onUpload,onVideoUpload,uploading}:{
       </div>
     </section>
     <div className="opal-cms-photo-status"><strong>{hasCompleteCmsMedia(draft)?"✓ مكتبة الصور جاهزة للنشر":"الصور غير مكتملة بعد"}</strong>
-      <p>الصور الست مش هتظهر على الموقع قبل اكتمال اعتماد المجموعة كلها. اللوجو مستقل عنها، وبيظهر في الهيدر بمجرد اعتماده ونشر التعديل.</p></div>
+      <p>النظام القديم بيشترط اكتمال الصور الست معًا. أما مكتبة الوسائط V2 فتسمح بتغيير كل قسم أو غرفة أو جاليري بشكل مستقل بعد الاعتماد والنشر.</p></div>
     <section className="opal-cms-editor-card">
       <div className="opal-cms-editor-head"><span>03 / HERO VIDEO</span><h3>فيديو خلفية الموقع والفيلم الكامل</h3></div>
       <p className="opal-cms-note">فيديو الـHero يكون MP4 / H.264 بصيغة Web Optimized (faststart)، صامت ويفضل 10–15 ثانية.
