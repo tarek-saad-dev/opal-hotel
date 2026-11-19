@@ -553,6 +553,10 @@ try{
     check((await filmPrivateVisitor.request.get(origin+newOverviewFilm)).status()===404,
       "Unpublished Overview video must stay private");
   }finally{await filmPrivateVisitor.close();}
+  // Owner preview is deliberately based on the LAST SAVED draft; the
+  // one-click publish path does not require this optional preview step.
+  await page.getByRole("button",{name:"حفظ المسودة"}).click();
+  await page.getByText("تم حفظ المسودة ✅",{exact:false}).waitFor();
   const privateFilm=await context.newPage();
   try{
     await privateFilm.goto(origin+"/ar/preview",{waitUntil:"domcontentloaded"});
