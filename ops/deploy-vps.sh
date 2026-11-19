@@ -12,6 +12,8 @@ APP_DIR=/var/www/opal-hotel
 CMS_DIR=/var/lib/opal-hotel-cms
 CMS_CONFIG_DIR=/etc/opal-hotel
 CMS_ENV=/etc/opal-hotel/cms.env
+CMS_DROPIN_DIR=/etc/systemd/system/opal-hotel.service.d
+CMS_DROPIN=$CMS_DROPIN_DIR/20-opal-cms.conf
 UNIT=/etc/systemd/system/opal-hotel.service
 VHOST=/etc/nginx/sites-available/opal-hotel.conf
 VHOST_LINK=/etc/nginx/sites-enabled/opal-hotel.conf
@@ -107,11 +109,19 @@ PrivateTmp=true
 WantedBy=multi-user.target
 SYSTEMD
 fi
-# Existing production installs already have an Opal-managed unit. Retrofit
-# just the new CMS configuration without changing unrelated services.
-if ! grep -Fq 'Environment=OPAL_CMS_DATA_DIR=/var/lib/opal-hotel-cms' "$UNIT"; then
-  sed -i '/^Environment=NEXT_TELEMETRY_DISABLED=1$/a Environment=OPAL_CMS_DATA_DIR=/var/lib/opal-hotel-cms\nEnvironmentFile=/etc/opal-hotel/cms.env\nUMask=0077' "$UNIT"
+# Apply the CMS settings to existing Opal-managed units regardless of their layout.
+# A separate managed drop-in avoids rewriting an older service's directives.
+if [[ -e "$CMS_DROPIN" ]] && ! grep -Fq "# Managed by Opal Hotel CMS" "$CMS_DROPIN"; then
+  die "Existing CMS systemd override is not Opal-managed; refusing overwrite."
 fi
+install -d -o root -g root -m 0755 "$CMS_DROPIN_DIR"
+cat >"$CMS_DROPIN" <<'SYSTEMD_CMS'
+# Managed by Opal Hotel CMS
+[Service]
+Environment=OPAL_CMS_DATA_DIR=/var/lib/opal-hotel-cms
+EnvironmentFile=/etc/opal-hotel/cms.env
+UMask=0077
+SYSTEMD_CMS
 
 log "Starting production service..."
 systemctl daemon-reload
