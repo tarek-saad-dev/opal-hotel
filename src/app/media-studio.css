@@ -224,3 +224,18 @@
   .opal-media-readiness-summary button,.opal-media-not-ready button{width:100%}
   .opal-media-order-row .opal-media-fix-link{flex-basis:100%}
 }
+
+
+/* Owner-friendly publishing: no per-file approval fields or intimidating blocks. */
+.opal-media-optional-details{width:100%;border:1px solid #e1dfd2;background:#faf9f4;padding:12px 15px}
+.opal-media-optional-details>summary{cursor:pointer;font:700 12px/1.8 "Cairo",Tahoma,sans-serif;color:#335641;list-style:revert}
+.opal-media-optional-details[open]>summary{padding-bottom:12px}
+.opal-media-optional-details>label{display:flex;flex-direction:column;gap:7px;font:600 12px/1.7 "Cairo",Tahoma,sans-serif;margin:0 0 12px}
+.opal-media-optional-details input,.opal-media-optional-details select{width:100%}
+.opal-cms-visual-tip,.opal-picker-publish-note{
+  background:#edf3ed;border:1px solid #c9d9c7;color:#335a3f;
+  padding:12px 16px;font:500 12px/1.9 "Cairo",Tahoma,sans-serif;
+}
+.opal-cms-visual-tip{margin-bottom:18px}
+.opal-picker-preview>.opal-picker-publish-note{color:#335a3f;font-size:11px}
+@media(max-width:600px){.opal-media-optional-details{padding:10px}.opal-cms-visual-tip{padding:10px 12px}}

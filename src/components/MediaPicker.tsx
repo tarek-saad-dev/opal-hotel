@@ -46,7 +46,7 @@ export function MediaPicker({assets,label,kind="image",value="",selected=[],mult
       .some(x=>x.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())))
   );
   const focusAsset=eligible.find(a=>a.src===highlighted);
-  const isReady=(asset:VisualAsset)=>asset.approved&&Boolean(asset.altAr.trim())&&Boolean(asset.altEn.trim());
+  const isReady=(asset:VisualAsset)=>asset.approved;
 
   const close=()=>{
     setOpen(false);
@@ -103,7 +103,7 @@ export function MediaPicker({assets,label,kind="image",value="",selected=[],mult
         <span className="opal-picker-trigger-copy">
           <strong>{multiple?label:currentAsset?.title||"اختار من مكتبة الوسائط"}</strong>
           <small>{multiple?selected.length+" مستخدم · "+remaining+" متاح"
-            :currentAsset?names[currentAsset.category]+" · "+(isReady(currentAsset)?"جاهز للنشر":"غير جاهز للنشر")
+            :currentAsset?names[currentAsset.category]+" · "+(isReady(currentAsset)?"معتمد":"جاهز للنشر بنقرة واحدة")
             :"اعرض الصور والفيديوهات كـThumbnails"}</small>
         </span>
         <span className="opal-picker-trigger-action" aria-hidden="true">{multiple?"＋ إضافة":"تغيير"}</span>
@@ -153,7 +153,7 @@ export function MediaPicker({assets,label,kind="image",value="",selected=[],mult
                     <Thumb asset={asset}/>
                     <span className="opal-picker-tile-copy">
                       <strong title={asset.title}>{asset.title}</strong>
-                      <small>{names[asset.category]} · {isReady(asset)?"جاهز للنشر":"غير جاهز للنشر"}</small>
+                      <small>{names[asset.category]} · {isReady(asset)?"معتمد":"جاهز عند النشر"}</small>
                     </span>
                     <span className="opal-picker-tile-check" aria-hidden="true">{used||picked?"✓":"＋"}</span>
                   </button>;
@@ -174,11 +174,8 @@ export function MediaPicker({assets,label,kind="image",value="",selected=[],mult
                 <strong>{focusAsset.title}</strong>
                 <small>{names[focusAsset.category]} · {focusAsset.kind==="video"?"فيديو":"صورة"}</small>
                 <p>{focusAsset.altAr||"مفيش وصف عربي مضاف"}</p>
-                {!isReady(focusAsset)&&<p className="opal-picker-warning">
-                  مش هيظهر على الموقع لحد ما تستكمل البيانات والحقوق من مكتبة الوسائط:
-                  {(!focusAsset.altAr.trim()?" وصف عربي.":"")}
-                  {(!focusAsset.altEn.trim()?" وصف إنجليزي.":"")}
-                  {(!focusAsset.approved?" تأكيد حق النشر.":"")}
+                {!isReady(focusAsset)&&<p className="opal-picker-publish-note">
+                  اختار الصورة عادي. عند الضغط على «حفظ ونشر الآن» هتأكد حقوق نشر كل الصور المختارة مرة واحدة.
                 </p>}
               </>:<div className="opal-picker-preview-empty">
                 <span aria-hidden="true">▧</span>

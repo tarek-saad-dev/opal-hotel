@@ -8,9 +8,11 @@ export async function POST(request:NextRequest){
   if(!await isCmsAuthenticated())return NextResponse.json({error:"UNAUTHORIZED"},{status:401,headers:noStoreHeaders});
   if(!validCmsMutationOrigin(request))return NextResponse.json({error:"INVALID_ORIGIN"},{status:403});
   try{
-    const data=await request.json() as {expectedRevision?:number};
+    const data=await request.json() as {expectedRevision?:number;confirmAssignedMediaRights?:boolean};
     if(!Number.isSafeInteger(data.expectedRevision))return NextResponse.json({error:"BAD_REVISION"},{status:400});
-    const result=await publishDraft(data.expectedRevision!);
+    if(data.confirmAssignedMediaRights!==undefined&&typeof data.confirmAssignedMediaRights!=="boolean")
+      return NextResponse.json({error:"BAD_RIGHTS_CONFIRMATION"},{status:400,headers:noStoreHeaders});
+    const result=await publishDraft(data.expectedRevision!,data.confirmAssignedMediaRights===true);
     // Invalidate both localized homepage routes after the atomic CMS publish.
     revalidatePath("/en");
     revalidatePath("/ar");

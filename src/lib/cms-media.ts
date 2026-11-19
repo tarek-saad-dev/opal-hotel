@@ -125,20 +125,28 @@ export function normalizeVisualLibrary(raw:unknown):CmsVisualLibrary{
     rooms
   }};
 }
-/** An asset assigned in the owner UI isn't necessarily eligible for the site.
- * V2 must require explicit publishing rights plus real alt text in BOTH locales.
- * Keep diagnostics in sync with the same gate the public site uses. */
+/** Uploaded media remains private until the owner explicitly confirms rights
+ * for selected media at Publish. Descriptions are optional editorial metadata. */
 export function visualAssetIssues(visual:CmsVisualLibrary,src:string):string[]{
   if(!src)return [];
   const asset=visual.assets.find(item=>item.src===src);
-  if(!asset)return ["الملف مش موجود في مكتبة الوسائط"];
-  const issues:string[]=[];
-  if(!asset.altAr.trim())issues.push("الوصف العربي ناقص");
-  if(!asset.altEn.trim())issues.push("الوصف الإنجليزي ناقص");
-  if(!asset.approved)issues.push("حقوق النشر لم يتم تأكيدها");
-  return issues;
+  if(!asset)return ["الملف مش موجود في المكتبة"];
+  return asset.approved?[]:["في انتظار النشر وتأكيد حق الاستخدام"];
 }
 export type UnreadyVisualPlacement={src:string;label:string;issues:string[]};
+export function assignedVisualSources(visual:CmsVisualLibrary):Set<string>{
+  const p=visual.placements;
+  const chosen=[
+    ...p.hero,p.overviewMain,p.overviewInset,p.facilities,p.location,...p.gallery,
+    ...Object.values(p.rooms).flatMap(r=>[r.cover,...r.gallery,r.video])
+  ];
+  const selected=new Set(chosen.filter(Boolean));
+  // A poster is part of its assigned video, even when not in a visual slot.
+  for(const asset of visual.assets){
+    if(selected.has(asset.src)&&asset.kind==="video"&&asset.poster)selected.add(asset.poster);
+  }
+  return selected;
+}
 export function unreadyVisualPlacements(visual:CmsVisualLibrary):UnreadyVisualPlacement[]{
   const p=visual.placements;
   const refs:{src:string;label:string}[]=[
@@ -154,16 +162,39 @@ export function unreadyVisualPlacements(visual:CmsVisualLibrary):UnreadyVisualPl
       {src:r.video,label:"Room "+slug+" — video"}
     ]))
   ];
-  return refs.filter(ref=>ref.src).map(ref=>({
-    ...ref,issues:visualAssetIssues(visual,ref.src)
-  })).filter(ref=>ref.issues.length>0);
+  return refs.filter(ref=>ref.src).map(ref=>({...ref,issues:visualAssetIssues(visual,ref.src)}))
+    .filter(ref=>ref.issues.length>0);
+}
+/** Explicit owner confirmation is required by the publish API. Do not silently
+ * approve an uploaded but unassigned private photo or film. */
+export function approveAssignedVisualMedia(visual:CmsVisualLibrary):CmsVisualLibrary{
+  const selected=assignedVisualSources(visual);
+  return {...visual,assets:visual.assets.map(asset=>selected.has(asset.src)
+    ?{...asset,approved:true}:asset)};
+}
+/** Meaningful default text without obliging the owner to author translations. */
+export function visualAssetAlt(asset:VisualAsset,locale:"ar"|"en"):string{
+  const custom=locale==="ar"?asset.altAr:asset.altEn;
+  if(custom.trim())return custom.trim();
+  const category:Record<VisualCategory,{ar:string;en:string}>={
+    exterior:{ar:"واجهة الفندق",en:"Hotel exterior"},
+    pool:{ar:"مسبح الفندق",en:"Hotel pool"},
+    rooms:{ar:"صور الغرف",en:"Hotel rooms"},
+    restaurant:{ar:"مطعم الفندق",en:"Hotel restaurant"},
+    facilities:{ar:"مرافق الفندق",en:"Hotel facilities"},
+    location:{ar:"موقع الفندق",en:"Hotel location"},
+    events:{ar:"فعاليات الفندق",en:"Hotel events"},
+    garden:{ar:"حدائق الفندق",en:"Hotel gardens"},
+    other:{ar:"صورة من الفندق",en:"Hotel photo"}
+  };
+  // Avoid displaying camera-generated filenames as alt text.
+  return category[asset.category][locale];
 }
 export function approvedAsset(visual:CmsVisualLibrary,src:string):VisualAsset|undefined{
   const asset=visual.assets.find(item=>item.src===src);
-  if(!asset||visualAssetIssues(visual,src).length>0)return undefined;
+  if(!asset?.approved)return undefined;
   return asset;
 }
-/** Exactly which referenced media is public, including posters for assigned videos. */
 export function approvedPublishedPaths(visual:CmsVisualLibrary):Set<string>{
   const p=visual.placements;
   const refs=[
