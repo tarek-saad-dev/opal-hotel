@@ -103,6 +103,9 @@ try{
   await page.screenshot({path:path.join(dir,"owner-sections.png"),fullPage:true,animations:"disabled"});
 
   await page.getByRole("button",{name:/تسجيل الخروج/}).click();
+  // Logout clears the HttpOnly cookie asynchronously; the login screen is
+  // rendered only after the server has acknowledged cookie expiry.
+  await page.getByRole("heading",{name:"إدارة محتوى الفندق"}).waitFor();
   const logout=await context.request.get(origin+"/api/admin/cms");
   check(logout.status()===401,"Logout must revoke private content access");
   check(errors.length===0,"Browser errors: "+errors.join("; "));
