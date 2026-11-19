@@ -24,7 +24,7 @@ test("Existing Opal managed systemd service receives CMS data and secrets via a 
 
 test("CMS production smoke script is read-only and checks private endpoints", () => {
   const src = read("ops/check-cms-production.sh");
-  assert.match(src, /BASE="https:\/\/$DOMAIN"/);
+  assert.match(src, /BASE="https:\/\/\$DOMAIN"/);
   assert.match(src, /expect \/api\/admin\/cms 401/);
   assert.match(src, /expect \/en\/preview 404/);
   assert.match(src, /data\.configured !== true/);
