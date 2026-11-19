@@ -5,7 +5,7 @@ import type { CmsLocale,CmsMediaRole,CmsSectionId,CmsSite } from "@/lib/cms-sche
 import { cmsSectionIds,hasApprovedCmsLogo,hasApprovedCmsHeroVideo,hasApprovedCmsFullFilm,hasCompleteCmsMedia,mediaRoles } from "@/lib/cms-schema";
 import type { Locale } from "@/lib/hotel-content";
 import { MediaStudio,optimizeMediaPhoto } from "@/components/MediaStudio";
-import { unreadyVisualPlacements } from "@/lib/cms-media";
+import { assignedVisualSources,unreadyVisualPlacements } from "@/lib/cms-media";
 
 type Tab="content"|"sections"|"media"|"visual"|"history";
 type HistoryRow={revision:number;updatedAt:string};
@@ -309,34 +309,43 @@ export function AdminCms(){
     }catch(e){setError(e instanceof Error?e.message:"فشل الحفظ");}
     finally{setBusy("");}
   }
+  // Fast default: Pick photos, then Save & Publish in a single action.
+  // Publication rights are confirmed ONCE per batch, not for each upload.
+  // Explicit confirmation is verified by the authenticated server endpoint.
   async function publish(){
-    if(!saved||dirty)return;
-    const blocked=unreadyVisualPlacements(saved.media.visual);
-    const warning=blocked.length>0
-      ? "تنبيه: عندك "+blocked.length+" اختيار وسائط غير جاهز للنشر (وصف بالعربي/الإنجليزي أو تأكيد الحقوق ناقص). الصور دي مش هتتغير للزوار وهتفضل الصور القديمة مكانها.\n\n"
-        +"أول أماكن محتاجة مراجعة: "+blocked.slice(0,3).map(x=>x.label).join("، ")+"\n\n"
-        +"اختار «إلغاء» وكمّل اعتماد الصور من مكتبة الوسائط. أو «موافق» لو عاوز تنشر النصوص وباقي الصور الجاهزة فقط."
-      : "تأكيد نشر المحتوى المحفوظ على الموقع العام؟ التغييرات المعتمدة هتظهر للزوار.";
-    if(!window.confirm(warning))return;
+    if(!draft||!saved||uploading||busy)return;
+    const count=assignedVisualSources(draft.media.visual).size;
+    const confirmation=count>0
+      ?"نشر التعديلات والصور المختارة على موقع الفندق؟\n\n"
+        +"بتأكيدك، أنت تقر إن عندك حق استخدام ونشر الصور والفيديوهات المختارة ("+count+" ملف).\n"
+        +"هيتم حفظ المسودة ونشر الصور المختارة تلقائيًا. مش محتاج أوصاف أو موافقات لكل صورة."
+      :"نشر التعديلات على الموقع؟ هيتحفظ آخر تعديل ويتنشر مباشرة.";
+    if(!window.confirm(confirmation))return;
     setBusy("publishing");setError("");setMessage("");
     try{
-      const r=await fetch("/api/admin/cms/publish",{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({expectedRevision:saved.revision})});
-      const data=await r.json() as {published?:CmsSite;mediaReady?:boolean;error?:string};
-      if(!r.ok||!data.published)throw new Error(data.error||"فشل النشر");
+      let current=draft;
+      if(dirty){
+        const saveResponse=await fetch("/api/admin/cms",{method:"PUT",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({document:draft,expectedRevision:saved.revision})});
+        const saveData=await saveResponse.json() as {draft?:CmsSite;error?:string};
+        if(!saveResponse.ok||!saveData.draft)throw new Error(saveData.error||"تعذر حفظ المسودة");
+        current=saveData.draft;
+        // Preserve any successful save if the following publish fails.
+        setDraft(current);setSaved(current);
+      }
+      const response=await fetch("/api/admin/cms/publish",{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({expectedRevision:current.revision,confirmAssignedMediaRights:count>0})
+      });
+      const data=await response.json() as {published?:CmsSite;mediaReady?:boolean;error?:string};
+      if(!response.ok||!data.published)throw new Error(data.error||"تعذر نشر التعديلات");
       setDraft(data.published);setSaved(data.published);setPublished(data.published);
       await fetchHistory();
-      const skipped=unreadyVisualPlacements(data.published.media.visual);
-      const v2InUse=data.published.media.visual.assets.length>0;
-      setMessage("تم نشر النسخة الجديدة ✅"
-        +(skipped.length>0
-          ?" لكن "+skipped.length+" صورة/فيديو مرتبط غير جاهز ومش هيظهر للزوار؛ هيستمر ظهور الصور القديمة في مكانه. استكمل الوصف بالعربي والإنجليزي وتأكيد الحقوق، وبعدها احفظ وانشر من جديد."
-          :v2InUse?" صور V2 المعتمدة والمرتبطة بالأقسام أصبحت ضمن النسخة المنشورة."
-          :data.mediaReady?" الصور الأساسية المعتمدة اتفعلت.":" الصور التجريبية هتفضل لحد ما ترفع وتعتمد الصور الحقيقية.")
+      setMessage("تم الحفظ والنشر ✅ صور الأقسام المختارة اتنشرت على الموقع بالعربي والإنجليزي."
         +(hasApprovedCmsLogo(data.published)?" اللوجو المعتمد ظاهر في الهيدر.":"")
         +(hasApprovedCmsHeroVideo(data.published)?" فيديو الـHero اتفعل.":"")
         +(hasApprovedCmsFullFilm(data.published)?" الفيلم الكامل متاح للمشاهدة.":""));
-    }catch(e){setError(e instanceof Error?e.message:"تعذر النشر");}
+    }catch(e){setError(e instanceof Error?e.message:"تعذر حفظ ونشر التغييرات");}
     finally{setBusy("");}
   }
   async function upload(file:File,role:CmsMediaRole|"logo"|"poster"){
@@ -414,7 +423,7 @@ export function AdminCms(){
           if(next.media.visual.assets.length>=160)return next;
           next.media.visual.assets.push({
             src,kind:video?"video":"image",title:name,category:"other",
-            altEn:name,altAr:"",approved:false,poster:""
+            altEn:"",altAr:"",approved:false,poster:""
           });
           return next;
         });
@@ -481,7 +490,7 @@ export function AdminCms(){
         <p className="opal-cms-subtitle">تحكم في الموقع مباشرة. كل تعديل بيتحفظ كمسودة الأول، وبعدها أنت تقرر النشر.</p>
       </div>
       <div className="opal-cms-status"><span className={dirty||unpublished?"is-unsaved":"is-saved"}>
-          {dirty?"● فيه تعديلات لسه مش محفوظة":unpublished?"● المسودة محفوظة لكن لسه مش منشورة":"● آخر تعديلات محفوظة ومنشورة"}
+          {dirty?"● تعديلات جاهزة للحفظ والنشر":unpublished?"● مسودة محفوظة، جاهزة للنشر":"● الموقع محدّث"}
         </span>
         <small>المنشور: #{published?.revision??0}</small></div></header>
       <div className="opal-cms-toolbar">
@@ -493,13 +502,14 @@ export function AdminCms(){
           <a target="_blank" rel="noopener noreferrer" href={`/${locale}/preview`}>معاينة المسودة <span>↗</span></a>
           <button type="button" className="opal-cms-save" disabled={!dirty||Boolean(busy)||Boolean(uploading)} onClick={()=>void save()}>
             {busy==="saving"?"جاري الحفظ…":"حفظ المسودة"}</button>
-          <button type="button" className="opal-cms-publish" disabled={dirty||Boolean(busy)||Boolean(uploading)}
-            onClick={()=>void publish()}>{busy==="publishing"?"جاري النشر…":"نشر على الموقع"} <span>↗</span></button>
+          <button type="button" className="opal-cms-publish"
+            disabled={Boolean(busy)||Boolean(uploading)||(!dirty&&!unpublished&&pendingVisual.length===0)}
+            onClick={()=>void publish()}>{busy==="publishing"?"جاري الحفظ والنشر…":"حفظ ونشر الآن"} <span>↗</span></button>
         </div>
       </div>
-      {tab==="visual"&&pendingVisual.length>0&&<div role="status" className="opal-cms-visual-warning">
-        فيه {pendingVisual.length} صورة/فيديو متحدد للأقسام لكنه غير جاهز للنشر؛ ده سبب ظهور الصور القديمة في الموقع.
-        لازم تكمل الوصف باللغتين وتأكيد حق النشر، وبعدها تحفظ المسودة وتنشرها.
+      {tab==="visual"&&pendingVisual.length>0&&<div role="status" className="opal-cms-visual-tip">
+        اخترت صور جديدة؟ اضغط <strong>حفظ ونشر الآن</strong> من فوق.
+        هتأكد حقوق النشر مرة واحدة للصور المختارة كلها. الوصف بالعربي والإنجليزي اختياري.
       </div>}
       {message&&<div role="status" className="opal-cms-message">{message}</div>}
       {error&&<div role="alert" className="opal-cms-alert">{error}{error==="REVISION_CONFLICT"&&
