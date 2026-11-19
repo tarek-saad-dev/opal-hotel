@@ -119,3 +119,31 @@ test("The owner can pick and publish without checking every image or writing tra
   assert.match(admin,/حفظ ونشر الآن/);
   assert.match(preview,/<CmsProvider value={draft} preview>/);
 });
+
+
+test("Overview supports a private-preview on-demand video, and legacy V2 documents remain valid",()=>{
+  const media=read("src/lib/cms-media.ts");
+  const provider=read("src/components/CmsProvider.tsx");
+  const sections=read("src/components/PremiumSections.tsx");
+  const studio=read("src/components/MediaStudio.tsx");
+  const admin=read("src/components/AdminCms.tsx");
+  const styles=read("src/app/overview-video.css");
+  assert.match(media,/overviewVideo:string/);
+  assert.match(media,/overviewVideo:single\(placements\.overviewVideo\?\?""/);
+  assert.match(media,/p\.overviewVideo/);
+  assert.match(media,/label:"Overview — فيديو المكان"/);
+  assert.match(provider,/const overviewMovie=lookup\(placed\.overviewVideo\)/);
+  assert.match(provider,/overviewVideo:overviewFilm/);
+  assert.match(sections,/media\.overviewVideo\s*\?/);
+  assert.match(sections,/className="opal-story-film-frame"/);
+  assert.match(sections,/preload="none"/);
+  assert.match(sections,/filmRef\.current\?\.play\(\)/);
+  assert.match(sections,/className="opal-story-main-photo"/);
+  assert.match(studio,/label="أو اختار فيديو مرفوع قبل كده"/);
+  assert.match(studio,/opal-overview-video-upload/);
+  assert.match(studio,/const paths=await upload\(\[file\]\)/);
+  assert.match(studio,/v\.placements\.overviewVideo=paths\[0\]/);
+  assert.match(admin,/async function uploadLibrary\(files:File\[\]\):Promise<string\[\]>/);
+  assert.match(styles,/@media\(max-width:820px\)/);
+  assert.match(styles,/\.opal-story-film-play/);
+});
