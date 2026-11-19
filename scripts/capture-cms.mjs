@@ -48,7 +48,7 @@ try{
   const hero=page.locator(".opal-cms-editor-card").nth(1);
   await hero.locator("input").nth(1).fill("An owner-managed Luxor story");
   await page.getByRole("button",{name:"حفظ المسودة"}).click();
-  await page.getByText("تم حفظ المسودة بنجاح.",{exact:false}).waitFor();
+  await page.getByText("تم حفظ المسودة ✅",{exact:false}).waitFor();
 
   const publicBeforePublish=await context.newPage();
   await publicBeforePublish.goto(origin+"/en",{waitUntil:"domcontentloaded"});
@@ -65,7 +65,7 @@ try{
 
   page.once("dialog",dialog=>void dialog.accept());
   await page.getByRole("button",{name:/نشر على الموقع/}).click();
-  await page.getByText("تم النشر بنجاح.",{exact:false}).waitFor();
+  await page.getByText("تم نشر النسخة الجديدة ✅",{exact:false}).waitFor();
   const published=await context.newPage();
   await published.goto(origin+"/en",{waitUntil:"domcontentloaded"});
   await published.locator("#hotel-name").getByText("An owner-managed Luxor story").waitFor();
@@ -80,10 +80,10 @@ try{
   check(await currentGallery===1,"Section controls missing");
   await gallery.locator('input[type="checkbox"]').uncheck();
   await page.getByRole("button",{name:"حفظ المسودة"}).click();
-  await page.getByText("تم حفظ المسودة بنجاح.",{exact:false}).waitFor();
+  await page.getByText("تم حفظ المسودة ✅",{exact:false}).waitFor();
   page.once("dialog",dialog=>void dialog.accept());
   await page.getByRole("button",{name:/نشر على الموقع/}).click();
-  await page.getByText("تم النشر بنجاح.",{exact:false}).waitFor();
+  await page.getByText("تم نشر النسخة الجديدة ✅",{exact:false}).waitFor();
   const hidden=await context.newPage();
   await hidden.goto(origin+"/en",{waitUntil:"domcontentloaded"});
   check(await hidden.locator("#gallery").count()===0,"Hidden section still renders");
