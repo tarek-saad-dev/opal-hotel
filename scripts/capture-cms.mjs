@@ -110,7 +110,7 @@ try{
   });
   check(valid.status()===200,"Owner should be able to upload a valid PNG");
   const uploaded=await valid.json();
-  check(/^\\/api\\/cms\\/media\\/[0-9a-f]{32}\\.png$/.test(uploaded.src),
+  check(/^\/api\/cms\/media\/[0-9a-f]{32}\.png$/.test(uploaded.src),
     "CMS image upload must return a managed path");
   const ownerImage=await context.request.get(origin+uploaded.src);
   check(ownerImage.status()===200,"Authenticated owner must be able to preview draft image");
