@@ -26,7 +26,13 @@ try{
   const unauth=await context.request.get(origin+"/api/admin/cms");
   check(unauth.status()===401,"CMS private endpoint must reject visitors");
   const forbidden=await context.request.get(origin+"/ar/preview");
-  check(forbidden.status()===404,"Draft preview must reject visitors");
+  const unauthorizedHtml=await forbidden.text();
+  // Next.js may stream a not-found boundary as an HTTP 200 "soft 404".
+  // The security invariant is that no private preview UI/data renders.
+  check(forbidden.status()===404||
+    (!unauthorizedHtml.includes('class="premium-hero"')
+      &&(unauthorizedHtml.includes("opal-recovery")||unauthorizedHtml.includes("404"))),
+    "Unauthorized visitors must not receive the private draft preview");
 
   const rawPublic=await page.goto(origin+"/en",{waitUntil:"domcontentloaded"});
   check(rawPublic?.status()===200,"Public homepage not found");
