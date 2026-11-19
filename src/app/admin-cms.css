@@ -1,0 +1,211 @@
+/* Opal Legacy Owner CMS: isolated luxury editorial workspace */
+.opal-cms-dashboard,.opal-cms-login,.opal-cms-loading{
+  --c-forest:#19372a;--c-forest-2:#254736;--c-cream:#f7f5ef;
+  --c-ink:#263d31;--c-muted:#738078;--c-gold:#bb9e76;--c-border:#e0dbcf;
+  font-family:"Cairo",Tahoma,Arial,sans-serif;box-sizing:border-box
+}
+.opal-cms-dashboard *,.opal-cms-login *{box-sizing:border-box}
+.opal-cms-dashboard button,.opal-cms-login button,
+.opal-cms-dashboard input,.opal-cms-login input,.opal-cms-dashboard textarea{
+  font:inherit
+}
+.opal-cms-dashboard :is(button,a,input,textarea):focus-visible,
+.opal-cms-login :is(button,a,input):focus-visible{
+  outline:2px solid #a8875d;outline-offset:3px
+}
+.opal-cms-dashboard{
+  background:var(--c-cream);min-height:100svh;display:grid;
+  grid-template-columns:258px minmax(0,1fr);color:var(--c-ink)
+}
+.opal-cms-sidebar{
+  position:sticky;top:0;min-height:100svh;height:100svh;display:flex;
+  flex-direction:column;background:#1a3529;color:#f5f1e6;padding:32px 20px
+}
+.opal-cms-sidebar-brand{display:flex;align-items:center;gap:14px;padding:0 7px 45px}
+.opal-cms-monogram{
+  width:43px;height:43px;flex-shrink:0;display:grid;place-items:center;
+  border:1px solid #e6d6bb9a;color:#ebddc8;
+  font:400 38px/1 Georgia,serif;padding-bottom:4px
+}
+.opal-cms-sidebar-brand div{display:flex;flex-direction:column;gap:5px}
+.opal-cms-sidebar-brand strong{font:400 20px Georgia,serif;letter-spacing:.1em}
+.opal-cms-sidebar-brand small{font:700 8px Arial,sans-serif;letter-spacing:.24em;color:#acb9a9}
+.opal-cms-sidebar-eyebrow,.opal-cms-eyebrow{font:700 10px Arial,sans-serif;
+  letter-spacing:.17em;color:#9d8766;margin:0 0 19px}
+.opal-cms-sidebar-eyebrow{color:#afac93;padding-inline:13px}
+.opal-cms-sidebar nav{display:flex;flex-direction:column;gap:8px}
+.opal-cms-sidebar nav button,.opal-cms-sidebar-footer button,.opal-cms-sidebar-footer a{
+  color:#dbe3d8;background:transparent;border:1px solid transparent;
+  min-height:47px;width:100%;text-align:start;display:flex;align-items:center;
+  gap:13px;padding:12px 13px;font-size:12px;cursor:pointer;text-decoration:none
+}
+.opal-cms-sidebar nav button>span{font:400 21px Arial,sans-serif;color:#bca987;min-width:18px}
+.opal-cms-sidebar nav button:hover,.opal-cms-sidebar nav button.is-active{
+  background:#3654406f;border-color:#67765c5c;color:#fff
+}
+.opal-cms-sidebar-footer{margin-top:auto;border-top:1px solid #ffffff30;padding-top:15px}
+.opal-cms-sidebar-footer :is(button,a){justify-content:space-between;min-height:40px;font-size:11px}
+.opal-cms-sidebar-footer :is(button,a):hover{color:#d8c49d}
+.opal-cms-main{min-width:0;max-width:1500px;width:100%;margin:0 auto;
+  padding:clamp(25px,4vw,60px) clamp(19px,4vw,65px) 45px}
+.opal-cms-topbar{display:flex;justify-content:space-between;align-items:flex-end;
+  gap:25px;padding-bottom:31px;border-bottom:1px solid var(--c-border)}
+.opal-cms-topbar h1{font:700 clamp(31px,4vw,54px)/1.4 "Cairo",Tahoma,sans-serif;
+  letter-spacing:-.03em;margin:0 0 8px}
+.opal-cms-subtitle{font-size:12px;line-height:1.85;color:var(--c-muted);margin:0}
+.opal-cms-status{display:flex;flex-direction:column;gap:10px;align-items:flex-end;white-space:nowrap}
+.opal-cms-status>span{font-size:11px;padding:9px 12px;border:1px solid #d1d3c5;color:#536c53}
+.opal-cms-status .is-unsaved{background:#f6ead7;color:#8b6837;border-color:#dac59e}
+.opal-cms-status .is-saved{background:#e9f0e4}
+.opal-cms-status small{font-size:10px;color:#8d9389}
+.opal-cms-toolbar{display:flex;align-items:center;justify-content:space-between;
+  gap:20px;padding:21px 0 34px;flex-wrap:wrap}
+.opal-cms-locale{display:flex;gap:2px;background:#e7e3d8;padding:4px}
+.opal-cms-locale button{border:0;background:transparent;min-height:41px;
+  min-width:84px;padding:10px 15px;color:#667364;font-size:11px;cursor:pointer}
+.opal-cms-locale .is-active{background:#fffefa;color:#234538;font-weight:700;box-shadow:0 1px 4px #0000000e}
+.opal-cms-toolbar-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.opal-cms-toolbar-actions :is(a,button){min-height:44px;padding:11px 16px;
+  border:1px solid #bfc9b8;background:#fffef9;color:#2e503e;
+  font-size:11px;font-weight:750;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:15px}
+.opal-cms-toolbar-actions a:hover,.opal-cms-toolbar-actions .opal-cms-save:hover{background:#e8eee4}
+.opal-cms-toolbar-actions .opal-cms-publish{background:#244934;color:#fff;border-color:#244934}
+.opal-cms-toolbar-actions .opal-cms-publish:hover{background:#173929}
+.opal-cms-toolbar-actions button:disabled{opacity:.46;cursor:not-allowed}
+.opal-cms-message,.opal-cms-alert,.opal-cms-note{
+  padding:15px 19px;font-size:12px;line-height:1.9;margin-bottom:20px;border-inline-start:3px solid #99a985;
+  background:#edf2e8;color:#36553b
+}
+.opal-cms-alert{border-color:#b4735f;background:#f6e9e2;color:#925748}
+.opal-cms-alert button{display:block;border:1px solid #ab7d70;padding:8px 10px;
+  margin-top:10px;background:#fff8f4;cursor:pointer;font-size:11px}
+.opal-cms-note{border-color:#b59e75;background:#f0ece2;color:#6f715e}
+.opal-cms-stack{display:flex;flex-direction:column;gap:24px}
+.opal-cms-editor-card{background:#fffefa;border:1px solid #e4dfd4;padding:clamp(19px,3vw,33px);min-width:0}
+.opal-cms-editor-head{display:flex;flex-direction:column;align-items:flex-start;gap:6px;
+  padding-bottom:21px;margin-bottom:24px;border-bottom:1px solid #e9e5dd}
+.opal-cms-editor-head span{font:700 10px Arial,sans-serif;letter-spacing:.1em;color:#b19772}
+.opal-cms-editor-head h3{font:700 clamp(21px,2.6vw,31px)/1.5 "Cairo",Tahoma,sans-serif;margin:0}
+.opal-cms-grid-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.opal-cms-field{display:flex;flex-direction:column;gap:10px;min-width:0;margin-bottom:19px}
+.opal-cms-label{display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  color:#475a4d;font-size:12px;font-weight:700;line-height:1.7}
+.opal-cms-label small{color:#8d958b;font-weight:400;font-size:10px}
+.opal-cms-field :is(input,textarea),.opal-cms-login input{
+  width:100%;max-width:100%;min-width:0;color:#254435;background:#fff;
+  border:1px solid #d6d3c9;padding:13px 15px;border-radius:0;
+  outline:none;line-height:1.7;font-size:13px
+}
+.opal-cms-field textarea{resize:vertical;min-height:100px}
+.opal-cms-field :is(input,textarea):focus,.opal-cms-login input:focus{border-color:#a88d65}
+.opal-cms-list-row{padding:19px;border:1px solid #e4e2da;background:#f9f8f3;margin-bottom:13px}
+.opal-cms-list-row-header{display:flex;align-items:center;justify-content:space-between;
+  gap:10px;margin-bottom:14px}
+.opal-cms-list-row-header strong{font-size:13px}
+.opal-cms-text-action{border:none;background:none;color:#a25a48;font-size:11px;cursor:pointer}
+.opal-cms-outline{background:transparent;border:1px dashed #baa98e;
+  color:#355742;font-weight:700;font-size:12px;padding:13px 18px;cursor:pointer;min-height:46px}
+.opal-cms-outline:hover{background:#edf0e9}
+.opal-cms-attraction{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,.7fr) auto;
+  gap:15px;align-items:end}
+.opal-cms-attraction>button{margin-bottom:19px;border:1px solid #d6d3c9;
+  color:#965c50;height:46px;width:40px;background:#fff;cursor:pointer;font-size:22px}
+.opal-cms-editor-card-top{display:flex;align-items:center;gap:15px;margin-bottom:24px;
+  padding-bottom:19px;border-bottom:1px solid #e5e0d5;flex-wrap:wrap}
+.opal-cms-editor-number{color:#a58d68;font:600 12px Georgia,serif}
+.opal-cms-editor-card-title{flex:1;min-width:130px}
+.opal-cms-editor-card-title h3{font-size:20px;margin:0}
+.opal-cms-editor-card-title small{font:10px Arial,sans-serif;color:#939b90}
+.opal-cms-toggle,.opal-cms-checkline{display:flex;align-items:center;gap:10px;
+  font-size:11px;color:#465e4c;cursor:pointer;line-height:1.7}
+.opal-cms-toggle input,.opal-cms-checkline input{accent-color:#28543c;width:17px;height:17px}
+.opal-cms-sort-controls{display:flex;gap:6px}
+.opal-cms-sort-controls button{width:36px;height:36px;background:#f4f1e9;
+  color:#395b45;border:1px solid #d8d1c3;cursor:pointer}
+.opal-cms-sort-controls button:disabled{opacity:.3;cursor:not-allowed}
+.opal-cms-media-line{display:flex;gap:30px;align-items:center;flex-wrap:wrap}
+.opal-cms-upload-preview{height:145px;width:160px;display:grid;place-items:center;
+  overflow:hidden;background:#e9e6dd;color:#a49578;font:24px Georgia,serif}
+.opal-cms-upload-preview img{height:100%;width:100%;object-fit:contain}
+.opal-cms-media-line>div:last-child{flex:1;display:flex;flex-direction:column;gap:15px}
+.opal-cms-media-line input[type=file],.opal-cms-photo-card input[type=file]{
+  font-size:11px;color:#6b796c;max-width:100%;width:100%
+}
+.opal-cms-media-line input[type=file]::file-selector-button,.opal-cms-photo-card input[type=file]::file-selector-button{
+  background:#224634;color:#fff;padding:10px 12px;border:0;margin-inline-end:10px;cursor:pointer
+}
+.opal-cms-photo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+.opal-cms-photo-card{padding:16px;background:#faf9f5;border:1px solid #e5dfd3;min-width:0}
+.opal-cms-photo-visual{width:100%;height:190px;overflow:hidden;
+  background:#e4e0d4;display:grid;place-items:center;color:#9e947e;font:15px Georgia,serif}
+.opal-cms-photo-visual img{width:100%;height:100%;object-fit:cover}
+.opal-cms-photo-card h4{font-size:15px;margin:17px 0}
+.opal-cms-photo-card h4 small{display:block;color:#a58f6b;font:11px Georgia,serif;margin-top:7px}
+.opal-cms-photo-card input[type=file]{margin-bottom:20px}
+.opal-cms-photo-card .opal-cms-field{margin-bottom:12px}
+.opal-cms-photo-card .opal-cms-checkline{padding:13px 0;border-top:1px solid #e1dbd0}
+.opal-cms-photo-status{padding:23px;background:#eae8de;color:#47634d}
+.opal-cms-photo-status strong{font-size:15px}
+.opal-cms-photo-status p{font-size:12px;line-height:1.8}
+.opal-cms-history-row{display:flex;align-items:center;justify-content:space-between;
+  gap:17px;background:#fffefa;border:1px solid #e4dfd4;padding:18px 25px}
+.opal-cms-history-row>div{display:flex;flex-direction:column;gap:7px}
+.opal-cms-history-row strong{font-size:14px}
+.opal-cms-history-row small{font-size:11px;color:#778174}
+.opal-cms-history-row button{background:#f7f4eb;padding:12px 17px;
+  border:1px solid #c6b79c;color:#375b44;cursor:pointer;font-size:12px}
+.opal-cms-history-row button:disabled{opacity:.45}
+.opal-cms-bottom{padding:45px 0 25px;color:#869285;text-align:center;font-size:11px}
+.opal-cms-loading{min-height:100svh;background:#1c382d;color:#f4ecdc;
+  display:grid;place-items:center;font-size:16px;text-align:center;padding:40px}
+.opal-cms-login{min-height:100svh;display:grid;place-items:center;
+  padding:30px;background:radial-gradient(circle at 12% 12%,#3f574459,transparent 34%),#1b372a;color:#f6f1e7}
+.opal-cms-login-card{background:#fbf9f2;color:#274735;padding:clamp(28px,5vw,56px);
+  width:min(100%,500px);display:flex;flex-direction:column;align-items:flex-start;
+  box-shadow:0 30px 90px #071c1450}
+.opal-cms-login-card .opal-cms-monogram{color:#294b38;border-color:#bba480}
+.opal-cms-login-card .opal-cms-eyebrow{margin-top:25px}
+.opal-cms-login h1{font:700 clamp(30px,4vw,44px)/1.4 "Cairo",Tahoma,sans-serif;margin:0 0 13px}
+.opal-cms-login-card>p:not(.opal-cms-eyebrow){font-size:13px;line-height:1.8;color:#6b796b;margin-bottom:30px}
+.opal-cms-login form,.opal-cms-login form label{width:100%;display:flex;flex-direction:column;gap:11px}
+.opal-cms-login form button{background:#244833;color:#fff;border:none;
+  min-height:54px;padding:13px 18px;margin:17px 0 23px;font-size:13px;
+  display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.opal-cms-login form button:disabled{opacity:.45;cursor:not-allowed}
+.opal-cms-login-card>small{font-size:10px;color:#8c948b}
+@media(max-width:1080px){
+  .opal-cms-dashboard{grid-template-columns:210px minmax(0,1fr)}
+  .opal-cms-sidebar{padding:25px 13px}
+  .opal-cms-sidebar-brand strong{font-size:16px}
+  .opal-cms-main{padding-inline:22px}
+}
+@media(max-width:800px){
+  .opal-cms-dashboard{display:block}
+  .opal-cms-sidebar{position:static;min-height:unset;height:auto;padding:15px}
+  .opal-cms-sidebar-brand{padding:5px 4px 15px}
+  .opal-cms-sidebar nav{flex-direction:row;overflow-x:auto;padding-bottom:7px}
+  .opal-cms-sidebar nav button{flex:0 0 auto;width:auto;white-space:nowrap}
+  .opal-cms-sidebar-eyebrow{display:none}
+  .opal-cms-sidebar-footer{margin:6px 0 0;padding:5px 0 0;display:flex;gap:10px}
+  .opal-cms-sidebar-footer :is(button,a){width:auto}
+  .opal-cms-main{padding:28px 18px}
+}
+@media(max-width:600px){
+  .opal-cms-topbar{align-items:flex-start;flex-direction:column}
+  .opal-cms-status{align-items:flex-start}
+  .opal-cms-topbar h1{font-size:31px}
+  .opal-cms-toolbar-actions{width:100%}
+  .opal-cms-toolbar-actions a{flex:1}
+  .opal-cms-toolbar-actions button{flex:1}
+  .opal-cms-grid-two{grid-template-columns:1fr;gap:0}
+  .opal-cms-photo-grid{grid-template-columns:1fr}
+  .opal-cms-attraction{grid-template-columns:1fr auto;gap:5px 10px}
+  .opal-cms-attraction .opal-cms-field:first-child{grid-column:1/-1}
+  .opal-cms-attraction>button{grid-column:2}
+  .opal-cms-history-row{align-items:flex-start;flex-direction:column}
+  .opal-cms-history-row button{width:100%}
+  .opal-cms-login{padding:15px}
+}
+@media(prefers-reduced-motion:reduce){
+  .opal-cms-dashboard *, .opal-cms-login *{transition:none!important;animation:none!important}
+}
