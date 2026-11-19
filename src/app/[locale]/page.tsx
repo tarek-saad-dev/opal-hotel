@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { HotelExperience } from "@/components/HotelExperience";
 import { getContent, isLocale } from "@/lib/hotel-content";
+import { readPublished } from "@/lib/cms-store";
 
 export function generateStaticParams() { return [{ locale: "en" }, { locale: "ar" }]; }
 
 export async function generateMetadata({params}: {params: Promise<{locale:string}>}): Promise<Metadata> {
   const {locale} = await params;
   if (!isLocale(locale)) return {};
-  const c = getContent(locale);
+  const c = (await readPublished()).locales[locale];
   return { title: c.hotelName, description: c.metaDescription, alternates: { languages: {en:"/en", ar:"/ar"} } };
 }
 
