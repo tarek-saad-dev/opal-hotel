@@ -1,0 +1,155 @@
+/* OPAL LEGACY — VIEWPORT-AWARE SECTION RHYTHM (2026-11)
+   Design principle: full viewport for cinematic entry, comfortable viewport
+   targets for short editorial compositions, content-first for galleries/forms.
+   Avoid height:100vh on content-driven sections (CMS text/images can change).
+   Do not add mandatory scroll-snap, overflow clipping or nested page scrolling.
+*/
+:root{
+  --opal-rhythm-header:92px;
+  --opal-rhythm-pad:clamp(54px,7svh,104px);
+}
+html{scroll-padding-top:calc(var(--opal-rhythm-header) + 14px)}
+.opal-stage-section{scroll-margin-top:calc(var(--opal-rhythm-header) - 8px)}
+
+/* HERO: fill the visible screen; when copy wraps or height is short, grow.
+   The booking ribbon intentionally overlaps by 50-66px BELOW the hero.
+   This rule supersedes old 790px / 704px fixed floors and max-height. */
+.premium-hero{
+  height:auto;
+  min-height:100svh;
+  max-height:none;
+}
+.premium-hero-layout{
+  height:auto;
+  min-height:100svh;
+  padding-block:clamp(138px,17svh,190px) clamp(132px,18svh,190px);
+}
+.premium-hero-bottom{
+  bottom:clamp(81px,10svh,112px);
+}
+.premium-hero-copy{min-width:0}
+.premium-hero h1{overflow-wrap:normal}
+
+/* Home — Overview: roughly one readable screen on wide displays. The
+   image is viewport-aware rather than always 630px tall. Owner copy wins. */
+.opal-stage-story{
+  min-height:min(100svh,980px);
+  display:flex;
+  align-items:center;
+  padding-block:var(--opal-rhythm-pad);
+}
+.opal-story-wrap{width:100%}
+.opal-story-copy{padding-block:clamp(10px,2svh,30px)}
+.opal-story-main-photo{height:clamp(340px,57svh,560px)}
+.opal-story-small-photo{height:clamp(145px,23svh,225px)}
+.opal-story-media{padding-bottom:clamp(60px,8svh,90px)}
+.opal-story-signature{margin-top:clamp(25px,5svh,58px)}
+
+/* Home — Facilities: multi-panel lists can expand when the owner adds
+   facilities. A fixed viewport would hide accordion content. */
+.opal-stage-facilities{
+  min-height:0;
+  padding-block:clamp(62px,8svh,108px);
+}
+.opal-feature{min-height:0}
+.opal-amenities-panel{padding-top:clamp(48px,6svh,78px)}
+
+/* Home — Location: nearly a screen when compact, taller only if the nearby
+   list, address, photography or Arabic copy requires it. */
+.opal-stage-location{
+  min-height:min(93svh,1000px);
+  display:flex;align-items:center;
+  padding-block:var(--opal-rhythm-pad);
+}
+.opal-location-layout{width:100%;min-height:0}
+
+/* Home — Rooms / Gallery: the owner's card count and CMS images determine
+   length; do not squash three room cards or a 100-photo gallery to 100vh. */
+.opal-stage-rooms{
+  min-height:0;
+  padding-block:clamp(62px,8svh,112px);
+}
+.opal-stage-gallery{
+  min-height:0;
+  padding-block:clamp(62px,8svh,112px);
+}
+.opal-room-photo{aspect-ratio:.96}
+.opal-gallery-mosaic{grid-auto-rows:clamp(140px,21svh,220px)}
+
+/* Home — Reviews: balanced two-column editorial section while keeping the
+   inputs fully visible. Contact fields and footer remain content-first. */
+.opal-stage-reviews{
+  min-height:min(94svh,1000px);
+  display:flex;align-items:center;
+  padding-block:var(--opal-rhythm-pad);
+}
+.opal-end-review-layout{width:100%}
+.opal-end-review-story{min-height:0}
+.opal-stage-contact{min-height:0}
+.opal-end-contact-layout{min-height:min(92svh,1000px)}
+.opal-end-contact-intro,.opal-end-contact-paper{
+  padding-block:clamp(58px,7svh,104px);
+}
+.opal-end-footer{min-height:0;padding-top:clamp(60px,8svh,105px)}
+
+/* Tablet: two-column editorial layouts become stacked; filling 100vh
+   would create blank regions or crop content. */
+@media(max-width:820px){
+  :root{--opal-rhythm-header:78px;--opal-rhythm-pad:clamp(46px,6svh,75px)}
+  .opal-stage-story,.opal-stage-location,.opal-stage-reviews{
+    min-height:0;display:block;
+  }
+  .opal-story-wrap{width:auto}
+  .opal-story-main-photo{height:clamp(320px,48svh,520px)}
+  .opal-story-small-photo{height:clamp(150px,20svh,220px)}
+  .opal-feature{min-height:0}
+  .opal-end-contact-layout{min-height:0}
+  .opal-end-review-story{min-height:0}
+  .opal-end-contact-intro,.opal-end-contact-paper{padding-block:clamp(48px,6svh,78px)}
+}
+
+/* Mobile: the browser's short viewport and touch keyboard must never clip
+   owner CMS text, CTA, hero playback controls, or the availability form. */
+@media(max-width:600px){
+  :root{--opal-rhythm-header:74px;--opal-rhythm-pad:clamp(38px,6svh,68px)}
+  html{scroll-padding-top:84px}
+  .opal-stage-section{scroll-margin-top:70px}
+  .premium-hero{height:auto;max-height:none;min-height:100svh}
+  .premium-hero-layout{
+    height:auto;min-height:100svh;
+    padding:clamp(117px,15svh,154px) 22px clamp(139px,19svh,172px);
+  }
+  .premium-hero-bottom{bottom:clamp(82px,12svh,112px);inset-inline:22px}
+  .premium-hero h1{font-size:clamp(46px,12vw,70px)}
+  [dir="rtl"] .premium-hero h1{font-size:clamp(34px,8.9vw,53px)}
+  .premium-hero-actions{gap:14px}
+  .opal-stage-story,.opal-stage-facilities,.opal-stage-location,
+  .opal-stage-rooms,.opal-stage-gallery,.opal-stage-reviews{padding-block:var(--opal-rhythm-pad)}
+  .opal-story-copy{padding:0}
+  .opal-story-signature{margin-top:clamp(20px,4svh,38px)}
+  .opal-story-media{padding-inline-end:clamp(24px,8vw,40px);padding-bottom:66px}
+  .opal-story-main-photo{height:clamp(260px,45svh,410px)}
+  .opal-story-small-photo{height:clamp(100px,18svh,158px)}
+  .opal-location-layout{min-height:0}
+  .opal-location-nearby{padding:clamp(20px,4svh,26px)}
+  .opal-room-photo{aspect-ratio:1.06}
+  .opal-gallery-mosaic{grid-auto-rows:clamp(100px,18svh,158px)}
+  .opal-end-contact-intro,.opal-end-contact-paper{padding:clamp(40px,6svh,65px) 22px}
+  .opal-end-footer{padding-block:clamp(48px,7svh,72px) 28px}
+  .opal-end-footer-columns{padding-block:clamp(30px,5svh,55px)}
+}
+@media(max-width:360px){
+  .premium-hero-layout{padding-inline:17px;padding-top:112px;padding-bottom:135px}
+  .premium-hero-bottom{inset-inline:17px}
+  .opal-story-main-photo{height:clamp(250px,44svh,345px)}
+  .opal-gallery-mosaic{grid-auto-rows:clamp(96px,17svh,134px)}
+}
+/* Compact-height desktop screens: reduce vertical chrome before the copy,
+   but keep the page scrollable if the writing needs more space. */
+@media(min-width:821px) and (max-height:720px){
+  .premium-hero-layout{padding-block:115px 118px}
+  .premium-hero-bottom{bottom:80px}
+  .opal-stage-story,.opal-stage-location,.opal-stage-reviews{padding-block:clamp(45px,7svh,72px)}
+  .opal-story-main-photo{height:clamp(310px,57svh,450px)}
+  .opal-story-small-photo{height:clamp(140px,22svh,180px)}
+}
