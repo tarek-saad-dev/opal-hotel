@@ -100,6 +100,26 @@ try{
       buffer:Buffer.from('<svg><script>alert(1)</script></svg>')}}
   });
   check(invalid.status()===415,"SVG/script upload should be rejected");
+  // A freshly uploaded valid image is visible to its owner but not to an
+  // anonymous visitor until it belongs to a fully approved published set.
+  const tinyPng=Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO9lJ9sAAAAASUVORK5CYII=",
+    "base64");
+  const valid=await context.request.post(origin+"/api/admin/cms/upload",{
+    headers:{Origin:origin},multipart:{image:{name:"test.png",mimeType:"image/png",buffer:tinyPng}}
+  });
+  check(valid.status()===200,"Owner should be able to upload a valid PNG");
+  const uploaded=await valid.json();
+  check(/^\\/api\\/cms\\/media\\/[0-9a-f]{32}\\.png$/.test(uploaded.src),
+    "CMS image upload must return a managed path");
+  const ownerImage=await context.request.get(origin+uploaded.src);
+  check(ownerImage.status()===200,"Authenticated owner must be able to preview draft image");
+  const anonymous=await browser.newContext();
+  try {
+    const leaked=await anonymous.request.get(origin+uploaded.src);
+    check(leaked.status()===404,"Unpublished draft image must not be publicly accessible");
+  } finally { await anonymous.close(); }
+
   await page.screenshot({path:path.join(dir,"owner-sections.png"),fullPage:true,animations:"disabled"});
 
   await page.getByRole("button",{name:/تسجيل الخروج/}).click();
