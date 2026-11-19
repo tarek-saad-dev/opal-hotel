@@ -55,3 +55,28 @@ test("Owner studio allows bulk optimized uploads and safe order/room management"
   assert.match(admin,/"\/api\/admin\/cms\/upload-video"/);
   assert.match(admin,/"\/api\/admin\/cms\/upload"/);
 });
+
+
+test("Media assignments use thumbnail dialogs instead of unreadable filename dropdowns",()=>{
+  const studio=read("src/components/MediaStudio.tsx");
+  const picker=read("src/components/MediaPicker.tsx");
+  const css=read("src/app/media-studio.css");
+  assert.ok(!studio.includes('className="opal-media-select"'),"No native filename selects in assignment editor");
+  assert.match(studio,/label="إضافة صور للـHero"/);
+  assert.match(studio,/label="إضافة صور وفيديوهات للجاليري"/);
+  assert.match(studio,/label="صورة بوستر للفيديو"/);
+  assert.match(studio,/selected={mapping.gallery}/);
+  assert.match(studio,/value={visual.placements\[slot\]}/);
+  assert.match(picker,/createPortal/);
+  assert.match(picker,/className="opal-picker-grid"/);
+  assert.match(picker,/className="opal-picker-preview"/);
+  assert.match(picker,/loading="lazy"/);
+  assert.match(picker,/preload="none"/);
+  assert.match(picker,/aria-modal="true"/);
+  assert.match(picker,/aria-pressed={picked}/);
+  assert.match(picker,/Escape/);
+  assert.match(picker,/selectedSet.has/);
+  assert.match(css,/max-width:600px/);
+  assert.match(css,/opal-picker-tile.is-selected/);
+  assert.match(css,/opal-picker-backdrop/);
+});
