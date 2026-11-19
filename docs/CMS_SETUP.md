@@ -9,7 +9,7 @@ The CMS is intentionally simple for the existing **single VPS / one Next.js serv
 1. Open `/admin` over HTTPS and log in using the owner password.
 2. Use **المحتوى والنصوص** to edit hotel name, address, SEO description, bilingual hero, overview paragraphs, quick amenities, facility groups and nearby attractions.
 3. Use **الأقسام والترتيب** to hide/show and move the seven homepage sections (Story, Facilities, Location, Rooms, Gallery, Reviews, Contact); edit each section's headline, kicker, accent and introduction for Arabic and English.
-4. Use **مكتبة الصور واللوجو** to upload real JPEG/PNG/WebP images (up to 4 MB each) and their proper Arabic/English alt descriptions. Tick the rights/approval box only when authorized. The six images **and logo must all be approved** to replace preview photography; partial updates stay in draft without mixing real and demo images.
+4. Use **مكتبة الصور واللوجو** to upload real JPEG/PNG/WebP images (up to 4 MB each) and their proper Arabic/English alt descriptions. Tick the rights/approval box only when authorized. **The logo can now go live separately** once its rights are confirmed and the saved draft is published. The six photos still require their complete approved set to replace preview photography; no partial photo swaps.
 5. Click **حفظ المسودة**. Then **معاينة المسودة** opens `/ar/preview` or `/en/preview`. Only a signed-in owner can see this preview.
 6. Click **نشر على الموقع**. The published snapshot becomes live on the next page load. No build or developer is involved. Previous versions are available as drafts from **النسخ السابقة**.
 
@@ -40,15 +40,15 @@ Use a new long random password. Changing it invalidates existing signed sessions
 ## What is dynamic
 - Published Arabic and English homepage copy and server-rendered title/meta description.
 - Owner-ordered and hidden/visible sections; nav and footer respect visibility.
-- The six shared hero/story/gallery/rooms/booking images and the logo when the *full set* is owner-approved.
+- The approved logo independently in the header/mobile menu after Publish; the six shared hero/story/gallery/rooms/booking images only when the *full photo set* is owner-approved.
 - Live server read on each page visit; private draft preview; optimistic revision checks to prevent overwriting another editor's changes.
 - Multiple image uploads, previous published revisions and restore-to-draft.
 
 ## Safety restrictions
 - This CMS is single-owner password based, **not** a multi-tenant role/permissions platform yet.
 - Uploads allow only PNG/JPEG/WebP magic signatures, max 4 MB; **no SVG, HTML or executable content**. Strip EXIF/geolocation from photos before uploading using an approved editor; V1 does not transcode or remove EXIF automatically.
-- Newly uploaded media stays accessible only to the signed-in owner. Anonymous visitors cannot retrieve draft image URLs until that image is part of the complete, owner-approved **published** set. Published media is cacheable for 10 minutes; previously viewed images may remain in browser caches briefly after withdrawal.
-- The shared media set activates only when all six owner-verified photos, localized alts and official logo are complete. The previous repo-based approval manifest still exists as a fallback until the owner CMS library is ready.
+- Newly uploaded media stays accessible only to the signed-in owner. An owner-approved, published logo can be retrieved publicly **by itself**; individual photos remain private until all six photos and the logo are approved and published together. Published media is cacheable for 10 minutes; previously viewed images may remain in browser caches briefly after withdrawal.
+- The CMS logo activates independently when uploaded, rights-confirmed and published. The six-photo library still activates only when all six photographs, descriptions, rights and official logo are approved; the previous repo-based approval manifest remains a fallback.
 - Owner content is escaped by React; no rich HTML injection or custom scripts. Security requires HTTPS, a strong owner secret and single-site origin checks.
 - Booking, payment, availability, guest review submission and contact delivery **remain disabled preview experiences**. The CMS never adds a real reservation or sends guest details.
 - The global `noindex` safety policy remains until separate hotel/public-launch approval.
