@@ -32,7 +32,7 @@ export function RouteLoadingProvider({children}:{children:ReactNode}){
     showTimer.current=window.setTimeout(()=>{
       showTimer.current=null;
       setVisible(true);
-    },150);
+    },220);
     // A cancelled, failed or stalled navigation must never trap the guest.
     guardTimer.current=window.setTimeout(stopNavigation,6500);
   },[stopNavigation]);
