@@ -4,17 +4,23 @@
 .opal-hero-video-player{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
   opacity:0;transition:opacity .65s ease;pointer-events:none}
 .opal-hero-video-player.is-playing{opacity:1}
+/* Pause/play sits quietly in the hero's bottom row (where the scroll cue is),
+   not floating beside the navigation. */
 .opal-hero-video-toggle{position:absolute;z-index:5;inset-inline-end:clamp(25px,7vw,113px);
-  top:130px;width:42px;height:42px;display:grid;place-items:center;
-  background:#11291fb8;border:1px solid #ffffffa6;color:#fff;
-  font-size:17px;cursor:pointer;border-radius:50%}
+  bottom:clamp(81px,10svh,112px);width:38px;height:38px;display:grid;place-items:center;
+  background:#0d211a66;border:1px solid #ffffff73;color:#fffc;
+  font-size:13px;cursor:pointer;border-radius:50%;transition:background .25s,color .25s}
+.opal-hero-video-toggle:hover{background:#ffffff26;color:#fff}
+/* The hero film has the hotel logo burned into its top-left corner, which
+   doubled the header logo. Zoom the frame slightly from the opposite corner so
+   that corner falls outside the visible area. Remove once the owner uploads a
+   clean export. */
+@media(min-width:801px){
+  .opal-hero-video-poster,.opal-hero-video-player{scale:1.15;transform-origin:100% 62%}
+}
 .opal-hero-video-toggle:focus-visible,.opal-hero-watch:focus-visible,
 .opal-film-top button:focus-visible{outline:3px solid #e8d8bd;outline-offset:4px}
-.opal-hero-watch{display:inline-flex;align-items:center;gap:10px;
-  background:#142c24b8;border:1px solid #fff8;color:#fff;
-  padding:12px 18px;font:600 12px var(--premium-sans,Arial,sans-serif);
-  cursor:pointer;min-height:46px;letter-spacing:.03em}
-.opal-hero-watch:hover{background:#254536}
+.opal-hero-watch svg{width:15px;height:15px;margin-inline-start:2px}
 .opal-film-backdrop{position:fixed;inset:0;z-index:200;background:#06150ff2;
   display:grid;place-items:center;padding:clamp(12px,4vw,45px)}
 .opal-film-panel{width:fit-content;max-width:min(100%,1150px);background:#10231c;border:1px solid #fff4}
@@ -26,10 +32,11 @@
    forcing 16:9 with wide black bars. */
 .opal-full-film-player{display:block;width:auto;max-width:100%;height:min(75svh,740px);min-width:min(320px,100%);background:#000}
 @media(max-width:800px){
-  .opal-hero-video-toggle{top:108px;inset-inline-end:25px}
-  .opal-hero-watch{padding:10px 12px;font-size:11px;min-height:44px}
+  .opal-hero-video-toggle{bottom:clamp(82px,12svh,112px);inset-inline-end:22px}
   .opal-film-top{padding:10px 13px}
 }
+@media(max-width:360px){.opal-hero-video-toggle{inset-inline-end:17px}}
+@media(min-width:821px) and (max-height:720px){.opal-hero-video-toggle{bottom:80px}}
 @media(prefers-reduced-motion:reduce){
   .opal-hero-video-player{transition:none}
 }

@@ -17,7 +17,7 @@ type Props = {
   onOpenGallery: () => void;
 };
 
-type GlyphName = "arrow" | "menu" | "close" | "calendar" | "users" | "chevron" | "pin" | "plus" | "minus" | "sun" | "camera";
+type GlyphName = "arrow" | "menu" | "close" | "calendar" | "users" | "chevron" | "pin" | "plus" | "minus" | "sun" | "camera" | "play";
 
 function Glyph({ name, ...props }: SVGProps<SVGSVGElement> & { name: GlyphName }) {
   const drawings: Record<GlyphName, React.ReactNode> = {
@@ -32,6 +32,7 @@ function Glyph({ name, ...props }: SVGProps<SVGSVGElement> & { name: GlyphName }
     minus: <path d="M5 12h14" />,
     sun: <><circle cx="12" cy="12" r="4" /><path d="M12 1v2m0 18v2M4.2 4.2l1.4 1.4m12.8 12.8 1.4 1.4M1 12h2m18 0h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" /></>,
     camera: <><path d="M4 7h4l2-2h4l2 2h4v12H4z" /><circle cx="12" cy="13" r="3.5" /></>,
+    play: <path d="M8 5.5v13l10.5-6.5z" fill="currentColor" stroke="none" />,
   };
   return <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.55"
     strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" aria-hidden="true" {...props}>{drawings[name]}</svg>;
@@ -65,6 +66,8 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
   const heroCopy=cms.locales[locale].hero;
   const shownSections=useVisibleSections();
   const firstVisible=shownSections[0]||"booking";
+  // The hero's main action goes to the rooms, the section visitors look for first.
+  const roomsTarget=shownSections.includes("rooms")?"rooms":firstVisible;
   const hasRealPhotos=media.images.some(image=>image.origin==="hotel-approved");
   // Follow the published section order so the menu matches the page top-to-bottom.
   const orderedNav=shownSections
@@ -274,20 +277,20 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
     home: "الصفحة الرئيسية", label: "إقامة تستحق أن تُروى", destination: "الأقصر، مصر",
     kicker: "تجربة بوتيك مختلفة في قلب الأقصر", first: "لحظات تعيشها،",
     second: "وحكايات تبقى.", description: "اكتشف هدوء المكان وروح العمارة المصرية في تجربة إقامة ذات طابع خاص.",
-    discover: "اكتشف المكان", photos: "استعرض الصور", scroll: "اكتشف المزيد", aesthetic: "تفاصيل تصنع الفرق",
+    photos: "استعرض الصور", film: "شاهد فيلم الفندق", scroll: "اكتشف المزيد",
     reserve: "خطط لإقامتك", nights: "إقامة لا تُنسى تبدأ هنا", guests: "الضيوف",
     guestPlural: "ضيف", adult: "البالغون", child: "الأطفال", plan: "احجز إقامتك",
     menuTitle: "اكتشف أوبال",
-    guestsHint: "عدد الضيوف", rooms: "تعرف على الغرف",
+    guestsHint: "عدد الضيوف", rooms: "شاهد الغرف",
   } : {
     home: "Home", label: "STAY SOMEWHERE MEANINGFUL", destination: "LUXOR, EGYPT",
     kicker: "A BOUTIQUE RETREAT IN THE HEART OF LUXOR", first: "Some places",
     second: "stay with you.", description: "An intimate escape inspired by the warmth, texture and timeless spirit of Luxor.",
-    discover: "Discover our story", photos: "Explore the gallery", scroll: "SCROLL TO EXPLORE", aesthetic: "THE ART OF FEELING AT HOME",
+    photos: "View the gallery", film: "Watch our film", scroll: "SCROLL TO EXPLORE",
     reserve: "Plan your stay", nights: "YOUR LUXOR STORY STARTS HERE", guests: "Guests",
     guestPlural: "guests", adult: "Adults", child: "Children", plan: "Book your stay",
     menuTitle: "Explore Opal",
-    guestsHint: "Your party", rooms: "Explore the rooms",
+    guestsHint: "Your party", rooms: "View the rooms",
   };
 
   return (
@@ -388,17 +391,15 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
             <h1 id="hotel-name"><span className="opal-visually-hidden">{c.hotelName}: </span><span>{heroCopy.title}</span><em>{heroCopy.accent}</em></h1>
             <p className="premium-hero-description">{heroCopy.description}</p>
             <div className="premium-hero-actions">
-              <a href={`#${firstVisible}`} className="premium-hero-button">{t.discover}<Glyph name="arrow" /></a>
-              {hasRealPhotos&&<button type="button" className="premium-photo-button" onClick={onOpenGallery} aria-label={t.photos}>
+              <a href={`#${roomsTarget}`} className="premium-hero-button">{t.rooms}<Glyph name="arrow" /></a>
+              {fullFilmSrc&&<button type="button" className="premium-photo-button opal-hero-watch" ref={filmTriggerRef}
+                onClick={()=>setFilmOpen(true)}>
+                <span><Glyph name="play"/></span>{t.film}
+              </button>}
+              {hasRealPhotos&&<button type="button" className="premium-photo-button opal-hero-gallery" onClick={onOpenGallery}>
                 <span><Glyph name="camera"/></span>{t.photos}
               </button>}
-              {fullFilmSrc&&<button type="button" className="opal-hero-watch" ref={filmTriggerRef}
-                onClick={()=>setFilmOpen(true)}>{ar?"▶ شاهد فيلم الفندق":"▶ Watch Our Film"}</button>}
             </div>
-          </div>
-          <div className="premium-hero-aside" aria-hidden="true">
-            <span className="premium-aside-line"/>
-            <span>{t.aesthetic}</span>
           </div>
         </div>
         <div className="premium-hero-bottom">
