@@ -1,30 +1,11 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { RoomCollection } from "@/components/RoomsExperience";
+import { notFound, permanentRedirect } from "next/navigation";
 import { isLocale } from "@/lib/hotel-content";
-import { roomUI } from "@/lib/room-concepts";
-import { readPublished } from "@/lib/cms-store";
-import { CmsProvider } from "@/components/CmsProvider";
-export const dynamic="force-dynamic";
 
 type Props={params:Promise<{locale:string}>};
-export function generateStaticParams(){return [{locale:"en"},{locale:"ar"}];}
 
-export async function generateMetadata({params}:Props):Promise<Metadata>{
-  const {locale}=await params;
-  if(!isLocale(locale))return {};
-  const t=roomUI(locale);
-  return {
-    title:locale==="ar"?"تصورات الغرف":"Room Design Concepts",
-    description:t.introduction,
-    alternates:{languages:{en:"/en/rooms",ar:"/ar/rooms"}},
-    robots:{index:false,follow:false},
-  };
-}
-
+/** Rooms are presented on the homepage; older links land on that section. */
 export default async function RoomsPage({params}:Props){
   const {locale}=await params;
   if(!isLocale(locale))notFound();
-  const published=await readPublished();
-  return <CmsProvider value={published}><RoomCollection locale={locale}/></CmsProvider>;
+  permanentRedirect(`/${locale}#rooms`);
 }

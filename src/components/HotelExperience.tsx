@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { SyntheticEvent } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
 import { responsivePhotoSrcSet } from "@/lib/gallery";
-import { useCmsSite,useCmsContent,useHotelMedia } from "@/components/CmsProvider";
+import { useCmsSite,useCmsContent,useHotelMedia,useVisibleSections } from "@/components/CmsProvider";
 import type { CmsSectionId } from "@/lib/cms-schema";
 import { PremiumMasthead } from "@/components/PremiumMasthead";
 import { PremiumStory, PremiumFacilities, PremiumLocation, PremiumRooms, PremiumGallery } from "@/components/PremiumSections";
@@ -26,14 +26,20 @@ export function HotelExperience({locale,content:baseContent}:Props) {
   const cms=useCmsSite();
   const media=useHotelMedia();
   const galleryImages=media.images;
+  const visibleSections=new Set(useVisibleSections());
+  // The lightbox only steps through the hotel's real photos.
+  const realPhotos=galleryImages.map((_,i)=>i).filter(i=>media.isReal(i));
+  const step=(from:number,delta:number)=>{
+    const at=realPhotos.indexOf(from);
+    if(at<0||!realPhotos.length)return from;
+    return realPhotos[(at+delta+realPhotos.length)%realPhotos.length];
+  };
   const [photo,setPhoto]=useState<number|null>(null);
-  const [checkin,setCheckin]=useState("");
-  const [checkout,setCheckout]=useState("");
-  const [attemptedBooking,setAttemptedBooking]=useState(false);
   const focusBeforePhoto=useRef<HTMLElement|null>(null);
   const photoWasOpen=useRef(false);
   const lightboxRef=useRef<HTMLDivElement>(null);
   const openPhoto=(index:number)=>{
+    if(!media.isReal(index))return;
     focusBeforePhoto.current=document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setPhoto(index);
   };
@@ -99,8 +105,8 @@ export function HotelExperience({locale,content:baseContent}:Props) {
           }
         }
       }
-      else if(e.key==="ArrowRight")setPhoto(v=>v===null?null:(v+1)%galleryImages.length);
-      else if(e.key==="ArrowLeft")setPhoto(v=>v===null?null:(v-1+galleryImages.length)%galleryImages.length);
+      else if(e.key==="ArrowRight")setPhoto(v=>v===null?null:step(v,1));
+      else if(e.key==="ArrowLeft")setPhoto(v=>v===null?null:step(v,-1));
     };
     window.addEventListener("keydown",handler);
     const old=document.body.style.overflow;document.body.style.overflow="hidden";
@@ -111,11 +117,8 @@ export function HotelExperience({locale,content:baseContent}:Props) {
   return (
     <>
       <PremiumMasthead locale={locale} content={c}
-        onOpenGallery={() => openPhoto(0)}
+        onOpenGallery={() => { if(realPhotos.length)openPhoto(realPhotos[0]); }}
         onAvailability={({checkin,checkout,adults,children}) => {
-          setCheckin(checkin);
-          setCheckout(checkout);
-          setAttemptedBooking(true);
           const params=new URLSearchParams({
             checkin, checkout, adults:String(adults), children:String(children),
           });
@@ -123,7 +126,7 @@ export function HotelExperience({locale,content:baseContent}:Props) {
         }}
       />
       <main>
-        {cms.sections.filter(section=>section.visible).map(section=>{
+        {cms.sections.filter(section=>visibleSections.has(section.id)).map(section=>{
           const id:CmsSectionId=section.id;
           if(id==="overview")return <section key={id} className="opal-stage-section opal-stage-story" id="overview" aria-label={c.labels.overviewTitle}>
             <PremiumStory locale={locale} content={c} onOpenPhoto={openPhoto}/>
@@ -135,8 +138,7 @@ export function HotelExperience({locale,content:baseContent}:Props) {
             <PremiumLocation locale={locale} content={c}/>
           </section>;
           if(id==="rooms")return <section key={id} className="opal-stage-section opal-stage-rooms" id="rooms" aria-label={c.labels.roomsTitle}>
-            <PremiumRooms locale={locale} content={c} onOpenPhoto={openPhoto}
-              attemptedBooking={attemptedBooking} checkin={checkin} checkout={checkout}/>
+            <PremiumRooms locale={locale} content={c} onOpenPhoto={openPhoto}/>
           </section>;
           if(id==="gallery")return <section key={id} className="opal-stage-section opal-stage-gallery" id="gallery" aria-label={c.nav.gallery}>
             <PremiumGallery locale={locale} content={c} onOpenPhoto={openPhoto}/>
@@ -156,15 +158,15 @@ export function HotelExperience({locale,content:baseContent}:Props) {
 
       {photo!==null&&<div className="lightbox" ref={lightboxRef} role="dialog" aria-modal="true" aria-label={c.nav.gallery} onClick={()=>setPhoto(null)}>
         <button type="button" className="lightbox-close" autoFocus onClick={()=>setPhoto(null)} aria-label={c.labels.close}><span aria-hidden="true">×</span></button>
-        <button type="button" className="lightbox-prev" onClick={e=>{e.stopPropagation();setPhoto((photo-1+galleryImages.length)%galleryImages.length)}} aria-label={c.labels.previous}>‹</button>
+        <button type="button" className="lightbox-prev" onClick={e=>{e.stopPropagation();setPhoto(step(photo,-1))}} aria-label={c.labels.previous}>‹</button>
         <div className="lightbox-body" onClick={e=>e.stopPropagation()}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={galleryImages[photo].src} srcSet={responsivePhotoSrcSet(galleryImages[photo].src)}
             sizes="100vw" width={1200} height={900} decoding="async"
             alt={locale==="ar"?galleryImages[photo].altAr:galleryImages[photo].alt} onError={handleImageError}/>
-          <p className="lightbox-counter" dir="ltr">{photo+1} / {galleryImages.length}</p>
+          <p className="lightbox-counter" dir="ltr">{realPhotos.indexOf(photo)+1} / {realPhotos.length}</p>
         </div>
-        <button type="button" className="lightbox-next" onClick={e=>{e.stopPropagation();setPhoto((photo+1)%galleryImages.length)}} aria-label={c.labels.next}>›</button>
+        <button type="button" className="lightbox-next" onClick={e=>{e.stopPropagation();setPhoto(step(photo,1))}} aria-label={c.labels.next}>›</button>
       </div>}
     </>
   );

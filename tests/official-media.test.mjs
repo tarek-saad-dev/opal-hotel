@@ -33,7 +33,10 @@ test("The gallery switches to real hotel media only with all six photos, a logo 
   assert.ok(src.includes("photo.altEn?.trim()"));
   assert.ok(src.includes("photo.altAr?.trim()"));
   assert.ok(src.includes("origin:\"hotel-approved\""));
-  assert.ok(src.includes("origin:\"design-demo\""));
+  // No stock photography: unapproved slots are decorative brand panels.
+  assert.ok(src.includes('origin:"placeholder" as const'));
+  assert.ok(src.includes('BRAND_PANEL_SRC="/media/brand-panel.svg"'));
+  assert.ok(!src.includes("images.unsplash.com/photo-"));
   assert.ok(src.includes("export function photoAlt"));
 });
 
@@ -53,7 +56,6 @@ test("All photo-bearing views label provenance and provide bilingual alt text",(
   const files=[
     "src/components/PremiumMasthead.tsx",
     "src/components/PremiumSections.tsx",
-    "src/components/RoomsExperience.tsx",
     "src/components/BookingExperience.tsx",
   ];
   for(const file of files){

@@ -14,62 +14,42 @@ test("Booking V2 exists as an EN/AR non-indexed preview route",()=>{
   assert.ok(route.includes("alternates"));
 });
 
-test("Booking flow has real progressive UI states, but no backend or false confirmation",()=>{
+test("Booking request flow: stay, guest details, review, then API submission",()=>{
   const ui=read("src/components/BookingExperience.tsx");
   assert.ok(ui.includes("const [step,setStep]=useState<Step>(1)"));
-  assert.ok(ui.includes("setStep(2)"));
-  assert.ok(ui.includes("setStep(3)"));
-  assert.ok(ui.includes("step===1"));
-  assert.ok(ui.includes("step===2"));
-  assert.ok(ui.includes("step===3"));
-  assert.ok(ui.includes("t.noBooking"));
-  assert.ok(ui.includes("t.reviewNotice"));
-  assert.ok(!ui.includes("fetch("));
-  assert.ok(!ui.includes("axios"));
-  assert.ok(!ui.includes("localStorage"));
-  assert.ok(!ui.includes("PaymentIntent"));
-  assert.ok(!ui.includes("/api/booking"));
+  assert.ok(ui.includes("goTo(2)")&&ui.includes("goTo(3)"));
+  assert.ok(ui.includes("submitBookingRequest("));
+  // Success screen only after the API answers ok.
+  assert.ok(ui.includes("if(result.ok)"));
+  assert.ok(ui.includes("setSent({reference:result.reference})"));
+  assert.ok(ui.includes("apiErrorMessage(result.error,locale)"));
+  // Guests coming from the homepage skip re-entering dates.
+  assert.ok(ui.includes("initial.checkout>initial.checkin) setStep(2)"));
+  assert.ok(!ui.includes("roomConcepts"));
 });
 
-test("Bilingual content explicitly says no reservation, rates or availability",()=>{
+test("Bilingual copy says a request is not a confirmed reservation; no preview wording",()=>{
   const src=read("src/lib/booking-preview.ts");
-  assert.ok(src.includes("No reservation has been created or confirmed."));
-  assert.ok(src.includes("لم يتم إنشاء أو تأكيد أي حجز."));
-  assert.ok(src.includes("Rates and live availability are not connected."));
-  assert.ok(src.includes("لا نطلب اسمًا أو بريدًا إلكترونيًا أو بيانات دفع"));
-  assert.ok(src.includes("parseDateStamp"));
-  assert.ok(src.includes("nightsBetween"));
-  assert.ok(src.includes("boundedInteger"));
+  assert.ok(src.includes("Sending a request does not confirm a reservation"));
+  assert.ok(src.includes("إرسال الطلب لا يعني تأكيد الحجز"));
+  assert.ok(!/preview|illustrative|DESIGN PREVIEW/i.test(src.slice(src.indexOf("export const bookingCopy"))));
 });
 
-test("Hero and room stories handoff to booking preview without claiming inventory",()=>{
-  const home=read("src/components/HotelExperience.tsx");
-  const hero=read("src/components/PremiumMasthead.tsx");
-  const rooms=read("src/components/RoomsExperience.tsx");
-  assert.ok(home.includes("router.push("));
-  assert.ok(home.includes("adults:String(adults)"));
-  assert.ok(home.includes("children:String(children)"));
-  assert.ok(hero.includes("guests: adults + children, adults, children"));
-  assert.ok(rooms.includes('booking?room=${concept.slug}'));
-  assert.ok(rooms.includes("room-exp-header-cta"));
-  assert.ok(rooms.includes("/booking"));
+test("Guest details are validated before review and sent only through the API client",()=>{
+  const ui=read("src/components/BookingExperience.tsx");
+  assert.ok(ui.includes("emailPattern.test(guest.email.trim())"));
+  assert.ok(ui.includes("phonePattern.test(guest.phone.trim())"));
+  assert.ok(ui.includes('autoComplete="email"'));
+  assert.ok(ui.includes('autoComplete="tel"'));
+  assert.ok(!ui.includes("fetch("));
+  const api=read("src/lib/api-client.ts");
+  assert.ok(api.includes('post("/booking-requests", payload)'));
+  assert.ok(api.includes("NEXT_PUBLIC_API_BASE_URL"));
 });
 
-test("Controls are keyboard friendly and preview displays no fake room price",()=>{
+test("Booking controls remain keyboard friendly",()=>{
   const ui=read("src/components/BookingExperience.tsx");
   assert.ok(ui.includes('aria-current={active?"step":undefined}'));
-  assert.ok(ui.includes('aria-pressed={selectedRoom===room.slug}'));
+  assert.ok(ui.includes("aria-busy={sending}"));
   assert.ok(ui.includes('role="alert"'));
-  assert.ok(ui.includes('type="date"'));
-  assert.ok(ui.includes("validDates"));
-  assert.ok(!ui.includes("EGP"));
-  assert.ok(!ui.includes("nightlyRate"));
-});
-
-test("Booking preview has narrow-mobile and Arabic layouts with reduced-motion support",()=>{
-  const css=read("src/app/booking-experience.css");
-  assert.ok(css.includes("@media(max-width:600px)"));
-  assert.ok(css.includes("@media(max-width:360px)"));
-  assert.ok(css.includes('[dir="rtl"]'));
-  assert.ok(css.includes("prefers-reduced-motion:reduce"));
 });

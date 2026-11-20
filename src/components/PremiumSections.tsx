@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef,useState } from "react";
-import Link from "next/link";
 import type { ReactNode, SyntheticEvent } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
 import { responsivePhotoSrcSet } from "@/lib/gallery";
@@ -10,7 +9,7 @@ import { roomConcepts } from "@/lib/room-concepts";
 
 type SharedProps = { locale: Locale; content: HotelContent };
 type StoryProps = SharedProps & { onOpenPhoto: (index: number) => void };
-type RoomsProps = StoryProps & { attemptedBooking: boolean; checkin: string; checkout: string };
+type RoomsProps = StoryProps;
 const A = ({ children }: { children: ReactNode }) => <span className="opal-index">{children}</span>;
 
 function demoImageError(event: SyntheticEvent<HTMLImageElement>) {
@@ -24,7 +23,7 @@ function PreviewImage({ index, locale, eager = false }: { index: number; locale:
   const img = useHotelMedia().images[index];
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img className="opal-editorial-photo" data-media-origin={img.origin} src={img.src} alt={locale==="ar"?img.altAr:img.alt}
+    <img className="opal-editorial-photo" data-media-origin={img.origin} src={img.src} alt={img.origin==="placeholder"?"":locale==="ar"?img.altAr:img.alt}
       srcSet={responsivePhotoSrcSet(img.src)} sizes="(max-width: 600px) 100vw, (max-width: 900px) 65vw, 42vw"
       width={1200} height={900} decoding="async" loading={eager ? "eager" : "lazy"} onError={demoImageError}/>
   );
@@ -56,13 +55,11 @@ export function PremiumStory({ locale, content: c, onOpenPhoto }: StoryProps) {
     lead: "هنا تلتقي تفاصيل المكان بروح الأقصر؛ وتتحوّل أبسط اللحظات إلى ذكريات تستحق البقاء.",
     slow: "مساحة للإحساس بالمكان", secondary: "تجربة تكتشفها على مهل",
     photo: "استكشف الصور", line: "اكتشف التفاصيل",
-    art: media.overviewApproved||media.approved ? "صور حقيقية معتمدة من إدارة الفندق" : "صور توضيحية · سيتم استبدالها بصور الفندق المعتمدة",
   } : {
     kicker: "THE OPAL EXPERIENCE", top: "Beyond a stay,", italic: "a feeling.",
     lead: "A place to discover more slowly. Inspired by the textures, light and timeless atmosphere of Luxor.",
     slow: "THE BEAUTY OF SLOWING DOWN", secondary: "STORIES IN EVERY DETAIL",
     photo: "Explore the images", line: "DISCOVER THE DETAILS",
-    art: media.overviewApproved||media.approved ? "Hotel-approved property photography" : "Illustrative imagery · not photos of Opal Legacy",
   };
   return <div className={`opal-story-wrap${media.overviewVideo?" is-film-layout":""}`}>
     <div className="opal-story-copy">
@@ -99,17 +96,18 @@ export function PremiumStory({ locale, content: c, onOpenPhoto }: StoryProps) {
           <span>{ar?"شغّل الفيديو وقت ما تحب":"PLAY WHEN YOU'RE READY"}</span>
         </div>
       </div> : <>
-        <button className="opal-story-main-photo" type="button" onClick={() => onOpenPhoto(media.overviewMain)} aria-label={t.photo}>
+        <button className="opal-story-main-photo" type="button" disabled={!media.isReal(media.overviewMain)}
+          onClick={() => onOpenPhoto(media.overviewMain)} aria-label={t.photo}>
           <PreviewImage locale={locale} index={media.overviewMain} eager/>
           <span className="opal-media-hover" aria-hidden="true">↗</span>
         </button>
         <div className="opal-story-inset">
-          <button type="button" className="opal-story-small-photo" onClick={() => onOpenPhoto(media.overviewInset)} aria-label={t.photo}>
+          <button type="button" className="opal-story-small-photo" disabled={!media.isReal(media.overviewInset)}
+            onClick={() => onOpenPhoto(media.overviewInset)} aria-label={t.photo}>
             <PreviewImage locale={locale} index={media.overviewInset}/>
           </button>
           <span className="opal-story-side-note">{t.secondary}</span>
         </div>
-        <p className="opal-photo-credit">{t.art}</p>
       </>}
     </div>
   </div>;
@@ -124,22 +122,20 @@ export function PremiumFacilities({ locale, content: c }: SharedProps) {
     kicker: "راحة في كل تفصيلة", title: "تفاصيل بسيطة.", italic: "تفرق كتير.",
     note: "من لحظات الهدوء إلى احتياجاتك اليومية، كل شيء يبدأ من الاهتمام بالتفاصيل.",
     items: [
-      { number: "01", title: "مساحتك للراحة", text: "أجواء مريحة ومساحات هادئة للاستمتاع بالوقت." },
-      { number: "02", title: "لحظات تستحقها", text: "استمتع باستراحة مختلفة خلال زيارتك للأقصر." },
-      { number: "03", title: "تفاصيل يومك", text: "تعرّف على الخدمات والمرافق المدرجة للفندق." },
+      { number: "01", title: "مطعم أوبال والبار", text: "مأكولات عالمية في مطعم أوبال، وبار خارجي، وإفطار في الغرفة عند الطلب." },
+      { number: "02", title: "ركوب الخيل والدراجات", text: "يرتب الفريق جولات ركوب الخيل وركوب الدراجات، والمساعدة في الرحلات والتذاكر." },
+      { number: "03", title: "التراس والحديقة", text: "تراس للتشمس، وحديقة ومنطقة نزهات وشواء، وأمسيات في الملهى الليلي." },
     ],
-    full: "كل المرافق والخدمات", all: "عرض التفاصيل",
-    foot: "قد تختلف المرافق والخدمات حسب الموسم؛ يُرجى التأكد مع الفندق قبل الزيارة.",
+    full: "كل المرافق والخدمات", all: "عرض التفاصيل", important: "معلومات مهمة",
   } : {
     kicker: "CONSIDERED COMFORTS", title: "Little details.", italic: "Lasting impressions.",
     note: "Thoughtful touches and room to slow down, all presented with a quieter sense of luxury.",
     items: [
-      { number: "01", title: "Space to unwind", text: "Rest, reset, and enjoy the rhythm of a slower day." },
-      { number: "02", title: "Moments to enjoy", text: "A relaxed backdrop for time spent in Luxor." },
-      { number: "03", title: "The everyday essentials", text: "Explore the facilities and services listed for the property." },
+      { number: "01", title: "The Opal restaurant & bar", text: "International cuisine at the Opal restaurant, an outdoor bar and in-room breakfast." },
+      { number: "02", title: "Horseback riding & cycling", text: "The team arranges horseback-riding tours and cycling, plus help with tours and tickets." },
+      { number: "03", title: "Sun terrace & gardens", text: "A sun terrace, garden, picnic and BBQ areas, and evenings at the nightclub." },
     ],
-    full: "Explore all the amenities", all: "VIEW DETAILS",
-    foot: "Amenities and services may vary by season; please confirm with the hotel before your visit.",
+    full: "Explore all the amenities", all: "VIEW DETAILS", important: "IMPORTANT INFORMATION",
   };
   return <div className="opal-facilities-layout">
     <Header number="02" kicker={heading.kicker} title={heading.title} italic={heading.accent} note={heading.description}/>
@@ -172,7 +168,10 @@ export function PremiumFacilities({ locale, content: c }: SharedProps) {
       {media.facilitiesImage!==null&&<figure className="opal-media-section-figure">
         <PreviewImage locale={locale} index={media.facilitiesImage}/>
       </figure>}
-      <p className="opal-verification-note">{t.foot}</p>
+      {c.policies.length>0&&<div className="opal-policies">
+        <span className="opal-label-mini">{t.important}</span>
+        <ul>{c.policies.map(item=><li key={item}>{item}</li>)}</ul>
+      </div>}
     </div>
   </div>;
 }
@@ -228,66 +227,45 @@ export function PremiumLocation({ locale, content: c }: SharedProps) {
   </div>;
 }
 
-const roomPhotos = [2,5,3] as const; // Fallback until owner publishes room covers.
-
-export function PremiumRooms({ locale, content: c, onOpenPhoto, attemptedBooking, checkin, checkout }: RoomsProps) {
+export function PremiumRooms({ locale, content: c, onOpenPhoto }: RoomsProps) {
   const cms=useCmsSite();
   const heading=cms.locales[locale].headings.rooms;
   const media=useHotelMedia();
-  const roomPhoto=(i:number)=>media.roomMedia[roomConcepts[i].slug]?.cover??roomPhotos[i];
   const ar = locale === "ar";
+  // Every photo the owner placed in any room slot, real photos only.
+  const photos=Array.from(new Set(roomConcepts.flatMap(room=>{
+    const m=media.roomMedia[room.slug];
+    return m?[m.cover,...m.gallery]:[];
+  }))).filter(index=>media.isReal(index)).slice(0,5);
   const t = ar ? {
-    kicker:"مساحات للإلهام", title:"أماكن تهدأ فيها.", italic:"وتستمتع بكل لحظة.",
-    note:media.approved ? "صور الفندق معتمدة، لكن تصورات الغرف والأوصاف ليست أنواعًا مؤكدة أو متاحة للحجز." : "معاينة لأسلوب عرض الغرف في الموقع الجديد؛ الصور والأوصاف توضيحية وليست أنواع غرف مؤكدة.",
-    stories:[
-      {label:"فكرة تصميمية 01",name:"نور وهدوء",text:"مساحات هادئة وخامات دافئة."},
-      {label:"فكرة تصميمية 02",name:"تفاصيل مريحة",text:"تصميم يجعل الراحة جزءًا من التجربة."},
-      {label:"فكرة تصميمية 03",name:"صباح مختلف",text:"استمتع بإيقاع أبطأ ولحظات أجمل."},
-    ],
-    view:"عرض الصور", warning:"تصور مبدئي للغرف — ليس عرض حجز أو قائمة غرف فعلية",
-    plan:"حالتك الحالية", noDates:"اختار تواريخ الإقامة من الأعلى لمعاينة تجربة الحجز.",
-    details:"استكشف التفاصيل", allConcepts:"شوف كل التصورات",
+    rooms:"غرف الفندق", features:"في كل غرفة", plan:"خطط لإقامتك", view:"عرض صورة الغرفة",
+    checkin:"الوصول", checkout:"المغادرة",
   } : {
-    kicker:"THE ART OF REST", title:"Rooms to slow down.", italic:"Moments to stay.",
-    note:media.approved ? "Approved hotel photography. Room concepts and descriptions remain illustrative, not confirmed inventory." : "An editorial preview of how the room experience could look. Photography and concepts are illustrative, not confirmed hotel inventory.",
-    stories:[
-      {label:"DESIGN STORY 01",name:"Light & stillness",text:"A softer rhythm and warm material details."},
-      {label:"DESIGN STORY 02",name:"Quiet comforts",text:"The thoughtful details that make a stay feel personal."},
-      {label:"DESIGN STORY 03",name:"Slow mornings",text:"Time to pause, breathe and feel at ease."},
-    ],
-    view:"EXPLORE IMAGES", warning:media.approved ? "Hotel photography approved · Concepts are not actual room types or bookable inventory" : "Concept room imagery only · Not actual room types or bookable inventory",
-    plan:"YOUR STAY PREVIEW", noDates:"Select your dates above to preview the booking journey.",
-    details:"EXPLORE THE CONCEPT", allConcepts:"VIEW ALL ROOM STORIES",
+    rooms:"THE ROOMS", features:"IN EVERY ROOM", plan:"Plan your stay", view:"View room photo",
+    checkin:"CHECK-IN", checkout:"CHECK-OUT",
   };
+  const [checkinRule,checkoutRule]=c.policies;
   return <div className="opal-rooms-wrap">
-    <Header number="04" kicker={heading.kicker} title={heading.title} italic={heading.accent} note={media.approved?"Owner-approved images · room types remain concepts.":t.note}/>
-    <div className="opal-room-cards">
-      {t.stories.map((story, i) => <article className="opal-room-card" key={story.label}>
-        <button type="button" className="opal-room-photo" onClick={() => onOpenPhoto(roomPhoto(i))}
-          aria-label={`${t.view}: ${story.name}`}>
-          <PreviewImage locale={locale} index={roomPhoto(i)}/>
-          <span className="opal-room-photo-arrow" aria-hidden="true">⤢</span>
-          <span className="opal-room-image-badge">{story.label}</span>
-        </button>
-        <div className="opal-room-card-footer">
-          <div><h3>{story.name}</h3><p>{story.text}</p>
-            <Link className="opal-room-details-link" href={`/${locale}/rooms/${roomConcepts[i].slug}`}>
-              {t.details}<span aria-hidden="true">↗</span>
-            </Link>
-          </div>
+    <Header number="04" kicker={heading.kicker} title={heading.title} italic={heading.accent} note={heading.description}/>
+    <div className={`opal-rooms-info${photos.length?" has-photos":""}`}>
+      <div className="opal-rooms-facts">
+        <span className="opal-label-mini">{t.rooms}</span>
+        <p className="opal-rooms-count">{c.roomFacts.count}</p>
+        <p className="opal-rooms-summary">{c.roomFacts.summary}</p>
+        <span className="opal-label-mini">{t.features}</span>
+        <ul className="opal-rooms-features">{c.roomFacts.features.map(item=><li key={item}>{item}</li>)}</ul>
+        <div className="opal-rooms-times">
+          {checkinRule&&<p>{checkinRule}</p>}
+          {checkoutRule&&<p>{checkoutRule}</p>}
         </div>
-      </article>)}
-    </div>
-    <Link className="opal-rooms-collection-link" href={`/${locale}/rooms`}>
-      {t.allConcepts}<span aria-hidden="true">↗</span>
-    </Link>
-    <div className="opal-rooms-action">
-      <p className="opal-rooms-disclaimer">{t.warning}</p>
-      <div className="opal-rooms-availability" role="status" aria-live="polite">
-        <span className="opal-label-mini">{t.plan}</span>
-        <p>{attemptedBooking ? c.labels.noBooking : t.noDates}</p>
-        {attemptedBooking && <strong dir="ltr">{checkin} — {checkout}</strong>}
+        <a className="opal-rooms-plan" href="#booking">{t.plan}<span aria-hidden="true">→</span></a>
       </div>
+      {photos.length>0&&<div className={`opal-rooms-photos opal-rooms-photos-${photos.length}`}>
+        {photos.map(index=><button type="button" key={index} className="opal-rooms-photo"
+          onClick={()=>onOpenPhoto(index)} aria-label={t.view}>
+          <PreviewImage locale={locale} index={index}/>
+        </button>)}
+      </div>}
     </div>
   </div>;
 }
@@ -305,42 +283,45 @@ const galleryCategoryLabels:Record<string,{en:string;ar:string}>={
   garden:{en:"Garden",ar:"الحديقة"},
   other:{en:"Other",ar:"أخرى"}
 };
+/** How many photos the section shows before "View all" opens the lightbox. */
+const GALLERY_PREVIEW_COUNT=8;
 export function PremiumGallery({ locale, onOpenPhoto }: GalleryProps) {
   const cms=useCmsSite();
   const heading=cms.locales[locale].headings.gallery;
   const media=useHotelMedia();
   const ar=locale==="ar";
   const [filter,setFilter]=useState("all");
-  const pictures=media.galleryIndices.map(index=>({
+  const pictures=media.galleryIndices.filter(index=>media.isReal(index)).map(index=>({
     ...media.images[index],index,category:media.imageCategories[index]||"other"
   }));
   const movies=media.galleryVideos;
   const filters=["all",...Array.from(new Set([
     ...pictures.map(x=>x.category),...movies.map(x=>x.category)
   ]))];
-  const visible=pictures.filter(item=>filter==="all"||item.category===filter);
-  const visibleFilms=movies.filter(item=>filter==="all"||item.category===filter);
-  const count=visible.length+visibleFilms.length;
+  const matching=pictures.filter(item=>filter==="all"||item.category===filter);
+  const visible=matching.slice(0,GALLERY_PREVIEW_COUNT);
+  const visibleFilms=movies.filter(item=>filter==="all"||item.category===filter).slice(0,2);
+  const hidden=matching.length-visible.length;
   return <div className="opal-gallery-wrap">
-    <Header number="05" kicker={heading.kicker} title={heading.title} italic={heading.accent}
-      note={ar?"لمحات بصرية من أجواء الإقامة":"A visual journal of the stay"}/>
-    <div className="opal-gallery-toolbar">
-      <div className="opal-gallery-tabs" role="group" aria-label={ar?"نوع الوسائط":"Media category"}>
+    <Header number="05" kicker={heading.kicker} title={heading.title} italic={heading.accent} note={heading.description}/>
+    {filters.length>2&&<div className="opal-gallery-toolbar">
+      <div className="opal-gallery-tabs" role="group" aria-label={ar?"نوع الصور":"Photo category"}>
         {filters.map(key=><button key={key} type="button" aria-pressed={filter===key}
           className={filter===key?"is-active":""} onClick={()=>setFilter(key)}>
             {galleryCategoryLabels[key]?.[locale]||key}
           </button>)}
       </div>
-      <span className="opal-gallery-count">{String(count).padStart(2,"0")} {ar?"عناصر معروضة":"items shown"}</span>
-    </div>
-    <div className={`opal-gallery-mosaic ${filter==="all"?"opal-gallery-full":"opal-gallery-filtered"}`}>
-      {visible.map((img,i)=><button type="button" className={`opal-gallery-item opal-gallery-item-${i}`} key={img.src}
-        onClick={()=>onOpenPhoto(img.index)} aria-label={ar?"افتح الصورة":"Open photo"}>
+    </div>}
+    {/* Natural aspect ratios: every photo is shown whole, never cropped. */}
+    <div className="opal-gallery-grid">
+      {visible.map((img,i)=><button type="button" className="opal-gallery-tile" key={img.src}
+        onClick={()=>onOpenPhoto(img.index)} aria-label={(ar?"افتح الصورة ":"Open photo ")+(i+1)}>
         <PreviewImage locale={locale} index={img.index}/>
-        <span className="opal-gallery-hover" aria-hidden="true">↗</span>
-        <span className="opal-gallery-item-number">{String(i+1).padStart(2,"0")}</span>
       </button>)}
     </div>
+    {hidden>0&&<button type="button" className="opal-gallery-more" onClick={()=>onOpenPhoto(matching[0].index)}>
+      {ar?`عرض كل الصور (${matching.length})`:`View all ${matching.length} photos`}<span aria-hidden="true">→</span>
+    </button>}
     {visibleFilms.length>0&&<div className="opal-gallery-films" aria-label={ar?"فيديوهات الفندق":"Hotel videos"}>
       {visibleFilms.map(item=><figure className="opal-gallery-film" key={item.src}>
         <video src={item.src} poster={item.poster||undefined} controls playsInline preload="none"
@@ -348,8 +329,5 @@ export function PremiumGallery({ locale, onOpenPhoto }: GalleryProps) {
         <figcaption>{item.title}</figcaption>
       </figure>)}
     </div>}
-    <p className="opal-gallery-disclaimer">{ar
-      ?"بعض الصور توضيحية لحين توفر صور الفندق الرسمية."
-      :"Some images are illustrative until official hotel photography is available."}</p>
   </div>;
 }

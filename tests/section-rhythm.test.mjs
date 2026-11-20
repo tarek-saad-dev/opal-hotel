@@ -24,14 +24,8 @@ test("All seven homepage editorial sections retain independent content-aware siz
   assert.ok(!css.includes("scroll-snap-type:"),"Do not force section scrolling");
 });
 
-test("Room pages and booking flow expand based on content on short and mobile screens",()=>{
-  const rooms=read("src/app/rooms-experience.css");
+test("Booking flow expands based on content on short and mobile screens",()=>{
   const booking=read("src/app/booking-experience.css");
-  for(const selector of [".room-exp-collection-hero",".room-exp-catalogue-section",
-    ".room-exp-detail-hero",".room-exp-detail-story",".room-exp-related"])
-    assert.ok(rooms.includes(selector),selector);
-  assert.match(rooms,/\.room-exp-detail-hero\{min-height:0;/);
-  assert.match(rooms,/\.room-exp-gallery-open\{height:clamp/);
   assert.match(booking,/\.opal-book-page\{min-height:calc\(100svh/);
   assert.match(booking,/\.opal-book-summary\{position:static\}/);
   assert.match(booking,/\.opal-book-layout\{\s*min-height:0;/);
@@ -41,8 +35,7 @@ test("Every live public guest route and RTL locale is measured with real browser
   const audit=read("scripts/audit-section-heights.mjs");
   const workflow=read(".github/workflows/frontend-visual-preview.yml");
   const pkg=read("package.json");
-  for(const term of ["light-and-stillness","quiet-comforts","slow-mornings",
-    "opal-book-introduction","room-exp-catalogue-section","premium-hero",
+  for(const term of ["opal-book-introduction","opal-book-layout","#rooms","premium-hero",
     "document.documentElement.scrollWidth","heroCopyFits","short-laptop","small-mobile"])
     assert.ok(audit.includes(term),term);
   assert.match(audit,/for\(const locale of \["en","ar"\]\)/);

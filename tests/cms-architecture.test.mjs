@@ -60,8 +60,9 @@ test("Published CMS replaces public content only after publish, and draft previe
  assert.ok(!layout.includes("readPublished()"));
  assert.ok(read("src/app/[locale]/page.tsx").includes("readPublished()"));
  assert.ok(read("src/app/[locale]/page.tsx").includes("CmsProvider value={published}"));
- assert.ok(read("src/app/[locale]/rooms/[slug]/page.tsx").includes("readPublished()"));
- assert.ok(home.includes("cms.sections.filter(section=>section.visible)"));
+ assert.ok(read("src/app/[locale]/booking/page.tsx").includes("readPublished()"));
+ assert.ok(home.includes("cms.sections.filter(section=>visibleSections.has(section.id))"));
+ assert.ok(read("src/components/CmsProvider.tsx").includes("item.visible&&(item.id!==\"gallery\"||hasGallery)"));
  assert.ok(home.includes('useCmsContent(locale)'));
  assert.ok(privatePreview.includes('isCmsAuthenticated()'));
  assert.ok(privatePreview.includes('readDraft()'));

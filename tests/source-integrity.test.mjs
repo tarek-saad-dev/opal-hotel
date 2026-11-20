@@ -15,14 +15,12 @@ test("Reference order and booking integration gate are preserved",()=>{
   const positions=ids.map(x=>p.indexOf('id="'+x+'"'));
   assert.ok(positions.every(x=>x>=0),"all approved reference sections must exist");
   assert.ok(positions.every((x,i)=>i===0||x>positions[i-1]),"reference sections must preserve order");
-  const sections=read("src/components/PremiumSections.tsx");
-  assert.ok(sections.includes("c.labels.noBooking"));
   const closing=read("src/components/PremiumClosing.tsx");
-  assert.ok(closing.includes("c.labels.noBackend"),"review/contact forms must report unsent state");
+  assert.ok(closing.includes('role="alert" className="opal-end-status is-error"'),"failed sends must be reported");
   assert.doesNotMatch(p,/booking confirmed/i);
 });
 test("Legacy photos are labelled temporary reference sources",()=>{
   const p=read("src/lib/gallery.ts");
   assert.match(p,/third-party-reference/);
-  assert.match(p,/Replace with owned, local copies/);
+  assert.match(p,/Reference only: not loaded by the site/);
 });

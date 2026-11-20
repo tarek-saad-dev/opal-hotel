@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900" aria-hidden="true">
+<defs>
+<linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1f3a2f"/><stop offset="1" stop-color="#142a21"/></linearGradient>
+<pattern id="p" width="120" height="150" patternUnits="userSpaceOnUse">
+<path d="M20 150V70a40 40 0 0 1 80 0v80" fill="none" stroke="#c9a96e" stroke-opacity=".13" stroke-width="2"/>
+</pattern>
+</defs>
+<rect width="1200" height="900" fill="url(#g)"/>
+<rect width="1200" height="900" fill="url(#p)"/>
+<g fill="none" stroke="#d8bd90" stroke-opacity=".55" stroke-width="3">
+<path d="M520 560V430a80 80 0 0 1 160 0v130"/>
+<path d="M545 560V438a55 55 0 0 1 110 0v122"/>
+<path d="M480 560h240"/>
+</g>
+</svg>

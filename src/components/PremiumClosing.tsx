@@ -4,7 +4,29 @@ import { useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
 import { hotelBrand } from "@/lib/gallery";
-import { useCmsSite,useHotelMedia } from "@/components/CmsProvider";
+import { useCmsSite,useHotelMedia,useVisibleSections } from "@/components/CmsProvider";
+import { apiErrorMessage, submitContactMessage, submitReview, type ApiResult } from "@/lib/api-client";
+
+type SendState={state:"idle"}|{state:"sending"}|{state:"sent"}|{state:"error";message:string};
+/** Shared submit lifecycle: one request at a time, honest success/error states. */
+function useSend(locale:Locale){
+  const [status,setStatus]=useState<SendState>({state:"idle"});
+  const run=async(request:()=>Promise<ApiResult>,onSuccess:()=>void)=>{
+    if(status.state==="sending")return;
+    setStatus({state:"sending"});
+    const result=await request();
+    if(result.ok){setStatus({state:"sent"});onSuccess();}
+    else setStatus({state:"error",message:apiErrorMessage(result.error,locale)});
+  };
+  const reset=()=>{if(status.state!=="sending")setStatus({state:"idle"});};
+  return {status,run,reset};
+}
+function FormStatus({status,sent}:{status:SendState;sent:string}){
+  if(status.state==="sent")return <p role="status" className="opal-end-status is-success">{sent}</p>;
+  if(status.state==="error")return <p role="alert" className="opal-end-status is-error">{status.message}</p>;
+  return null;
+}
+const field=(form:HTMLFormElement,name:string)=>String(new FormData(form).get(name)??"").trim();
 
 type Props = { locale: Locale; content: HotelContent };
 const mapUrl = (address:string) => "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(address);
@@ -30,7 +52,7 @@ export function PremiumReviews({locale,content:c}:Props) {
   const ar=locale==="ar";
   // No preselected score: a default value nudges the guest's rating.
   const [rating,setRating]=useState<number|null>(null);
-  const [submitted,setSubmitted]=useState(false);
+  const {status,run,reset}=useSend(locale);
   const [thisMonth,setThisMonth]=useState("");
   useEffect(()=>{
     const now=new Date();
@@ -39,8 +61,9 @@ export function PremiumReviews({locale,content:c}:Props) {
   const t=ar ? {
     kicker:"كلمات تترك أثرًا",
     heading:"بعض الذكريات", accent:"تستحق الحكاية.",
-    lead:"كل تجربة إقامة لها تفاصيل خاصة. ودي مساحة مصممة علشان تشارك انطباعك بالطريقة اللي تحبها.",
-    note:"هذا نموذج تصميمي فقط. لا يتم تخزين أي بيانات أو إرسال تقييمات حاليًا.",
+    lead:"كل تجربة إقامة لها تفاصيل خاصة. شاركنا انطباعك.",
+    note:"يراجع فريق الفندق التقييمات قبل نشرها.",
+    sent:"شكرًا لك! تم إرسال تقييمك وسيظهر بعد مراجعته.",
     cardKicker:"مذكرات الضيوف",
     cardTitle:"احكي لنا تجربتك",
     score:"تقييم تجربتك",
@@ -49,13 +72,13 @@ export function PremiumReviews({locale,content:c}:Props) {
     visit:"موعد الزيارة",
     story:"إيه أكتر حاجة فضلت في ذاكرتك؟",
     storyPlaceholder:"اكتب انطباعك هنا...",
-    action:"معاينة التقييم",
-    preview:"نسخة عرض فقط",
+    action:"أرسل التقييم", sending:"جارٍ الإرسال…",
   } : {
     kicker:"THE GUEST JOURNAL",
     heading:"Some memories", accent:"deserve a story.",
     lead:"Every stay has its own little moments. A considered space to share what made yours memorable.",
-    note:"This is a visual preview only. Reviews are not stored, published or sent.",
+    note:"Reviews are checked by the hotel team before they are published.",
+    sent:"Thank you! Your review was sent and will appear once it has been checked.",
     cardKicker:"YOUR PERSPECTIVE",
     cardTitle:"Share your story",
     score:"Your experience",
@@ -64,13 +87,16 @@ export function PremiumReviews({locale,content:c}:Props) {
     visit:"When did you visit?",
     story:"What stayed with you?",
     storyPlaceholder:"The moment you'll remember...",
-    action:"Preview your review",
-    preview:"DESIGN PREVIEW ONLY",
+    action:"Send your review", sending:"Sending…",
   };
   const submit=(event:FormEvent<HTMLFormElement>)=>{
     event.preventDefault();
-    // UI-only interaction. No network request, storage, or review publication.
-    setSubmitted(true);
+    const form=event.currentTarget;
+    if(rating===null)return;
+    void run(()=>submitReview({
+      locale,rating,name:field(form,"reviewName"),
+      visitMonth:field(form,"visitDate"),story:field(form,"reviewStory"),
+    }),()=>{form.reset();setRating(null);});
   };
 
   return <div className="opal-end-review-layout">
@@ -79,7 +105,6 @@ export function PremiumReviews({locale,content:c}:Props) {
       <h2 id="reviews-heading">{heading.title} <em>{heading.accent}</em></h2>
       <p className="opal-end-lead">{heading.description}</p>
       <div className="opal-end-quote-decoration" aria-hidden="true">“</div>
-      <div className="opal-end-review-line"><span />{t.preview}</div>
     </div>
     <div className="opal-end-review-paper opal-reveal">
       <div className="opal-end-paper-top">
@@ -97,7 +122,7 @@ export function PremiumReviews({locale,content:c}:Props) {
           {Array.from({length:10},(_,i)=>i+1).map(value=>
             <label key={value} className={rating===value?"is-selected":""}>
               <input type="radio" name="rating" value={value} checked={rating===value} required
-                onChange={()=>{setRating(value);setSubmitted(false);}}/>
+                onChange={()=>{setRating(value);reset();}}/>
               <span>{value}</span>
             </label>
           )}
@@ -105,21 +130,21 @@ export function PremiumReviews({locale,content:c}:Props) {
         <div className="opal-end-form-two">
           <label>{t.name}<RequiredMark/>
             <input required name="reviewName" type="text" autoComplete="name" maxLength={100}
-              onChange={()=>setSubmitted(false)} placeholder={t.nameExample}/>
+              onChange={reset} placeholder={t.nameExample}/>
           </label>
           <label>{t.visit}
-            <input name="visitDate" type="month" max={thisMonth||undefined} onChange={()=>setSubmitted(false)}/>
+            <input name="visitDate" type="month" max={thisMonth||undefined} onChange={reset}/>
           </label>
         </div>
         <label>{t.story}<RequiredMark/>
           <textarea name="reviewStory" rows={3} maxLength={1200} required
-            onChange={()=>setSubmitted(false)} placeholder={t.storyPlaceholder}/>
+            onChange={reset} placeholder={t.storyPlaceholder}/>
         </label>
         <div className="opal-end-form-submit">
-          <button type="submit">{t.action}<Arrow /></button>
-          <span className="opal-end-preview-pill">{t.preview}</span>
+          <button type="submit" disabled={status.state==="sending"} aria-busy={status.state==="sending"}>
+            {status.state==="sending"?t.sending:t.action}<Arrow /></button>
         </div>
-        {submitted&&<p role="status" className="opal-end-status">{c.labels.noBackend}</p>}
+        <FormStatus status={status} sent={t.sent}/>
         <p className="opal-end-form-hint">{t.note}</p>
       </form>
     </div>
@@ -129,44 +154,47 @@ export function PremiumReviews({locale,content:c}:Props) {
 export function PremiumContact({locale,content:c}:Props) {
   const heading=useCmsSite().locales[locale].headings.contact;
   const ar=locale==="ar";
-  const [submitted,setSubmitted]=useState(false);
+  const {status,run,reset}=useSend(locale);
   const t=ar ? {
     kicker:"تواصل مع المكان",
     heading:"عندك سؤال؟", accent:"خلّينا نتكلم.",
-    intro:"فيه تفاصيل بتحب تعرفها عن الإقامة؟ هنا تقدر تستكشف شكل تجربة التواصل قبل تفعيلها.",
+    intro:"عندك سؤال عن الإقامة أو الخدمات؟ اكتب لنا وسيرد عليك فريق الفندق.",
     location:"مكاننا", place:"الأقصر، مصر",
     map:"شوف المكان على الخريطة",
-    note:"للتوضيح: نموذج التواصل غير مفعل حاليًا، ولا تُرسل منه أي رسائل.",
+    sent:"شكرًا لك! وصلتنا رسالتك وسنرد عليك عبر البريد الإلكتروني.",
     formKicker:"ابدأ المحادثة",
     formTitle:"اكتب لنا رسالة",
     nameExample:"الاسم بالكامل",
     emailExample:"name@example.com",
     subjectExample:"موضوع الاستفسار",
     messageExample:"حابب تعرف إيه؟",
-    action:"معاينة الرسالة",
-    foot:"المعاينة فقط — لا تُحفظ البيانات ولا تُرسل.",
+    action:"أرسل الرسالة", sending:"جارٍ الإرسال…",
+    foot:"نستخدم بياناتك للرد على رسالتك فقط.",
     email:"البريد الإلكتروني",
   } : {
     kicker:"LET'S TALK",
     heading:"Have a question?", accent:"Let's connect.",
-    intro:"Questions about your stay, or just curious about the experience? A first look at how contacting Opal will feel.",
+    intro:"Questions about your stay or our services? Write to us and the hotel team will reply.",
     location:"FIND US IN", place:"LUXOR, EGYPT",
     map:"FIND US ON THE MAP",
-    note:"This contact form is not connected yet. Messages are not delivered.",
+    sent:"Thank you! We received your message and will reply by email.",
     formKicker:"A PERSONAL NOTE",
     formTitle:"Write to us",
     nameExample:"Your full name",
     emailExample:"name@example.com",
     subjectExample:"What is this about?",
     messageExample:"Tell us what you're looking for...",
-    action:"Preview your message",
-    foot:"PREVIEW ONLY — DETAILS ARE NOT SAVED OR SENT",
+    action:"Send message", sending:"Sending…",
+    foot:"We only use your details to reply to your message.",
     email:"Email address",
   };
   const submit=(event:FormEvent<HTMLFormElement>)=>{
     event.preventDefault();
-    // Explicitly no network, delivery, or persistence until real contact is approved.
-    setSubmitted(true);
+    const form=event.currentTarget;
+    void run(()=>submitContactMessage({
+      locale,name:field(form,"contactName"),email:field(form,"contactEmail"),
+      subject:field(form,"contactSubject"),message:field(form,"contactMessage"),
+    }),()=>form.reset());
   };
   return <div className="opal-end-contact-layout">
     <div className="opal-end-contact-intro opal-reveal">
@@ -180,7 +208,6 @@ export function PremiumContact({locale,content:c}:Props) {
       <a className="opal-end-map-link" href={mapUrl(c.address)} rel="noopener noreferrer" target="_blank">
         {t.map}<Arrow diagonal/>
       </a>
-      <p className="opal-end-contact-footnote">{t.note}</p>
       <span className="opal-end-contact-watermark" aria-hidden="true">OPAL</span>
     </div>
     <div className="opal-end-contact-paper opal-reveal">
@@ -190,23 +217,24 @@ export function PremiumContact({locale,content:c}:Props) {
         <div className="opal-end-form-two">
           <label>{c.labels.name}<RequiredMark/>
             <input name="contactName" type="text" autoComplete="name" required maxLength={100}
-              placeholder={t.nameExample} onChange={()=>setSubmitted(false)}/>
+              placeholder={t.nameExample} onChange={reset}/>
           </label>
           <label>{t.email}<RequiredMark/>
             <input name="contactEmail" type="email" autoComplete="email" required maxLength={254}
-              placeholder={t.emailExample} onChange={()=>setSubmitted(false)}/>
+              placeholder={t.emailExample} onChange={reset}/>
           </label>
         </div>
         <label>{c.labels.subject}<RequiredMark/>
           <input name="contactSubject" type="text" required maxLength={160}
-            placeholder={t.subjectExample} onChange={()=>setSubmitted(false)}/>
+            placeholder={t.subjectExample} onChange={reset}/>
         </label>
         <label>{c.labels.message}<RequiredMark/>
           <textarea name="contactMessage" rows={5} required maxLength={2000}
-            placeholder={t.messageExample} onChange={()=>setSubmitted(false)}/>
+            placeholder={t.messageExample} onChange={reset}/>
         </label>
-        <button className="opal-end-contact-submit" type="submit">{t.action}<Arrow /></button>
-        {submitted&&<p role="status" className="opal-end-status">{c.labels.noBackend}</p>}
+        <button className="opal-end-contact-submit" type="submit" disabled={status.state==="sending"}
+          aria-busy={status.state==="sending"}>{status.state==="sending"?t.sending:t.action}<Arrow /></button>
+        <FormStatus status={status} sent={t.sent}/>
         <p className="opal-end-form-hint">{t.foot}</p>
       </form>
     </div>
@@ -214,7 +242,6 @@ export function PremiumContact({locale,content:c}:Props) {
 }
 
 export function PremiumFooter({locale,content:c}:Props) {
-  const cms=useCmsSite();
   const media=useHotelMedia();
   const logoSrc=media.logoSrc??hotelBrand.officialLogoSrc;
   const ar=locale==="ar";
@@ -224,7 +251,7 @@ export function PremiumFooter({locale,content:c}:Props) {
     title:"الحكايات الجميلة", accent:"بتبدأ من هنا.",
     pre:"فندق أوبال ليجاسي", discover:"اكتشف", connect:"روابط سريعة",
     next:"مستعد تكتشف أكثر؟", plan:"خطط لإقامتك", map:"شوف الموقع", language:"English",
-    demo:media.approved ? "صور الفندق معتمدة؛ الحجز والتواصل الإلكتروني غير مفعلين بعد." : "نسخة العرض — الصور التوضيحية لا تمثل الفندق، والحجز والتواصل غير مفعلين.",
+    demo:"جميع الحقوق محفوظة",
     credits:"صُمم بهدوء ليبقى في الذاكرة",
   } : {
     top:"BACK TO THE TOP",
@@ -232,11 +259,11 @@ export function PremiumFooter({locale,content:c}:Props) {
     title:"Beautiful stories", accent:"begin here.",
     pre:"Opal Legacy Hotel", discover:"EXPLORE", connect:"DISCOVER",
     next:"READY FOR YOUR NEXT STORY?", plan:"PLAN YOUR STAY", map:"FIND US ON THE MAP", language:"العربية",
-    demo:media.approved ? "Approved hotel imagery. Booking and online contact remain disabled." : "Design preview. Imagery is illustrative; bookings and contact delivery are not enabled.",
+    demo:"All rights reserved",
     credits:"CONSIDERED DETAILS. LASTING FEELINGS.",
   };
   // Same order as the page sections (and the header menu).
-  const ordered=cms.sections.filter(item=>item.visible).map(item=>item.id);
+  const ordered=useVisibleSections();
   const explore=ordered.filter((id):id is "overview"|"facilities"|"location"|"rooms"|"gallery"=>
     ["overview","facilities","location","rooms","gallery"].includes(id));
   const other=ordered.filter((id):id is "reviews"|"contact"=>id==="reviews"||id==="contact");

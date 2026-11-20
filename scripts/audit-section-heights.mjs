@@ -17,20 +17,13 @@ const viewports=[
   {name:"small-mobile",width:320,height:640}
 ];
 const routes=[
+  // #gallery is hidden until the hotel's own photos are published, so it is
+  // not part of the fixed list measured on a fresh CMS.
   {path:"",selectors:[
-    ".premium-hero",".premium-booking-zone","#overview","#facilities","#location","#rooms","#gallery",
+    ".premium-hero",".premium-booking-zone","#overview","#facilities","#location","#rooms",
     "#reviews","#contact",".opal-end-footer"]},
-  {path:"rooms",selectors:[
-    ".room-exp-collection-hero",".room-exp-catalogue-section",
-    ".room-exp-truth-note",".room-exp-footer"]},
-  ...["light-and-stillness","quiet-comforts","slow-mornings"].map(slug=>({
-    path:"rooms/"+slug,
-    selectors:[".room-exp-detail-hero",".room-exp-detail-story",".room-exp-truth-note",
-      ".room-exp-related",".room-exp-footer"]
-  })),
   {path:"booking",selectors:[
-    ".opal-book-introduction",".opal-book-stepbar",".opal-book-layout",
-    ".opal-book-bottom-note",".opal-book-footer"]}
+    ".opal-book-introduction",".opal-book-stepbar",".opal-book-layout",".opal-book-footer"]}
 ];
 const directory=path.resolve("artifacts/frontend-preview/section-rhythm");
 await fs.mkdir(directory,{recursive:true});

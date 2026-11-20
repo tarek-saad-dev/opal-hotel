@@ -188,3 +188,6 @@
 @media(max-width:700px){
   .opal-end-footer-columns nav a,.opal-end-footer-last a{min-height:44px;display:flex;align-items:center}
 }
+.opal-end-status.is-success{background:#e6efe6;border-inline-start-color:#3f7a55;color:#2c5a3d}
+.opal-end-status.is-error{background:#f6e7e2;border-inline-start-color:#b5543a;color:#8a3a26}
+.opal-end-form button[disabled]{opacity:.6;cursor:progress}
