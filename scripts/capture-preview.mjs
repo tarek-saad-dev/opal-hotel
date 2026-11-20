@@ -236,7 +236,7 @@ for(const lang of langs)for(const screen of screens){
       // No hotel photos on a fresh CMS: the gallery and its nav link stay hidden.
       interactions.galleryHidden=(await page.locator('#gallery').count())===0
         &&(await page.locator('a[href="#gallery"]').count())===0
-        &&(await page.locator('.premium-photo-button').count())===0;
+        &&(await page.locator('.opal-hero-gallery').count())===0;
 
       await page.locator('.opal-end-rating input[value="9"]').check();
       await page.locator('input[name="reviewName"]').fill('Preview Guest');
