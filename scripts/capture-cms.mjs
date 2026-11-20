@@ -588,8 +588,11 @@ try{
   await filmMobile.setViewportSize({width:390,height:844});
   try{
     await filmMobile.goto(origin+"/ar/preview",{waitUntil:"domcontentloaded"});
-    check(await filmMobile.locator(".opal-story-film-frame").isVisible(),
-      "Mobile Overview film should remain visible and responsive");
+    // Wait for the client render instead of sampling once right after
+    // domcontentloaded; the one-shot isVisible() made this check flaky.
+    const filmShown=await filmMobile.locator(".opal-story-film-frame")
+      .waitFor({state:"visible",timeout:15000}).then(()=>true,()=>false);
+    check(filmShown,"Mobile Overview film should remain visible and responsive");
     await filmMobile.screenshot({path:path.join(dir,"owner-overview-film-mobile.png"),animations:"disabled"});
   }finally{await filmMobile.close();}
 
