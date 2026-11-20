@@ -25,7 +25,7 @@ test("No artificial wait; route loading remains safe on instant and cancelled na
   assert.match(provider,/setVisible\(true\)/);
   assert.match(provider,/setVisible\(false\)/);
   assert.match(provider,/6500/);
-  assert.match(provider,/150/);
+  assert.match(provider,/220/);
   assert.match(provider,/next\.pathname===current\.pathname&&next\.search===current\.search/);
   assert.match(provider,/next\.origin!==window\.location\.origin/);
   assert.match(provider,/anchor\.hasAttribute\("download"\)/);
