@@ -73,6 +73,12 @@ try{
   try{
     const page=await ctx.newPage();
     await page.goto(origin+"/en",{waitUntil:"domcontentloaded"});
+    // DOMContentLoaded precedes hydration: wait for the booking state effect
+    // before using the React submit handler in reduced-motion mode.
+    await page.waitForFunction(()=>{
+      const input=document.querySelector('input[name="checkin"]');
+      return input instanceof HTMLInputElement&&/^\\d{4}-\\d{2}-\\d{2}$/.test(input.value);
+    },null,{timeout:8000});
     await page.route("**/en/booking?**",async route=>{
       if(route.request().resourceType()==="fetch")
         await new Promise(resolve=>setTimeout(resolve,900));
