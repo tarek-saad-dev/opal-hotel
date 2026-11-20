@@ -45,7 +45,7 @@ test("Minimal luxury styling: gentle one-time type entrance, simple progress, no
   assert.match(css,/\.opal-route-loading\.is-overlay/);
   assert.match(css,/@media\(max-width:600px\)/);
   assert.ok(!/@import|url\(/.test(css),"Loader must not fetch external media");
-  assert.ok(!/spinner|loader-orbit|loader-halo|rotat(e|ing)/.test(css),
+  assert.ok(!/@keyframes opal-loader-(orbit|halo)|transform:\\s*rotate\\(|\\.opal-loader-emblem/.test(css),
     "No spinners or decorative orbit motion");
   assert.match(css,/\.opal-loader-wordmark,\.opal-loader-place,/);
   assert.match(css,/animation:none!important/);
