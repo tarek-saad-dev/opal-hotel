@@ -51,10 +51,10 @@ try{
         const expectedLabel=locale==="ar"?"جاري فتح الصفحة":"Opening your page";
         if(await overlay.getAttribute("aria-label")!==expectedLabel)
           throw new Error("Missing localized accessible loading status");
-        const animation=await overlay.locator(".opal-loader-letter").first()
+        const animation=await overlay.locator(".opal-loader-wordmark")
           .evaluate(el=>getComputedStyle(el).animationName);
-        if(!animation.includes("opal-loader-letter-enter"))
-          throw new Error("Wordmark does not animate");
+        if(!animation.includes("opal-loader-name-enter"))
+          throw new Error("Wordmark should have a quiet one-time entrance animation");
         const dims=await overlay.evaluate(el=>({
           width:el.getBoundingClientRect().width,viewport:innerWidth
         }));
@@ -81,7 +81,7 @@ try{
     await page.locator(".premium-booking-submit").click();
     const overlay=page.locator(".opal-route-loading.is-overlay");
     await overlay.waitFor({state:"visible",timeout:3500});
-    const letter=overlay.locator(".opal-loader-letter").first();
+    const letter=overlay.locator(".opal-loader-wordmark");
     const reduced=await letter.evaluate(el=>({
       opacity:getComputedStyle(el).opacity,
       animation:getComputedStyle(el).animationName
