@@ -120,7 +120,7 @@ for(const lang of langs)for(const screen of screens){
       amenities:false,galleryHidden:false,rooms:false,policies:false,
       review:false,contact:false,footer:false,
       decorativePanels:false,noPreviewCopy:false,dock:false,menuFocus:false,
-      menuGeometry:false,menuScrollLock:false,menuNavigate:false};
+      menuGeometry:false,menuScrollLock:false,menuNavigate:false,datePicker:false};
     try{
       // Slide controls only exist once there are several real hero photos.
       const sceneNav=page.locator('.premium-hero-scene-navigation');
@@ -203,8 +203,26 @@ for(const lang of langs)for(const screen of screens){
         interactions.menuNavigate=true;
       }
 
+      // Range picker: one calendar for both dates, nights shown, closes on departure.
+      await page.locator('#premium-arrival').click();
+      const pickerPanel=page.locator('.opal-dp-panel');
+      await pickerPanel.waitFor({state:'visible',timeout:5000});
+      const pickable=pickerPanel.locator('[data-day]:not([disabled])');
+      const pickIn=await pickable.nth(3).getAttribute('data-day');
+      const pickOut=await pickable.nth(7).getAttribute('data-day');
+      await pickable.nth(3).click();
+      await pickerPanel.locator(`[data-day="${pickOut}"]`).hover();
+      const previewNights=/\d/.test(await pickerPanel.locator('.opal-dp-summary strong').innerText());
+      await page.screenshot({path:path.join(dir,'date-picker.png'),animations:'disabled',timeout:20000});
+      await pickerPanel.locator(`[data-day="${pickOut}"]`).click();
+      await pickerPanel.waitFor({state:'detached',timeout:5000});
       await page.locator('.premium-booking-submit').click();
       await page.waitForURL(`**/${lang}/booking?*`,{timeout:8000});
+      {
+        const handoff=new URL(page.url());
+        interactions.datePicker=previewNights&&handoff.searchParams.get('checkin')===pickIn
+          &&handoff.searchParams.get('checkout')===pickOut;
+      }
       // Route loading.tsx now deliberately shows a loading state until the
       // booking UI is ready. A URL change is NOT proof hydration completed.
       await page.locator('.opal-book-step.is-current').waitFor({

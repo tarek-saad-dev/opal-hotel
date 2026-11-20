@@ -1,0 +1,112 @@
+/* Stay date picker: one calendar for check-in and check-out.
+   Desktop/tablet = two months in a popover, phones = one month in a bottom sheet. */
+
+/* The wrapper is transparent to layout so each trigger is its own grid cell. */
+.opal-dp{display:contents}
+.premium-booking-form,.opal-book-date-grid{position:relative}
+
+/* Homepage ribbon triggers reuse .premium-date-cell; reset button defaults. */
+.opal-dp-trigger{font:inherit;color:inherit;text-align:start;width:100%;cursor:pointer}
+.opal-dp-trigger:hover{background:#f1eee7}
+.opal-dp-trigger:focus-visible{background:#f0ebe1;outline:2px solid #bca37d;outline-offset:-2px}
+.opal-dp-trigger.is-active{background:#f0ebe1;box-shadow:inset 0 -2px 0 #274539}
+.opal-dp-trigger .premium-field-copy strong{overflow:hidden;text-overflow:ellipsis}
+
+/* Booking page triggers */
+.opal-dp-page-field{display:flex;flex-direction:column;gap:13px;min-width:0}
+.opal-dp-page-label{font-size:12px;color:#4f6555;font-weight:700}
+.opal-dp-page-trigger{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-width:0;
+  height:70px;background:#fffdf8;border:1px solid #cfc5b5;color:#314d3c;padding:12px 18px;
+  font:600 15px var(--premium-sans,Arial,sans-serif);cursor:pointer;text-align:start;transition:border-color .2s,background .2s}
+.opal-dp-page-trigger span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.opal-dp-page-trigger svg{flex-shrink:0;color:#8f7a5b}
+.opal-dp-page-trigger:hover{border-color:#8fa092}
+.opal-dp-page-trigger:focus-visible{outline:2px solid #54725e;outline-offset:2px}
+.opal-dp-page-trigger.is-active{border-color:#274539;background:#fff;box-shadow:inset 0 -2px 0 #274539}
+
+/* Panel */
+.opal-dp-panel{position:absolute;z-index:30;top:calc(100% + 12px);inset-inline-start:0;
+  width:min(720px,calc(100vw - 32px));background:#fff;border:1px solid #e5dfd3;
+  box-shadow:0 28px 60px #1b2b2833;color:#2b3931;font-family:var(--premium-sans,Arial,sans-serif);
+  animation:opal-dp-in .18s ease-out both}
+.opal-dp-head{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:16px 24px;background:#274539;color:#f7f2e9}
+.opal-dp-prompt{margin:0;font-size:14px;font-weight:600;letter-spacing:.01em}
+.opal-dp-close{background:transparent;border:1px solid #ffffff55;color:#fff;width:40px;height:40px;
+  font-size:26px;line-height:1;cursor:pointer;flex-shrink:0}
+
+.opal-dp-months{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.opal-dp-month{padding:18px 22px 14px}
+.opal-dp-month+.opal-dp-month{border-inline-start:1px solid #ece7dd}
+.opal-dp-month-title{margin:0 0 12px;text-align:center;font:500 19px/44px var(--premium-serif,Georgia,serif);color:#253b32}
+.opal-dp-nav{position:absolute;top:18px;z-index:1;width:44px;height:44px;display:grid;place-items:center;
+  background:transparent;border:1px solid transparent;color:#274539;cursor:pointer;transition:background .2s,border-color .2s}
+.opal-dp-nav.is-prev{inset-inline-start:14px}
+.opal-dp-nav.is-next{inset-inline-end:14px}
+.opal-dp-nav:hover:not(:disabled){background:#f3efe6;border-color:#e2dbce}
+.opal-dp-nav:disabled{color:#c9c2b6;cursor:default}
+.opal-dp-nav:focus-visible{outline:2px solid #bca37d;outline-offset:1px}
+.opal-dp-chevron.is-back{transform:rotate(180deg)}
+[dir="rtl"] .opal-dp-chevron{transform:rotate(180deg)}
+[dir="rtl"] .opal-dp-chevron.is-back{transform:none}
+
+.opal-dp-grid{width:100%;border-collapse:separate;border-spacing:0 4px;table-layout:fixed}
+.opal-dp-grid th{font-size:11px;font-weight:700;color:#8a8273;text-transform:uppercase;letter-spacing:.04em;padding:0 0 6px}
+.opal-dp-grid td{padding:0;text-align:center}
+.opal-dp-grid button{width:100%;height:42px;display:grid;place-items:center;background:transparent;border:0;
+  color:#2b3931;font:600 14px var(--premium-sans,Arial,sans-serif);cursor:pointer;position:relative;
+  font-variant-numeric:tabular-nums;transition:background .15s,color .15s}
+.opal-dp-grid button:hover:not(:disabled){background:#efe6d6}
+.opal-dp-grid button:disabled{color:#c4beb3;font-weight:500;cursor:default;text-decoration:line-through;text-decoration-color:#d9d3c8}
+.opal-dp-grid button:focus-visible{outline:2px solid #bca37d;outline-offset:-2px;z-index:1}
+/* Range: nights in between get a sand band, the two ends are solid green. */
+.opal-dp-grid td.is-between{background:#efe6d6}
+.opal-dp-grid td.is-between button{color:#253b32}
+.opal-dp-grid td.is-start.has-range{background:linear-gradient(to right,transparent 50%,#efe6d6 50%)}
+.opal-dp-grid td.is-end{background:linear-gradient(to left,transparent 50%,#efe6d6 50%)}
+[dir="rtl"] .opal-dp-grid td.is-start.has-range{background:linear-gradient(to left,transparent 50%,#efe6d6 50%)}
+[dir="rtl"] .opal-dp-grid td.is-end{background:linear-gradient(to right,transparent 50%,#efe6d6 50%)}
+.opal-dp-grid td.is-start.is-end{background:none}
+.opal-dp-grid td.is-start button,.opal-dp-grid td.is-end button,
+.opal-dp-grid td.is-start button:hover,.opal-dp-grid td.is-end button:hover{background:#274539;color:#fff}
+
+.opal-dp-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  border-top:1px solid #ece7dd;padding:14px 24px}
+.opal-dp-summary{margin:0;font-size:15px;color:#3c4c42}
+.opal-dp-summary strong{color:#274539}
+.opal-dp-actions{display:flex;gap:10px}
+.opal-dp-clear,.opal-dp-done{min-height:44px;padding:0 20px;font:600 13px var(--premium-sans,Arial,sans-serif);cursor:pointer}
+.opal-dp-clear{background:transparent;border:1px solid #d9d1c3;color:#4f6555}
+.opal-dp-clear:hover{background:#f5f1e8}
+.opal-dp-done{background:#274539;border:1px solid #274539;color:#f7f2e9}
+.opal-dp-done:hover:not(:disabled){background:#182f25}
+.opal-dp-done:disabled{opacity:.45;cursor:default}
+.opal-dp-clear:focus-visible,.opal-dp-done:focus-visible,.opal-dp-close:focus-visible{outline:2px solid #bca37d;outline-offset:2px}
+
+/* Ribbon: open under the date cells, not the guest field. */
+.opal-dp-ribbon .opal-dp-panel{top:calc(100% + 14px)}
+
+/* Phones: one month in a bottom sheet over a dimmed page. */
+.opal-dp-backdrop{position:fixed;inset:0;z-index:180;background:#0b1a1499;animation:opal-dp-fade .2s ease both}
+@media(max-width:700px){
+  .opal-dp-panel{position:fixed;z-index:181;inset:auto 0 0 0;top:auto;width:100%;max-height:92svh;overflow:auto;
+    border:0;border-radius:14px 14px 0 0;box-shadow:0 -18px 50px #0b1a1440;animation:opal-dp-up .24s ease-out both;
+    padding-bottom:env(safe-area-inset-bottom)}
+  .opal-dp-head{padding:12px 16px 12px 20px;border-radius:14px 14px 0 0}
+  .opal-dp-months{grid-template-columns:1fr}
+  .opal-dp-month{padding:14px 14px 8px}
+  .opal-dp-nav{top:14px}
+  .opal-dp-nav.is-prev{inset-inline-start:8px}
+  .opal-dp-nav.is-next{inset-inline-end:8px}
+  .opal-dp-grid button{height:46px;font-size:15px}
+  .opal-dp-foot{padding:12px 16px 16px}
+  .opal-dp-summary{flex-basis:100%}
+  .opal-dp-actions{flex:1}
+  .opal-dp-clear,.opal-dp-done{flex:1;min-height:48px}
+  .opal-dp-trigger .premium-field-copy strong{font-size:12px;white-space:normal;line-height:1.35}
+  .opal-dp-page-trigger{height:59px;font-size:14px;padding-inline:14px}
+}
+@keyframes opal-dp-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@keyframes opal-dp-up{from{transform:translateY(100%)}to{transform:none}}
+@keyframes opal-dp-fade{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.opal-dp-panel,.opal-dp-backdrop{animation:none}}

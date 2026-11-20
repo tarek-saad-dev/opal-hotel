@@ -10,6 +10,7 @@ import "./mobile-navigation.css";
 import "./route-polish.css";
 import "./section-rhythm.css";
 import "./overview-video.css";
+import "./date-picker.css";
 
 export const metadata: Metadata = {
   title: { default: "Opal Legacy Luxor Hotel", template: "%s | Opal Legacy" },

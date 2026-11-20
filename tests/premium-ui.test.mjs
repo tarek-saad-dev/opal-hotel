@@ -10,8 +10,8 @@ test("premium masthead is wired into the hotel homepage", () => {
   assert.ok(page.includes("<PremiumMasthead"), "page must use approved premium component");
   assert.ok(head.includes('id="hotel-name"'));
   assert.ok(head.includes('id="booking"'));
-  assert.ok(head.includes('id="premium-arrival"'));
-  assert.ok(head.includes('id="premium-departure"'));
+  assert.ok(head.includes('checkin: "premium-arrival"'));
+  assert.ok(head.includes('checkout: "premium-departure"'));
 });
 
 test("all premium visual controls are intentional interactions", () => {
@@ -20,7 +20,7 @@ test("all premium visual controls are intentional interactions", () => {
   assert.ok(head.includes("moveSlide"));
   assert.ok(head.includes("setGuestsOpen"));
   assert.ok(head.includes("onAvailability"));
-  assert.ok(head.includes('type="date"'));
+  assert.ok(head.includes("<DateRangePicker"));
   assert.ok(head.includes("checkout <= checkin"));
   assert.ok(head.includes("aria-expanded"));
 });

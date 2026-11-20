@@ -11,6 +11,8 @@ import {
 } from "@/lib/booking-preview";
 import { apiErrorMessage, submitBookingRequest } from "@/lib/api-client";
 import { getRoomType, roomTypes } from "@/lib/room-types";
+import { DateRangePicker } from "@/components/DateRangePicker";
+import { formatLong, nightsLabel } from "@/lib/date-range";
 
 type Props={locale:Locale;initial:BookingPreviewInput};
 type Step=1|2|3;
@@ -102,12 +104,8 @@ export function BookingExperience({locale,initial}:Props) {
       &&initial.checkin>=current&&initial.checkout>initial.checkin) setStep(2);
   },[initial.checkin,initial.checkout]);
 
-  const formatDate=(stamp:string)=>{
-    const parts=stamp.split("-").map(Number);
-    if(parts.length!==3||parts.some(Number.isNaN))return stamp;
-    return new Intl.DateTimeFormat(ar?"ar-EG":"en-GB",{day:"numeric",month:"short",year:"numeric"})
-      .format(new Date(parts[0],parts[1]-1,parts[2]));
-  };
+  // Same format as the date picker: weekday, Western digits in both languages.
+  const formatDate=(stamp:string)=>formatLong(stamp,locale)||stamp;
 
   const query=new URLSearchParams({
     checkin,checkout,adults:String(adults),children:String(children),
@@ -215,20 +213,9 @@ export function BookingExperience({locale,initial}:Props) {
           </div>
           {step===1&&<form className="opal-book-dates" onSubmit={continueStay} noValidate>
             <div className="opal-book-date-grid">
-              <label>{t.checkin}
-                <input type="date" required name="checkin" value={checkin} min={today||undefined}
-                  onChange={e=>{
-                    const day=e.target.value;
-                    setCheckin(day);
-                    if(checkout&&checkout<=day)setCheckout(nextDay(day));
-                    setError("");
-                  }}/>
-              </label>
-              <label>{t.checkout}
-                <input type="date" required name="checkout" value={checkout}
-                  min={checkin?nextDay(checkin):today||undefined}
-                  onChange={e=>{setCheckout(e.target.value);setError("");}}/>
-              </label>
+              <DateRangePicker variant="page" locale={locale} checkin={checkin} checkout={checkout} min={today}
+                labels={{checkin:t.checkin,checkout:t.checkout}} named
+                onChange={range=>{setCheckin(range.checkin);setCheckout(range.checkout);setError("");}}/>
             </div>
             <div className="opal-book-guests">
               <div className="opal-book-guests-top">
@@ -292,7 +279,7 @@ export function BookingExperience({locale,initial}:Props) {
               </div>
               <div>
                 <span>{t.stay}</span>
-                <strong>{nights} {t.night}</strong>
+                <strong>{nightsLabel(nights,locale)}</strong>
               </div>
               <div>
                 <span>{t.guests}</span>
@@ -332,7 +319,7 @@ export function BookingExperience({locale,initial}:Props) {
           <div className="opal-book-summary-rows">
             <div><span>{t.checkin}</span><strong>{validDates?formatDate(checkin):"—"}</strong></div>
             <div><span>{t.checkout}</span><strong>{validDates?formatDate(checkout):"—"}</strong></div>
-            <div><span>{t.stay}</span><strong>{validDates?nights:"—"}</strong></div>
+            <div><span>{t.stay}</span><strong>{validDates?nightsLabel(nights,locale):"—"}</strong></div>
             <div><span>{t.total}</span><strong>{guestCount}</strong></div>
             <div><span>{t.roomsCount}</span><strong>{rooms}</strong></div>
           </div>

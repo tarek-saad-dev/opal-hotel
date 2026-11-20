@@ -9,6 +9,7 @@ import { hotelBrand, responsivePhotoSrcSet } from "@/lib/gallery";
 import { useCmsSite,useHotelMedia,useVisibleSections } from "@/components/CmsProvider";
 import { hasApprovedCmsHeroVideo,hasApprovedCmsFullFilm } from "@/lib/cms-schema";
 import { HeroVideoBackground,FullHotelFilm } from "@/components/HeroVideo";
+import { DateRangePicker } from "@/components/DateRangePicker";
 
 type Props = {
   locale: Locale;
@@ -424,27 +425,10 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
             <h2 id="booking-heading">{t.reserve}</h2>
           </div>
           <form className="premium-booking-form" onSubmit={submit}>
-            <label className="premium-date-cell" htmlFor="premium-arrival">
-              <span className="premium-field-icon"><Glyph name="calendar" /></span>
-              <span className="premium-field-copy">
-                <span className="premium-field-label">{c.labels.checkin}</span>
-                <input id="premium-arrival" aria-label={c.labels.checkin} required type="date" min={today || undefined}
-                  value={checkin} onChange={e => {
-                    const value = e.target.value;
-                    setCheckin(value); setError("");
-                    if (checkout && checkout <= value) setCheckout(dayAfter(value));
-                  }} />
-              </span>
-            </label>
-            <label className="premium-date-cell" htmlFor="premium-departure">
-              <span className="premium-field-icon"><Glyph name="calendar" /></span>
-              <span className="premium-field-copy">
-                <span className="premium-field-label">{c.labels.checkout}</span>
-                <input id="premium-departure" aria-label={c.labels.checkout} required type="date"
-                  min={checkin ? dayAfter(checkin) : today || undefined} value={checkout}
-                  onChange={e => { setCheckout(e.target.value); setError(""); }} />
-              </span>
-            </label>
+            <DateRangePicker variant="ribbon" locale={locale} checkin={checkin} checkout={checkout} min={today}
+              labels={{ checkin: c.labels.checkin, checkout: c.labels.checkout }}
+              ids={{ checkin: "premium-arrival", checkout: "premium-departure" }}
+              onChange={range => { setCheckin(range.checkin); setCheckout(range.checkout); setError(""); setGuestsOpen(false); }} />
             <div className="premium-guest-field" ref={guestRef}>
               <button className="premium-guest-trigger" type="button" aria-haspopup="dialog"
                 aria-expanded={guestsOpen} aria-controls="premium-guest-menu"
