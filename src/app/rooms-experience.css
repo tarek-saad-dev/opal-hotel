@@ -215,7 +215,7 @@
 @media(max-width:600px){
   .room-exp-header-inner{padding:15px 17px;min-height:72px}
   .room-exp-header-nav{gap:10px}
-  .room-exp-header-nav a:first-child{font-size:11px}
+  .room-exp-header-nav a:nth-child(2){font-size:11px}
   .room-exp-brand{gap:7px}
   .room-exp-brand strong{font-size:17px}
   .room-exp-brand small{font-size:6px}
@@ -266,7 +266,7 @@
   [dir="rtl"] .room-exp-card-text h2{font-size:27px}
 }
 @media(max-width:360px){
-  .room-exp-header-nav a:first-child{font-size:10px}
+  .room-exp-header-nav a:nth-child(2){font-size:10px}
   .room-exp-brand strong{font-size:15px}
   .room-exp-brand small{font-size:6px}
   .room-exp-header-inner{gap:6px}

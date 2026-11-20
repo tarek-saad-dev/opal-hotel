@@ -43,6 +43,7 @@ function RoomHeader({locale,slug}:{locale:Locale;slug?:string}) {
         <span><strong>OPAL LEGACY</strong><small>LUXOR · EGYPT</small></span>
       </Link>
       <nav className="room-exp-header-nav" aria-label={t.collection}>
+        <Link href={`/${locale}`} className="opal-header-home">{locale==="ar"?"الرئيسية":"Home"}</Link>
         <Link href={`/${locale}/rooms`}>{t.all}</Link>
         <Link href={`/${locale}/booking${slug?"?room="+slug:""}`} className="room-exp-header-cta">{t.book}<span aria-hidden="true">↗</span></Link>
         <Link href={`/${locale==="ar"?"en":"ar"}/rooms${slug?"/"+slug:""}`} lang={locale==="ar"?"en":"ar"} hrefLang={locale==="ar"?"en":"ar"}

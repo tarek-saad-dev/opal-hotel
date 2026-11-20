@@ -42,7 +42,7 @@ a,button,input,textarea,select{-webkit-tap-highlight-color:transparent}
 .premium-desktop-nav a{font-size:11px;letter-spacing:.115em;text-transform:uppercase;opacity:.9;transition:opacity .2s ease}
 .premium-desktop-nav a:hover{opacity:1;color:#fff}
 .premium-header-controls{display:flex;justify-content:flex-end;align-items:center;gap:28px}
-.premium-locale{font-size:11px;letter-spacing:.08em;font-weight:600;opacity:.9}
+.premium-locale{font-size:11px;letter-spacing:.08em;font-weight:600;opacity:.9;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding-inline:6px}
 .premium-header-cta{border:1px solid #fffd;background:#f9f6ee;color:var(--premium-dark);min-height:42px;padding:0 15px 0 19px;display:flex;align-items:center;justify-content:center;gap:17px;font-size:11px;letter-spacing:.075em;font-weight:700;white-space:nowrap;transition:background .2s ease,color .2s ease}
 .premium-header-cta:hover{background:var(--premium-champagne)}
 .premium-header-cta svg{width:17px;height:17px}
@@ -93,7 +93,7 @@ a,button,input,textarea,select{-webkit-tap-highlight-color:transparent}
 .premium-hero-scene-navigation button{height:40px;width:40px;background:#1d2b284d;border:1px solid #fffa;color:#fff;display:flex;align-items:center;justify-content:center;transition:background .25s}
 .premium-hero-scene-navigation button:hover{background:#ffffff35}
 .premium-hero-scene-navigation button:first-of-type svg{transform:rotate(180deg)}
-.premium-photo-disclaimer{position:absolute;bottom:77px;inset-inline-end:clamp(25px,7vw,113px);font-size:9px;color:#f4f0e9a6;letter-spacing:.01em;z-index:3;margin:0}
+.premium-photo-disclaimer{position:absolute;bottom:77px;inset-inline-end:clamp(25px,7vw,113px);font-size:10px;color:#f4f0e9d9;letter-spacing:.01em;z-index:3;margin:0;text-shadow:0 1px 3px #0008}
 @keyframes premium-hero-image{from{opacity:.25;transform:scale(1.04)}to{opacity:1;transform:scale(1)}}
 @keyframes premium-hero-breathe{from{transform:scale(1)}to{transform:scale(1.055)}}
 @keyframes premium-hero-copy{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
@@ -122,15 +122,15 @@ a,button,input,textarea,select{-webkit-tap-highlight-color:transparent}
 .premium-guest-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:15px 0}
 .premium-guest-row+.premium-guest-row{border-top:1px solid #ece8de}
 .premium-guest-row>span{font-size:13px;font-weight:600}
-.premium-stepper{display:flex;align-items:center;gap:15px}
+.premium-stepper{display:flex;align-items:center;gap:10px}
 .premium-stepper output{min-width:16px;text-align:center;font-size:13px;font-weight:700}
-.premium-stepper button{width:27px;height:27px;border:1px solid #e0d9cc;background:#faf8f2;display:grid;place-items:center;color:#304f42}
+.premium-stepper button{width:36px;height:36px;border:1px solid #e0d9cc;background:#faf8f2;display:grid;place-items:center;color:#304f42}
 .premium-stepper button:disabled{opacity:.35}
 .premium-stepper button svg{width:12px;height:12px}
 .premium-booking-submit{display:flex;align-items:center;justify-content:center;gap:11px;border:0;background:#274539;color:#f7f2e9;padding:12px 17px;min-width:0;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.04em;transition:background .2s}
 .premium-booking-submit:hover{background:#182f25}
 .premium-booking-submit svg{width:17px;height:17px;flex-shrink:0}
-.premium-booking-note{font-size:10px;color:#9b9284;grid-column:1/-1;text-align:end;margin:-4px 0 0}
+.premium-booking-note{font-size:11px;color:#6b6357;grid-column:1/-1;text-align:end;margin:-4px 0 0}
 .premium-booking-error{grid-column:1/-1;color:#9b5f33;font-size:12px;padding:7px 15px 0;margin:0}
 [dir="rtl"] .premium-booking-form input[type=date]{direction:ltr;text-align:right}
 [dir="rtl"] .premium-header-cta svg,[dir="rtl"] .premium-hero-button svg,[dir="rtl"] .premium-booking-submit svg,[dir="rtl"] .premium-menu-surface nav svg{transform:rotate(180deg)}
@@ -248,10 +248,11 @@ a,button,input,textarea,select{-webkit-tap-highlight-color:transparent}
   .premium-hero-description{font-size:13px;max-width:340px;margin-bottom:25px;line-height:1.9}
   .premium-hero-actions{gap:18px}
   .premium-hero-button{min-height:50px;padding-inline:17px;gap:14px;font-size:11px}
-  .premium-photo-button{font-size:0;gap:0}
+  .premium-photo-button{font-size:12px;gap:10px}
   .premium-photo-button span{height:45px;width:45px}
   .premium-hero-bottom{bottom:118px;inset-inline:25px}
-  .premium-scroll-cue{font-size:8px;letter-spacing:.08em;gap:8px}
+  /* The cue collided with the media note on phones and adds little on touch screens. */
+  .premium-scroll-cue{display:none}
   .premium-scene-number{margin-right:2px;gap:8px}
   .premium-scene-number i{width:16px}
   .premium-hero-scene-navigation{gap:5px}
@@ -289,4 +290,12 @@ a,button,input,textarea,select{-webkit-tap-highlight-color:transparent}
 }
 @media(prefers-reduced-motion:reduce){
   .premium-hero-photo,.premium-hero-copy,.premium-scroll-mark::after{animation:none!important}
+}
+
+/* One calendar icon per field: the decorative glyph stays, the native indicator
+   becomes an invisible hit area over the whole value so a click still opens the picker. */
+.premium-field-copy{position:relative}
+.premium-field-copy input[type="date"]{position:static}
+.premium-field-copy input[type="date"]::-webkit-calendar-picker-indicator{
+  position:absolute;inset:0;width:auto;height:auto;margin:0;padding:0;opacity:0;cursor:pointer
 }

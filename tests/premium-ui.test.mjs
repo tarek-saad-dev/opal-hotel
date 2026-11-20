@@ -46,5 +46,6 @@ test("there is no simulated booking success from the premium form", () => {
   const head = read("src/components/PremiumMasthead.tsx");
   assert.ok(!head.includes("fetch("));
   assert.ok(!head.includes("/api/bookings"));
-  assert.ok(head.includes("Dates are for preview only"));
+  assert.ok(head.includes("Online booking is coming soon"));
+  assert.ok(head.includes("dates here are for planning only"));
 });

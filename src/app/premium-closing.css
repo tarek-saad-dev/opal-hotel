@@ -12,7 +12,7 @@
 .opal-end-review-story h2,.opal-end-contact-intro h2{font-family:var(--premium-serif,Georgia,serif);font-size:clamp(63px,6.8vw,111px);font-weight:400;letter-spacing:-.054em;line-height:.91;text-wrap:balance;margin:32px 0 28px;color:#2b4438}
 .opal-end-review-story h2 em,.opal-end-contact-intro h2 em{display:block;font-weight:400;color:#ae9370}
 .opal-end-lead{max-width:425px;color:#667469;line-height:1.9;font-size:16px;margin:0 0 25px}
-.opal-end-quote-decoration{position:absolute;inset-inline-start:0;bottom:17px;font-family:var(--premium-serif,Georgia,serif);font-size:150px;color:#c3b29349;line-height:.55;pointer-events:none}
+.opal-end-quote-decoration{position:absolute;inset-inline-end:0;top:40px;font-family:var(--premium-serif,Georgia,serif);font-size:150px;color:#c3b29349;line-height:.55;pointer-events:none}
 .opal-end-review-line{display:flex;align-items:center;gap:14px;color:#9c8b6f;font-size:9px;letter-spacing:.14em;text-transform:uppercase;margin-top:12px}
 .opal-end-review-line span{width:41px;height:1px;background:#b9a88c}
 .opal-end-review-paper{position:relative;background:#faf8f3;padding:clamp(30px,4vw,61px);box-shadow:0 25px 70px #25372f12;border:1px solid #e9e3d7;min-width:0}
@@ -180,4 +180,11 @@
 }
 @media(prefers-reduced-motion:reduce){
   .opal-stage-reviews *, .opal-stage-contact *, .opal-end-footer *{transition:none!important;animation:none!important}
+}
+
+.opal-required-mark{color:#a3633f;font-weight:600}
+
+/* Comfortable touch targets for footer links on phones. */
+@media(max-width:700px){
+  .opal-end-footer-columns nav a,.opal-end-footer-last a{min-height:44px;display:flex;align-items:center}
 }

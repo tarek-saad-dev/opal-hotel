@@ -15,7 +15,7 @@ export async function generateMetadata({params}:Props):Promise<Metadata>{
   if(!isLocale(locale))return {};
   const t=roomUI(locale);
   return {
-    title:locale==="ar"?"تصورات الغرف | أوبال ليجاسي":"Room Design Concepts | Opal Legacy",
+    title:locale==="ar"?"تصورات الغرف":"Room Design Concepts",
     description:t.introduction,
     alternates:{languages:{en:"/en/rooms",ar:"/ar/rooms"}},
     robots:{index:false,follow:false},

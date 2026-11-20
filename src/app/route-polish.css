@@ -5,7 +5,7 @@
 .opal-route-transition{min-width:0}
 @media(prefers-reduced-motion:no-preference){
   .opal-route-transition{
-    animation:opal-route-arrive .32s cubic-bezier(.2,.8,.2,1) both;
+    animation:opal-route-arrive .32s cubic-bezier(.2,.8,.2,1) backwards;
   }
   @keyframes opal-route-arrive{
     from{opacity:.92;transform:translateY(6px)}
@@ -132,4 +132,9 @@
 @media(prefers-reduced-motion:reduce){
   .opal-route-transition{animation:none!important}
   .opal-route-loading-orbit{animation:none!important;border-color:#c7ae84}
+}
+
+/* Shared "Home" link in the rooms and booking headers; the logo covers it on phones. */
+@media(max-width:800px){
+  .opal-header-home{display:none!important}
 }

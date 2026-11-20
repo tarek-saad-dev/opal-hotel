@@ -129,7 +129,7 @@ export function PremiumFacilities({ locale, content: c }: SharedProps) {
       { number: "03", title: "تفاصيل يومك", text: "تعرّف على الخدمات والمرافق المدرجة للفندق." },
     ],
     full: "كل المرافق والخدمات", all: "عرض التفاصيل",
-    foot: "المرافق والمواعيد المعروضة من المرجع السابق، وتحتاج تأكيد إدارة الفندق قبل الإطلاق.",
+    foot: "قد تختلف المرافق والخدمات حسب الموسم؛ يُرجى التأكد مع الفندق قبل الزيارة.",
   } : {
     kicker: "CONSIDERED COMFORTS", title: "Little details.", italic: "Lasting impressions.",
     note: "Thoughtful touches and room to slow down, all presented with a quieter sense of luxury.",
@@ -139,7 +139,7 @@ export function PremiumFacilities({ locale, content: c }: SharedProps) {
       { number: "03", title: "The everyday essentials", text: "Explore the facilities and services listed for the property." },
     ],
     full: "Explore all the amenities", all: "VIEW DETAILS",
-    foot: "Amenities and policies are based on the previous listing and require hotel verification before launch.",
+    foot: "Amenities and services may vary by season; please confirm with the hotel before your visit.",
   };
   return <div className="opal-facilities-layout">
     <Header number="02" kicker={heading.kicker} title={heading.title} italic={heading.accent} note={heading.description}/>
@@ -177,6 +177,13 @@ export function PremiumFacilities({ locale, content: c }: SharedProps) {
   </div>;
 }
 
+// "1.5 km" / "1.5 كم" / "١٫٥ كم" → 1.5; unknown values sort last.
+function distanceValue(text:string) {
+  const western=text.replace(/[٠-٩]/g,d=>String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace("٫",".");
+  const value=parseFloat(western.replace(/[^0-9.]/g,""));
+  return Number.isFinite(value)?value:Number.POSITIVE_INFINITY;
+}
+
 export function PremiumLocation({ locale, content: c }: SharedProps) {
   const cms=useCmsSite();
   const heading=cms.locales[locale].headings.location;
@@ -186,12 +193,12 @@ export function PremiumLocation({ locale, content: c }: SharedProps) {
     kicker: "الموقع", title: "في قلب", italic: "الحكاية.",
     subtitle: "الأقصر، مصر", intro: "كل رحلة لها مكان تبدأ منه. اكتشف موقع Opal Legacy وما حوله من معالم.",
     explore: "افتح الموقع على خرائط Google", nearby: "بالقرب منك",
-    notice: "المسافات تقريبية ومأخوذة من المرجع السابق، وتحتاج إلى مراجعة.",
+    notice: "المسافات تقريبية.",
   } : {
     kicker: "A SENSE OF PLACE", title: "Rooted in", italic: "Luxor.",
     subtitle: "LUXOR, EGYPT", intro: "Every journey begins somewhere. Discover the hotel's location and a selection of nearby points of interest.",
     explore: "OPEN IN GOOGLE MAPS", nearby: "IN THE NEIGHBOURHOOD",
-    notice: "Distances are indicative and sourced from the prior listing. Verify before publication.",
+    notice: "Distances are approximate.",
   };
   const map = "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(c.address);
   return <div className="opal-location-layout">
@@ -208,7 +215,7 @@ export function PremiumLocation({ locale, content: c }: SharedProps) {
     </div>
     <div className="opal-location-nearby">
       <div className="opal-location-nearby-head"><span className="opal-label-mini">{t.nearby}</span><span>↗</span></div>
-      <ol>{c.attractions.map((attraction,i)=><li key={attraction.name}>
+      <ol>{[...c.attractions].sort((a,b)=>distanceValue(a.distance)-distanceValue(b.distance)).map((attraction,i)=><li key={attraction.name}>
         <span className="opal-nearby-index">{String(i+1).padStart(2, "0")}</span>
         <span className="opal-nearby-name">{attraction.name}</span>
         <strong>{attraction.distance}</strong>
@@ -259,7 +266,7 @@ export function PremiumRooms({ locale, content: c, onOpenPhoto, attemptedBooking
         <button type="button" className="opal-room-photo" onClick={() => onOpenPhoto(roomPhoto(i))}
           aria-label={`${t.view}: ${story.name}`}>
           <PreviewImage locale={locale} index={roomPhoto(i)}/>
-          <span className="opal-room-photo-arrow" aria-hidden="true">↗</span>
+          <span className="opal-room-photo-arrow" aria-hidden="true">⤢</span>
           <span className="opal-room-image-badge">{story.label}</span>
         </button>
         <div className="opal-room-card-footer">
@@ -268,7 +275,6 @@ export function PremiumRooms({ locale, content: c, onOpenPhoto, attemptedBooking
               {t.details}<span aria-hidden="true">↗</span>
             </Link>
           </div>
-          <button className="opal-room-view" type="button" onClick={() => onOpenPhoto(roomPhotos[i])} aria-label={`${t.view}: ${story.name}`}>↗</button>
         </div>
       </article>)}
     </div>
@@ -317,7 +323,7 @@ export function PremiumGallery({ locale, onOpenPhoto }: GalleryProps) {
   const count=visible.length+visibleFilms.length;
   return <div className="opal-gallery-wrap">
     <Header number="05" kicker={heading.kicker} title={heading.title} italic={heading.accent}
-      note={ar?"صور وفيديوهات الفندق المختارة من الإدارة":"Selected photographs and films from the owner"}/>
+      note={ar?"لمحات بصرية من أجواء الإقامة":"A visual journal of the stay"}/>
     <div className="opal-gallery-toolbar">
       <div className="opal-gallery-tabs" role="group" aria-label={ar?"نوع الوسائط":"Media category"}>
         {filters.map(key=><button key={key} type="button" aria-pressed={filter===key}
@@ -325,7 +331,7 @@ export function PremiumGallery({ locale, onOpenPhoto }: GalleryProps) {
             {galleryCategoryLabels[key]?.[locale]||key}
           </button>)}
       </div>
-      <span className="opal-gallery-count">{String(count).padStart(2,"0")} / {ar?"وسائط معروضة":"items on view"}</span>
+      <span className="opal-gallery-count">{String(count).padStart(2,"0")} {ar?"عناصر معروضة":"items shown"}</span>
     </div>
     <div className={`opal-gallery-mosaic ${filter==="all"?"opal-gallery-full":"opal-gallery-filtered"}`}>
       {visible.map((img,i)=><button type="button" className={`opal-gallery-item opal-gallery-item-${i}`} key={img.src}
@@ -343,7 +349,7 @@ export function PremiumGallery({ locale, onOpenPhoto }: GalleryProps) {
       </figure>)}
     </div>}
     <p className="opal-gallery-disclaimer">{ar
-      ?"الوسائط الحقيقية المعتمدة تُعرض عند نشرها من لوحة الإدارة؛ بيانات الحجز تحتاج مراجعة منفصلة."
-      :"Approved hotel media appears after owner publication; booking details remain subject to separate verification."}</p>
+      ?"بعض الصور توضيحية لحين توفر صور الفندق الرسمية."
+      :"Some images are illustrative until official hotel photography is available."}</p>
   </div>;
 }

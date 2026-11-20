@@ -85,7 +85,18 @@ export function BookingExperience({locale,initial}:Props) {
         ? initial.checkin:current;
       return parseDateStamp(old)!==null&&old>start?old:nextDay(start);
     });
-  },[initial.checkin]);
+    // Guests arriving from the homepage form already chose dates and party:
+    // start at the concept step instead of asking for the same details again.
+    if(parseDateStamp(initial.checkin)!==null&&parseDateStamp(initial.checkout)!==null
+      &&initial.checkin>=current&&initial.checkout>initial.checkin&&!initial.room) setStep(2);
+  },[initial.checkin,initial.checkout,initial.room]);
+
+  const formatDate=(stamp:string)=>{
+    const parts=stamp.split("-").map(Number);
+    if(parts.length!==3||parts.some(Number.isNaN))return stamp;
+    return new Intl.DateTimeFormat(ar?"ar-EG":"en-GB",{day:"numeric",month:"short",year:"numeric"})
+      .format(new Date(parts[0],parts[1]-1,parts[2]));
+  };
 
   const query=new URLSearchParams({
     checkin,checkout,adults:String(adults),children:String(children),
@@ -131,6 +142,7 @@ export function BookingExperience({locale,initial}:Props) {
           <small>LUXOR · EGYPT</small>
         </Link>
         <nav className="opal-book-header-links" aria-label={t.breadcrumb}>
+          <Link href={`/${locale}`} className="opal-header-home">{ar?"الرئيسية":"Home"}</Link>
           <Link href={`/${locale}/rooms`}>{t.exploreRooms}</Link>
           <Link href={`/${ar?"en":"ar"}/booking?${query}`}
             lang={ar?"en":"ar"} hrefLang={ar?"en":"ar"} className="opal-book-lang">{t.language}</Link>
@@ -223,7 +235,7 @@ export function BookingExperience({locale,initial}:Props) {
             <div className="opal-book-review-lines">
               <div>
                 <span>{t.checkin} / {t.checkout}</span>
-                <strong dir="ltr">{checkin} — {checkout}</strong>
+                <strong>{formatDate(checkin)} — {formatDate(checkout)}</strong>
                 <button type="button" onClick={()=>navigateTo(1)}>{t.editDates}<span aria-hidden="true">↗</span></button>
               </div>
               <div>
@@ -259,11 +271,11 @@ export function BookingExperience({locale,initial}:Props) {
             <PreviewPhoto locale={locale} index={chosen?(media.roomMedia[chosen.slug]?.cover??chosen.imageIndices[0]):(media.roomMedia[roomConcepts[0].slug]?.cover??2)}/>
             <span>{media.approved ? (ar?"صور الفندق المعتمدة":"HOTEL-APPROVED PHOTOS") : t.source}</span>
           </div>
-          <h2>{chosen?chosen.name[locale]:t.datePlaceholder}</h2>
+          <h2>{chosen?chosen.name[locale]:validDates?t.choose:t.datePlaceholder}</h2>
           <p className="opal-book-summary-room">{chosen?chosen.introduction[locale]:t.selectionHint}</p>
           <div className="opal-book-summary-rows">
-            <div><span>{t.checkin}</span><strong dir="ltr">{validDates?checkin:"—"}</strong></div>
-            <div><span>{t.checkout}</span><strong dir="ltr">{validDates?checkout:"—"}</strong></div>
+            <div><span>{t.checkin}</span><strong>{validDates?formatDate(checkin):"—"}</strong></div>
+            <div><span>{t.checkout}</span><strong>{validDates?formatDate(checkout):"—"}</strong></div>
             <div><span>{t.stay}</span><strong>{validDates?nights:"—"}</strong></div>
             <div><span>{t.total}</span><strong>{guestCount}</strong></div>
           </div>

@@ -64,7 +64,10 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
   const logoSrc=media.logoSrc??hotelBrand.officialLogoSrc;
   const heroCopy=cms.locales[locale].hero;
   const firstVisible=cms.sections.find(item=>item.visible)?.id||"booking";
-  const visibleNav=new Set(cms.sections.filter(item=>item.visible).map(item=>item.id));
+  // Follow the published section order so the menu matches the page top-to-bottom.
+  const orderedNav=cms.sections.filter(item=>item.visible).map(item=>item.id)
+    .filter((id):id is typeof navItems[number]=>(navItems as readonly string[]).includes(id));
+  const desktopNav=orderedNav.filter(id=>id!=="reviews"&&id!=="contact").slice(0,5);
   const ar = locale === "ar";
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -188,15 +191,31 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
   }, [guestsOpen]);
 
   useEffect(() => {
-    if (typeof IntersectionObserver === "undefined") return;
-    const targets = navItems.map(id => document.getElementById(id)).filter((el): el is HTMLElement => Boolean(el));
-    const observer = new IntersectionObserver(entries => {
-      for (const entry of entries) {
-        if (entry.isIntersecting) setActiveSection(entry.target.id);
+    // Scroll-spy: the active item is the last section whose top has passed
+    // 35% of the viewport. More reliable than a thin IntersectionObserver band,
+    // which lagged behind on tall sections and short ones.
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const line = window.innerHeight * 0.35;
+      let current: string | null = null;
+      for (const id of navItems) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        if (rect.top <= line && rect.bottom > line) current = id;
       }
-    }, { rootMargin: "-25% 0px -58% 0px", threshold: 0 });
-    targets.forEach(el => observer.observe(el));
-    return () => observer.disconnect();
+      setActiveSection(current);
+    };
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(update); };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
   }, []);
 
   useEffect(() => {
@@ -257,7 +276,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
     reserve: "خطط لإقامتك", nights: "إقامة لا تُنسى تبدأ هنا", guests: "الضيوف",
     guestPlural: "ضيف", adult: "البالغون", child: "الأطفال", plan: "استعرض الإقامة",
     preview: media.approved ? "صور الفندق معتمدة · الحجز الإلكتروني لا يزال في مرحلة المعاينة" : "عرض تصميمي — الصور توضيحية لحين اعتماد صور الفندق",
-    menuTitle: "اكتشف أوبال", helper: "تواريخك للعرض فقط؛ الحجز الفعلي غير مفعل بعد.",
+    menuTitle: "اكتشف أوبال", helper: "الحجز الإلكتروني قريبًا — اختيار التواريخ هنا للتخطيط فقط.",
     guestsHint: "عدد الضيوف", rooms: "تعرف على الغرف",
   } : {
     home: "Home", label: "STAY SOMEWHERE MEANINGFUL", destination: "LUXOR, EGYPT",
@@ -267,7 +286,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
     reserve: "Plan your stay", nights: "YOUR LUXOR STORY STARTS HERE", guests: "Guests",
     guestPlural: "guests", adult: "Adults", child: "Children", plan: "Explore your stay",
     preview: media.approved ? "Approved hotel photography · booking is still a design preview" : "Design preview · illustrative photography until hotel assets are approved",
-    menuTitle: "Explore Opal", helper: "Dates are for preview only. Live reservations are not yet enabled.",
+    menuTitle: "Explore Opal", helper: "Online booking is coming soon — dates here are for planning only.",
     guestsHint: "Your party", rooms: "Explore the rooms",
   };
 
@@ -283,14 +302,14 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
             <span className="premium-mark-words"><strong>{hotelBrand.wordmark}</strong><small>L U X O R&nbsp; · &nbsp;E G Y P T</small></span>
           </Link>
           <nav className="premium-desktop-nav" aria-label={c.labels.menu}>
-            {navItems.filter(id=>visibleNav.has(id)).slice(0,5).map(id =>
+            {desktopNav.map(id =>
               <a key={id} href={`#${id}`} aria-current={activeSection===id?"location":undefined}>{c.nav[id]}</a>
             )}
           </nav>
           <div className="premium-header-controls">
             {/* Full document navigation reads the latest published CMS snapshot in either locale. */}
             <a href={ar ? "/en" : "/ar"} className="premium-locale" lang={ar ? "en" : "ar"} hrefLang={ar ? "en" : "ar"}>
-              {ar ? "EN" : "عربي"}
+              {ar ? "English" : "العربية"}
             </a>
             <a className="premium-header-cta" href="#booking">{t.reserve}<Glyph name="arrow" /></a>
             <button className="premium-hamburger" type="button" ref={menuTriggerRef}
@@ -315,7 +334,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
             </span>
             <div className="premium-menu-top-controls">
               <a href={ar ? "/en" : "/ar"} className="premium-menu-lang" lang={ar ? "en" : "ar"}
-                hrefLang={ar ? "en" : "ar"}>{ar ? "EN" : "عربي"}</a>
+                hrefLang={ar ? "en" : "ar"}>{ar ? "English" : "العربية"}</a>
               <button type="button" className="premium-menu-close" ref={menuCloseRef}
                 onClick={() => { restoreMenuFocus.current = true; setMenuOpen(false); }}
                 aria-label={c.labels.close}><Glyph name="close"/></button>
@@ -324,7 +343,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
           <div className="premium-menu-content">
             <p className="premium-menu-eyebrow">{t.menuTitle}</p>
             <nav aria-label={c.labels.menu}>
-              {navItems.filter(id=>visibleNav.has(id)).map((id, i) =>
+              {orderedNav.map((id, i) =>
                 <a href={`#${id}`} key={id} aria-current={activeSection===id?"location":undefined}
                   onClick={event => navigateFromMenu(event, id)}>
                   <span className="premium-menu-number">{String(i + 1).padStart(2, "0")}</span>
@@ -368,7 +387,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
             <p className="premium-hero-description">{heroCopy.description}</p>
             <div className="premium-hero-actions">
               <a href={`#${firstVisible}`} className="premium-hero-button">{t.discover}<Glyph name="arrow" /></a>
-              <button type="button" className="premium-photo-button" onClick={onOpenGallery}>
+              <button type="button" className="premium-photo-button" onClick={onOpenGallery} aria-label={t.photos}>
                 <span><Glyph name="camera"/></span>{t.photos}
               </button>
               {fullFilmSrc&&<button type="button" className="opal-hero-watch" ref={filmTriggerRef}
@@ -393,7 +412,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
           </div>}
         </div>
         <p className="premium-photo-disclaimer">{showVideo
-          ?(ar?"فيديو الفندق معتمد · الحجز الإلكتروني غير مفعل":"Approved hotel film · Online booking is not yet enabled")
+          ?(ar?"فيلم الفندق · الحجز الإلكتروني قريبًا":"Hotel film · Online booking coming soon")
           :t.preview}</p>
       </section>
       {filmOpen&&fullFilmSrc&&<FullHotelFilm src={fullFilmSrc} locale={locale} onClose={closeFilm}/>}

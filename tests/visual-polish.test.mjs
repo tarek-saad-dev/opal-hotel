@@ -56,7 +56,9 @@ test("Floating booking shortcut stays preview-only and skip link supports reduce
   assert.ok(head.includes("opal-stay-dock"));
   assert.ok(head.includes('href="#booking"'));
   assert.ok(head.includes("firstVisible"));
-  assert.ok(head.includes("visibleNav"));
+  // Navigation follows the published CMS section order.
+  assert.ok(head.includes("orderedNav"));
+  assert.ok(head.includes("cms.sections.filter(item=>item.visible)"));
   assert.ok(head.includes("beforeFooter"));
   assert.ok(css.includes(".opal-skip-link:focus-visible"));
   assert.ok(css.includes("prefers-reduced-motion:reduce"));
