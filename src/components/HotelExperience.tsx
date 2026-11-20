@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useRouteLoading } from "@/components/RouteLoadingProvider";
 import type { SyntheticEvent } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
 import { responsivePhotoSrcSet } from "@/lib/gallery";
@@ -22,6 +23,7 @@ function handleImageError(event:SyntheticEvent<HTMLImageElement>) {
 }
 export function HotelExperience({locale,content:baseContent}:Props) {
   const router=useRouter();
+  const {startNavigation}=useRouteLoading();
   const c=useCmsContent(locale);
   const cms=useCmsSite();
   const media=useHotelMedia();
@@ -122,6 +124,7 @@ export function HotelExperience({locale,content:baseContent}:Props) {
           const params=new URLSearchParams({
             checkin, checkout, adults:String(adults), children:String(children),
           });
+          startNavigation();
           router.push(`/${locale}/booking?${params.toString()}`);
         }}
       />

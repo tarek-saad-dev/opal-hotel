@@ -11,6 +11,8 @@ import "./route-polish.css";
 import "./section-rhythm.css";
 import "./overview-video.css";
 import "./date-picker.css";
+import "./route-loading-motion.css";
+import { RouteLoadingProvider } from "@/components/RouteLoadingProvider";
 
 export const metadata: Metadata = {
   title: { default: "Opal Legacy Luxor Hotel", template: "%s | Opal Legacy" },
@@ -23,5 +25,5 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <link rel="preconnect" href="https://images.unsplash.com"/>
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous"/>
-  </head><body>{children}</body></html>;
+  </head><body><RouteLoadingProvider>{children}</RouteLoadingProvider></body></html>;
 }
