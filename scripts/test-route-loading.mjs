@@ -76,8 +76,9 @@ try{
     // DOMContentLoaded precedes hydration: wait for the booking state effect
     // before using the React submit handler in reduced-motion mode.
     await page.waitForFunction(()=>{
-      const input=document.querySelector('input[name="checkin"]');
-      return input instanceof HTMLInputElement&&/^\d{4}-\d{2}-\d{2}$/.test(input.value);
+      // The ribbon uses accessible buttons, not named hidden date inputs.
+      const label=document.querySelector("#premium-arrival")?.getAttribute("aria-label")||"";
+      return label.length>0&&!label.includes("Choose");
     },null,{timeout:8000});
     await page.route("**/en/booking?**",async route=>{
       if(route.request().resourceType()==="fetch")
