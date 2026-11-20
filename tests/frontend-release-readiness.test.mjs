@@ -33,10 +33,12 @@ test("Route transitions remain readable and honor reduced motion",()=>{
 
 test("Resilient page loading, 404 and error states provide meaningful actions",()=>{
   const loading=read("src/app/[locale]/loading.tsx");
+  const loadingVisual=read("src/components/OpalLoadingVisual.tsx");
   const missing=read("src/app/[locale]/not-found.tsx");
   const error=read("src/app/[locale]/error.tsx");
-  assert.ok(loading.includes('role="status"'));
-  assert.ok(loading.includes('aria-busy="true"'));
+  assert.ok(loading.includes("<OpalLoadingVisual"));
+  assert.ok(loadingVisual.includes('role="status"'));
+  assert.ok(loadingVisual.includes('aria-busy="true"'));
   assert.ok(missing.includes("404 /"));
   assert.ok(missing.includes("Back to homepage"));
   assert.ok(missing.includes("Book your stay"));
