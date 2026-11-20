@@ -83,7 +83,8 @@ for(const lang of langs)for(const screen of screens){
         visible:i.getClientRects().length>0 && getComputedStyle(i).visibility!=='hidden'
       }));
       const headings=Array.from(document.querySelectorAll('h1,h2')).map(n=>n.textContent?.trim());
-      const ids=['overview','facilities','location','rooms','gallery','reviews','contact'];
+      // #gallery is intentionally absent until hotel photos are published.
+      const ids=['overview','facilities','location','rooms','reviews','contact'];
       return {
         title:document.title,lang:doc.lang,dir:doc.dir,
         viewport:{width:innerWidth,height:innerHeight},document:{width:doc.scrollWidth,height:doc.scrollHeight},
