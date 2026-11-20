@@ -351,3 +351,7 @@
   .opal-book-field-grid{grid-template-columns:1fr}
   .opal-book-sent-lines>div{flex-direction:column;text-align:start}
 }
+.opal-book-room-type{display:flex;flex-direction:column;gap:11px;width:100%;font-size:12px;color:#4f6555;font-weight:700}
+.opal-book-room-type select{width:100%;min-height:56px;border:1px solid #d9d0bf;background:#fffdf8;color:#24382d;
+  font:500 14px/1.4 var(--premium-sans,Arial,sans-serif);padding:0 14px;border-radius:0}
+.opal-book-guests .opal-book-helper a{color:#2c4d3f;text-decoration:underline;text-underline-offset:3px}

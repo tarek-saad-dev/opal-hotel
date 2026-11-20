@@ -10,6 +10,7 @@ import {
   type BookingPreviewInput, bookingCopy, nightsBetween, nextDay, parseDateStamp, todayLocal,
 } from "@/lib/booking-preview";
 import { apiErrorMessage, submitBookingRequest } from "@/lib/api-client";
+import { getRoomType, roomTypes } from "@/lib/room-types";
 
 type Props={locale:Locale;initial:BookingPreviewInput};
 type Step=1|2|3;
@@ -74,6 +75,8 @@ export function BookingExperience({locale,initial}:Props) {
   const [checkout,setCheckout]=useState(initial.checkout);
   const [adults,setAdults]=useState(initial.adults);
   const [children,setChildren]=useState(initial.children);
+  const [roomType,setRoomType]=useState(initial.room);
+  const [rooms,setRooms]=useState(1);
   const [guest,setGuest]=useState<Guest>({fullName:"",email:"",phone:"",country:"",arrivalTime:"",notes:""});
   const [error,setError]=useState("");
   const [sending,setSending]=useState(false);
@@ -108,6 +111,7 @@ export function BookingExperience({locale,initial}:Props) {
 
   const query=new URLSearchParams({
     checkin,checkout,adults:String(adults),children:String(children),
+    ...(roomType?{room:roomType}:{}),
   }).toString();
 
   const goTo=(next:Step)=>{
@@ -135,7 +139,7 @@ export function BookingExperience({locale,initial}:Props) {
     setSending(true);
     setError("");
     const result=await submitBookingRequest({
-      locale,checkin,checkout,adults,children,
+      locale,checkin,checkout,adults,children,rooms,roomType,
       guest:{fullName:guest.fullName.trim(),email:guest.email.trim(),phone:guest.phone.trim(),country:guest.country.trim()},
       arrivalTime:guest.arrivalTime.trim(),notes:guest.notes.trim(),
     });
@@ -232,7 +236,16 @@ export function BookingExperience({locale,initial}:Props) {
               </div>
               <Counter label={t.adults} value={adults} min={1} max={8} update={setAdults}/>
               <Counter label={t.children} value={children} min={0} max={6} update={setChildren}/>
+              <Counter label={t.roomsCount} value={rooms} min={1} max={2} update={setRooms}/>
+              <p className="opal-book-helper">{t.groupNote} <a href={`/${locale}#contact`}>{t.groupLink}</a></p>
             </div>
+            <label className="opal-book-room-type">{t.roomType}
+              <select name="roomType" value={roomType} onChange={e=>setRoomType(e.target.value)}>
+                <option value="">{t.anyRoom}</option>
+                {roomTypes.map(room=><option key={room.slug} value={room.slug}>
+                  {room.name[locale]} · {room.sizeM2} {ar?"م²":"m²"}</option>)}
+              </select>
+            </label>
             {error&&<p role="alert" className="opal-book-error">{error}</p>}
             <button className="opal-book-primary" type="submit">{t.continue}<span aria-hidden="true">→</span></button>
           </form>}
@@ -286,6 +299,10 @@ export function BookingExperience({locale,initial}:Props) {
                 <strong>{guestCount} ({adults} {t.adults} · {children} {t.children})</strong>
               </div>
               <div>
+                <span>{t.roomType}</span>
+                <strong>{getRoomType(roomType)?.name[locale]??t.anyRoom} · {rooms} {t.roomsCount}</strong>
+              </div>
+              <div>
                 <span>{t.fullName}</span>
                 <strong>{guest.fullName}</strong>
                 <button type="button" onClick={()=>navigateTo(2)}>{t.editDetails}</button>
@@ -311,12 +328,13 @@ export function BookingExperience({locale,initial}:Props) {
             <span className="opal-book-summary-ornament" aria-hidden="true">✳</span>
           </div>
           <div className="opal-book-summary-image"><SummaryPhoto locale={locale}/></div>
-          <h2>Opal Legacy Luxor</h2>
+          <h2>{getRoomType(roomType)?.name[locale]??"Opal Legacy Luxor"}</h2>
           <div className="opal-book-summary-rows">
             <div><span>{t.checkin}</span><strong>{validDates?formatDate(checkin):"—"}</strong></div>
             <div><span>{t.checkout}</span><strong>{validDates?formatDate(checkout):"—"}</strong></div>
             <div><span>{t.stay}</span><strong>{validDates?nights:"—"}</strong></div>
             <div><span>{t.total}</span><strong>{guestCount}</strong></div>
+            <div><span>{t.roomsCount}</span><strong>{rooms}</strong></div>
           </div>
           <div className="opal-book-unavailable">
             <span aria-hidden="true">✳</span>

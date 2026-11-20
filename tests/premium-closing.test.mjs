@@ -40,7 +40,8 @@ test("footer has navigation, language switch and genuine map link",()=>{
   assert.ok(closing.includes("PremiumFooter"));
   assert.ok(closing.includes('href="#top"'));
   assert.ok(closing.includes("hrefLang"));
-  assert.ok(closing.includes("google.com/maps/search"));
+  assert.ok(closing.includes("href={hotelMapUrl}"));
+  assert.ok(read("src/lib/hotel-content.ts").includes("lat: 25.660151, lng: 32.625835"));
   assert.ok(closing.includes('rel="noopener noreferrer"'));
 });
 

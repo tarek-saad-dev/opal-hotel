@@ -21,10 +21,27 @@ test("Room slots are storage keys only, not invented room types",()=>{
 test("Homepage rooms section shows the hotel's real room facts and only real photos",()=>{
   const src=read("src/components/PremiumSections.tsx");
   assert.ok(src.includes("c.roomFacts.count"));
-  assert.ok(src.includes("c.roomFacts.features"));
+  assert.ok(src.includes("roomAmenities[locale]"));
+  assert.ok(src.includes("roomTypes.map(room=>"));
+  assert.ok(src.includes("/booking?room=${room.slug}"));
   assert.ok(src.includes("filter(index=>media.isReal(index))"));
-  assert.ok(src.includes('href="#booking"'));
+  assert.ok(src.includes('opal-room-type-cta'));
   const content=read("src/lib/hotel-content.ts");
   assert.ok(content.includes('count: "40 rooms"'));
   assert.ok(content.includes('count:"40 غرفة"'));
+});
+
+test("All six room types from the hotel listing, bilingual, with size and beds",()=>{
+  const src=read("src/lib/room-types.ts");
+  for(const slug of ["single-garden-view","double-private-bathroom","deluxe-double-twin",
+    "triple-garden-view","one-bedroom-suite","family-suite"])assert.ok(src.includes(`slug: "${slug}"`),slug);
+  for(const size of ["sizeM2: 25","sizeM2: 19","sizeM2: 44","sizeM2: 60","sizeM2: 39"])assert.ok(src.includes(size),size);
+  assert.ok(src.includes('ar: "جناح عائلي"'));
+  // Each room type gets its own CMS photo slot; legacy slots stay valid.
+  const slots=read("src/lib/room-concepts.ts");
+  assert.ok(slots.includes("...roomTypes.map(room=>"));
+  assert.ok(slots.includes('"light-and-stillness"'));
+  // Booking accepts a preselected room type and sends it to the API.
+  assert.ok(read("src/lib/booking-preview.ts").includes("roomTypes.some(item=>item.slug===room)"));
+  assert.ok(read("src/components/BookingExperience.tsx").includes("rooms,roomType,"));
 });

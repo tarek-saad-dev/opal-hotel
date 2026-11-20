@@ -21,6 +21,8 @@ export type BookingRequestPayload = {
   checkout: string;         // YYYY-MM-DD
   adults: number;
   children: number;
+  rooms: number;            // 1–2 (more → group booking via contact form)
+  roomType: string;         // slug from src/lib/room-types.ts, or "" for no preference
   guest: {
     fullName: string;
     email: string;
@@ -35,16 +37,21 @@ export type ContactMessagePayload = {
   locale: Locale;
   name: string;
   email: string;
-  subject: string;
+  subject: ContactSubject;
   message: string;
 };
+export const contactSubjects = ["booking_question","change_booking","cancel_booking","hotel_info","group_booking","other"] as const;
+export type ContactSubject = typeof contactSubjects[number];
 
 export type ReviewPayload = {
   locale: Locale;
   name: string;
+  email: string;            // not published; lets the hotel verify the stay
   rating: number;           // 1–10
   visitMonth: string;       // YYYY-MM or ""
-  story: string;
+  story: string;            // overall impression
+  pros: string;             // optional
+  cons: string;             // optional
 };
 
 export type ApiErrorCode = "validation" | "rate_limited" | "server" | "network";

@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
-import type { HotelContent, Locale } from "@/lib/hotel-content";
+import { hotelMapUrl, type HotelContent, type Locale } from "@/lib/hotel-content";
 import { hotelBrand } from "@/lib/gallery";
 import { useCmsSite,useHotelMedia,useVisibleSections } from "@/components/CmsProvider";
-import { apiErrorMessage, submitContactMessage, submitReview, type ApiResult } from "@/lib/api-client";
+import { apiErrorMessage, contactSubjects, submitContactMessage, submitReview, type ApiResult, type ContactSubject } from "@/lib/api-client";
 
 type SendState={state:"idle"}|{state:"sending"}|{state:"sent"}|{state:"error";message:string};
 /** Shared submit lifecycle: one request at a time, honest success/error states. */
@@ -29,7 +29,6 @@ function FormStatus({status,sent}:{status:SendState;sent:string}){
 const field=(form:HTMLFormElement,name:string)=>String(new FormData(form).get(name)??"").trim();
 
 type Props = { locale: Locale; content: HotelContent };
-const mapUrl = (address:string) => "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(address);
 
 function Arrow({ diagonal = false, up = false }: { diagonal?: boolean; up?: boolean }) {
   return <svg width="21" height="21" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
@@ -73,6 +72,7 @@ export function PremiumReviews({locale,content:c}:Props) {
     story:"إيه أكتر حاجة فضلت في ذاكرتك؟",
     storyPlaceholder:"اكتب انطباعك هنا...",
     action:"أرسل التقييم", sending:"جارٍ الإرسال…",
+    email:"البريد الإلكتروني (لن يُنشر)", pros:"الإيجابيات", cons:"السلبيات",
   } : {
     kicker:"THE GUEST JOURNAL",
     heading:"Some memories", accent:"deserve a story.",
@@ -88,14 +88,16 @@ export function PremiumReviews({locale,content:c}:Props) {
     story:"What stayed with you?",
     storyPlaceholder:"The moment you'll remember...",
     action:"Send your review", sending:"Sending…",
+    email:"Email (not published)", pros:"Pros", cons:"Cons",
   };
   const submit=(event:FormEvent<HTMLFormElement>)=>{
     event.preventDefault();
     const form=event.currentTarget;
     if(rating===null)return;
     void run(()=>submitReview({
-      locale,rating,name:field(form,"reviewName"),
+      locale,rating,name:field(form,"reviewName"),email:field(form,"reviewEmail"),
       visitMonth:field(form,"visitDate"),story:field(form,"reviewStory"),
+      pros:field(form,"reviewPros"),cons:field(form,"reviewCons"),
     }),()=>{form.reset();setRating(null);});
   };
 
@@ -132,14 +134,26 @@ export function PremiumReviews({locale,content:c}:Props) {
             <input required name="reviewName" type="text" autoComplete="name" maxLength={100}
               onChange={reset} placeholder={t.nameExample}/>
           </label>
-          <label>{t.visit}
-            <input name="visitDate" type="month" max={thisMonth||undefined} onChange={reset}/>
+          <label>{t.email}<RequiredMark/>
+            <input required name="reviewEmail" type="email" autoComplete="email" maxLength={254} dir="ltr"
+              onChange={reset} placeholder="name@example.com"/>
           </label>
         </div>
+        <label>{t.visit}
+          <input name="visitDate" type="month" max={thisMonth||undefined} onChange={reset}/>
+        </label>
         <label>{t.story}<RequiredMark/>
           <textarea name="reviewStory" rows={3} maxLength={1200} required
             onChange={reset} placeholder={t.storyPlaceholder}/>
         </label>
+        <div className="opal-end-form-two">
+          <label>{t.pros}
+            <textarea name="reviewPros" rows={2} maxLength={600} onChange={reset}/>
+          </label>
+          <label>{t.cons}
+            <textarea name="reviewCons" rows={2} maxLength={600} onChange={reset}/>
+          </label>
+        </div>
         <div className="opal-end-form-submit">
           <button type="submit" disabled={status.state==="sending"} aria-busy={status.state==="sending"}>
             {status.state==="sending"?t.sending:t.action}<Arrow /></button>
@@ -166,7 +180,9 @@ export function PremiumContact({locale,content:c}:Props) {
     formTitle:"اكتب لنا رسالة",
     nameExample:"الاسم بالكامل",
     emailExample:"name@example.com",
-    subjectExample:"موضوع الاستفسار",
+    subjectExample:"اختر موضوعًا",
+    subjects:{booking_question:"الأسعار والإتاحة",change_booking:"تعديل حجز",cancel_booking:"إلغاء حجز",
+      hotel_info:"معلومات عن الفندق",group_booking:"حجز مجموعة (أكثر من غرفتين)",other:"أخرى"} as Record<ContactSubject,string>,
     messageExample:"حابب تعرف إيه؟",
     action:"أرسل الرسالة", sending:"جارٍ الإرسال…",
     foot:"نستخدم بياناتك للرد على رسالتك فقط.",
@@ -182,7 +198,9 @@ export function PremiumContact({locale,content:c}:Props) {
     formTitle:"Write to us",
     nameExample:"Your full name",
     emailExample:"name@example.com",
-    subjectExample:"What is this about?",
+    subjectExample:"Choose a subject",
+    subjects:{booking_question:"Rates and availability",change_booking:"Change a booking",cancel_booking:"Cancel a booking",
+      hotel_info:"Hotel information",group_booking:"Group booking (more than 2 rooms)",other:"Other"} as Record<ContactSubject,string>,
     messageExample:"Tell us what you're looking for...",
     action:"Send message", sending:"Sending…",
     foot:"We only use your details to reply to your message.",
@@ -193,7 +211,7 @@ export function PremiumContact({locale,content:c}:Props) {
     const form=event.currentTarget;
     void run(()=>submitContactMessage({
       locale,name:field(form,"contactName"),email:field(form,"contactEmail"),
-      subject:field(form,"contactSubject"),message:field(form,"contactMessage"),
+      subject:field(form,"contactSubject") as ContactSubject,message:field(form,"contactMessage"),
     }),()=>form.reset());
   };
   return <div className="opal-end-contact-layout">
@@ -205,7 +223,7 @@ export function PremiumContact({locale,content:c}:Props) {
         <span className="opal-end-contact-place-mark" aria-hidden="true">⌖</span>
         <div><small>{t.location}</small><strong>{t.place}</strong><span>{c.address}</span></div>
       </div>
-      <a className="opal-end-map-link" href={mapUrl(c.address)} rel="noopener noreferrer" target="_blank">
+      <a className="opal-end-map-link" href={hotelMapUrl} rel="noopener noreferrer" target="_blank">
         {t.map}<Arrow diagonal/>
       </a>
       <span className="opal-end-contact-watermark" aria-hidden="true">OPAL</span>
@@ -225,8 +243,10 @@ export function PremiumContact({locale,content:c}:Props) {
           </label>
         </div>
         <label>{c.labels.subject}<RequiredMark/>
-          <input name="contactSubject" type="text" required maxLength={160}
-            placeholder={t.subjectExample} onChange={reset}/>
+          <select name="contactSubject" required defaultValue="" onChange={reset}>
+            <option value="" disabled>{t.subjectExample}</option>
+            {contactSubjects.map(key=><option key={key} value={key}>{t.subjects[key]}</option>)}
+          </select>
         </label>
         <label>{c.labels.message}<RequiredMark/>
           <textarea name="contactMessage" rows={5} required maxLength={2000}
@@ -293,7 +313,7 @@ export function PremiumFooter({locale,content:c}:Props) {
       <div className="opal-end-footer-last">
         <span>{t.next}</span>
         <a href="#booking">{t.plan}<Arrow/></a>
-        <a href={mapUrl(c.address)} rel="noopener noreferrer" target="_blank">{t.map}<Arrow diagonal/></a>
+        <a href={hotelMapUrl} rel="noopener noreferrer" target="_blank">{t.map}<Arrow diagonal/></a>
         <a href={ar?"/en":"/ar"} lang={ar?"en":"ar"} hrefLang={ar?"en":"ar"}>{t.language}</a>
       </div>
     </div>
