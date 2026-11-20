@@ -1,4 +1,5 @@
 import { getContent, type FacilityGroup, type Locale } from "@/lib/hotel-content";
+import { legacyContent, legacyHeadings } from "@/lib/cms-legacy";
 import { defaultVisualLibrary,normalizeVisualLibrary,type CmsVisualLibrary } from "@/lib/cms-media";
 
 export const cmsSectionIds=["overview","facilities","location","rooms","gallery","reviews","contact"] as const;
@@ -53,19 +54,19 @@ const defaultHeadings:Record<Locale,Record<CmsSectionId,CmsHeading>>={
     overview:{kicker:"THE OPAL EXPERIENCE",title:"Beyond a stay,",accent:"a feeling.",description:"A place to discover more slowly. Inspired by the textures, light and timeless atmosphere of Luxor."},
     facilities:{kicker:"CONSIDERED COMFORTS",title:"Little details.",accent:"Lasting impressions.",description:"Thoughtful touches and room to slow down."},
     location:{kicker:"A SENSE OF PLACE",title:"Rooted in",accent:"Luxor.",description:"Every journey begins somewhere. Discover the hotel's location."},
-    rooms:{kicker:"THE ART OF REST",title:"Rooms to slow down.",accent:"Moments to stay.",description:"Editorial room concepts. Not confirmed inventory."},
-    gallery:{kicker:"VISUAL JOURNAL",title:"A closer look.",accent:"Every angle.",description:"Illustrative visual inspiration until hotel assets are approved."},
-    reviews:{kicker:"THE GUEST JOURNAL",title:"Some memories",accent:"deserve a story.",description:"A space to share memories. Reviews are not yet submitted."},
-    contact:{kicker:"LET'S TALK",title:"Have a question?",accent:"Let's connect.",description:"Explore the future contact experience. Messages are not delivered."},
+    rooms:{kicker:"THE ART OF REST",title:"Rooms to slow down.",accent:"Moments to stay.",description:"40 air-conditioned rooms with garden views and everything you need to rest."},
+    gallery:{kicker:"VISUAL JOURNAL",title:"A closer look.",accent:"Every angle.",description:"Moments from around the hotel."},
+    reviews:{kicker:"THE GUEST JOURNAL",title:"Some memories",accent:"deserve a story.",description:"Stayed with us? Tell us about your visit."},
+    contact:{kicker:"LET'S TALK",title:"Have a question?",accent:"Let's connect.",description:"Questions about your stay? Send us a message and the team will get back to you."},
   },
   ar:{
     overview:{kicker:"تجربة أوبال",title:"وراء كل إقامة",accent:"حكاية.",description:"هنا تلتقي تفاصيل المكان بروح الأقصر."},
     facilities:{kicker:"راحة في كل تفصيلة",title:"تفاصيل بسيطة.",accent:"تفرق كتير.",description:"الراحة تبدأ من التفاصيل."},
     location:{kicker:"الموقع",title:"في قلب",accent:"الحكاية.",description:"اكتشف موقع الفندق وما حوله من معالم."},
-    rooms:{kicker:"تجربة الغرف",title:"غرف للراحة.",accent:"لحظات بتفضل.",description:"تصورات تصميمية وليست مخزون غرف متاح للحجز."},
-    gallery:{kicker:"نظرة أقرب",title:"جمال التفاصيل.",accent:"من كل زاوية.",description:"صور للإلهام البصري لحين اعتماد الصور الحقيقية."},
-    reviews:{kicker:"كلمات تترك أثرًا",title:"بعض الذكريات",accent:"تستحق الحكاية.",description:"معاينة فقط، لم يتم تفعيل إرسال التقييمات."},
-    contact:{kicker:"تواصل مع المكان",title:"عندك سؤال؟",accent:"خلّينا نتكلم.",description:"معاينة لتجربة التواصل ولم يتم تفعيل الإرسال."},
+    rooms:{kicker:"تجربة الغرف",title:"غرف للراحة.",accent:"لحظات بتفضل.",description:"40 غرفة مكيفة بإطلالة على الحديقة، فيها كل ما تحتاجه للراحة."},
+    gallery:{kicker:"نظرة أقرب",title:"جمال التفاصيل.",accent:"من كل زاوية.",description:"لقطات من أرجاء الفندق."},
+    reviews:{kicker:"كلمات تترك أثرًا",title:"بعض الذكريات",accent:"تستحق الحكاية.",description:"أقمت معنا؟ شاركنا تجربتك."},
+    contact:{kicker:"تواصل مع المكان",title:"عندك سؤال؟",accent:"خلّينا نتكلم.",description:"عندك سؤال عن إقامتك؟ أرسل لنا رسالة وسيتواصل معك فريق الفندق."},
   }
 };
 const defaultHero:Record<Locale,CmsHeading>={
@@ -212,4 +213,27 @@ export function validateCmsSite(input:unknown):CmsSite{
   const visual=normalizeVisualLibrary(media.visual);
   return {revision:Number(d.revision),updatedAt:typeof d.updatedAt==="string"?d.updatedAt.slice(0,50):"",
     locales:cleaned,sections,media:{logo,logoApproved:media.logoApproved as boolean,photos,video,visual}};
+}
+
+const sameJson=(a:unknown,b:unknown)=>JSON.stringify(a)===JSON.stringify(b);
+/** Replace untouched legacy defaults (preview wording, old facts) with the
+ * current defaults. Owner-edited values are never changed. */
+export function upgradeLegacyDefaults(site:CmsSite):CmsSite{
+  const fresh=defaultCmsSite();
+  const locales={...site.locales};
+  for(const code of ["en","ar"] as const){
+    const current={...locales[code],headings:{...locales[code].headings}};
+    const next=fresh.locales[code];
+    for(const id of cmsSectionIds){
+      if(sameJson(current.headings[id],legacyHeadings[code][id]))current.headings[id]={...next.headings[id]};
+    }
+    const fields=["metaDescription","overview","quick","facilities","attractions"] as const;
+    for(const field of fields){
+      if(legacyContent[code][field].some(old=>sameJson(current[field],old))){
+        (current as Record<string,unknown>)[field]=structuredClone(next[field]);
+      }
+    }
+    locales[code]=current;
+  }
+  return {...site,locales};
 }

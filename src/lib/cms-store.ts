@@ -3,7 +3,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { Readable } from "node:stream";
 import { approvedPublishedPaths,approveAssignedVisualMedia } from "@/lib/cms-media";
-import { defaultCmsSite, hasApprovedCmsLogo, hasApprovedCmsHeroVideo, hasApprovedCmsFullFilm, hasCompleteCmsMedia, isManagedImagePath, isManagedVideoPath, mediaRoles, validateCmsSite, type CmsSite } from "@/lib/cms-schema";
+import { defaultCmsSite, upgradeLegacyDefaults, hasApprovedCmsLogo, hasApprovedCmsHeroVideo, hasApprovedCmsFullFilm, hasCompleteCmsMedia, isManagedImagePath, isManagedVideoPath, mediaRoles, validateCmsSite, type CmsSite } from "@/lib/cms-schema";
 
 const root=()=>process.env.OPAL_CMS_DATA_DIR||
   (process.env.NODE_ENV==="production"?"/var/lib/opal-hotel-cms":path.join(process.cwd(),".cms-data"));
@@ -21,7 +21,7 @@ function serialized<T>(fn:()=>Promise<T>):Promise<T>{
 async function readJson(filename:string):Promise<CmsSite|null>{
   try{
     const parsed:unknown=JSON.parse(await fs.readFile(filename,"utf8"));
-    return validateCmsSite(parsed);
+    return upgradeLegacyDefaults(validateCmsSite(parsed));
   }catch(err){
     if((err as NodeJS.ErrnoException).code==="ENOENT")return null;
     throw err; // malformed persisted content must never be silently overwritten

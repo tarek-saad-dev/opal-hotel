@@ -25,13 +25,15 @@ test("all premium visual controls are intentional interactions", () => {
   assert.ok(head.includes("aria-expanded"));
 });
 
-test("imagery is explicitly declared illustrative, not owned inventory", () => {
+test("no stock imagery and no preview disclaimers in the hero", () => {
   const head = read("src/components/PremiumMasthead.tsx");
   const gallery = read("src/lib/gallery.ts");
-  assert.ok(head.includes("illustrative photography"));
-  assert.ok(gallery.includes('origin:"design-demo"'));
-  assert.ok(gallery.includes("not Opal Legacy"));
+  assert.ok(!/illustrative|design preview|not yet enabled|coming soon/i.test(head));
+  assert.ok(!head.includes("premium-photo-disclaimer"));
+  assert.ok(gallery.includes('origin:"placeholder" as const'));
   assert.ok(gallery.includes("referencePhotoUrls"));
+  // Gallery button only when the hotel's own photos exist.
+  assert.ok(head.includes("{hasRealPhotos&&<button"));
 });
 
 test("art direction preserves restrained motion and RTL", () => {
@@ -46,6 +48,6 @@ test("there is no simulated booking success from the premium form", () => {
   const head = read("src/components/PremiumMasthead.tsx");
   assert.ok(!head.includes("fetch("));
   assert.ok(!head.includes("/api/bookings"));
-  assert.ok(head.includes("Online booking is coming soon"));
-  assert.ok(head.includes("dates here are for planning only"));
+  // The homepage form only hands the stay details to the booking request page.
+  assert.ok(head.includes("onAvailability({ checkin, checkout, guests: adults + children, adults, children })"));
 });

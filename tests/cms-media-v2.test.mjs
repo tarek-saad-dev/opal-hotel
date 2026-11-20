@@ -33,15 +33,14 @@ test("Hero, gallery, overview and rooms use owner assignments with safe legacy f
   const provider=read("src/components/CmsProvider.tsx");
   const masthead=read("src/components/PremiumMasthead.tsx");
   const sections=read("src/components/PremiumSections.tsx");
-  const rooms=read("src/components/RoomsExperience.tsx");
   for(const needle of ["overviewMain","overviewInset","heroIndices","galleryIndices","galleryVideos","roomMedia","locationImage","facilitiesImage"])
     assert.ok(provider.includes(needle),needle);
   assert.match(masthead,/media\.heroIndices\.map/);
   assert.match(sections,/media\.overviewMain/);
   assert.match(sections,/media\.overviewInset/);
   assert.match(sections,/media\.galleryVideos/);
-  assert.match(rooms,/media\.roomMedia\[concept\.slug\]/);
-  assert.match(rooms,/preload="none"/);
+  assert.match(sections,/media\.roomMedia\[room\.slug\]/);
+  assert.match(sections,/preload="none"/);
 });
 
 test("Owner studio allows bulk optimized uploads and safe order/room management",()=>{

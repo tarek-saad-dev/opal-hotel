@@ -3,17 +3,14 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 const read=file=>readFileSync(new URL("../"+file,import.meta.url),"utf8");
 
-test("Homepage no longer loads the full room/booking CSS payload",()=>{
+test("Homepage does not load the booking page CSS payload",()=>{
   const root=read("src/app/layout.tsx");
-  const rooms=read("src/app/[locale]/rooms/layout.tsx");
   const booking=read("src/app/[locale]/booking/layout.tsx");
   const homepage=read("src/app/premium-sections.css");
-  assert.ok(!root.includes('import "./rooms-experience.css"'));
   assert.ok(!root.includes('import "./booking-experience.css"'));
-  assert.ok(rooms.includes('import "../../rooms-experience.css"'));
   assert.ok(booking.includes('import "../../booking-experience.css"'));
-  assert.ok(homepage.includes(".opal-room-details-link"));
-  assert.ok(homepage.includes(".opal-rooms-collection-link"));
+  assert.ok(homepage.includes(".opal-rooms-info"));
+  assert.ok(homepage.includes(".opal-gallery-grid"));
 });
 
 test("HTML assistive language direction updates across English/Arabic navigation",()=>{
@@ -42,7 +39,8 @@ test("Resilient page loading, 404 and error states provide meaningful actions",(
   assert.ok(loading.includes('aria-busy="true"'));
   assert.ok(missing.includes("404 /"));
   assert.ok(missing.includes("Back to homepage"));
-  assert.ok(missing.includes("Explore room concepts"));
+  assert.ok(missing.includes("Book your stay"));
+  assert.ok(!missing.includes("design preview"));
   assert.ok(missing.includes("العودة للرئيسية"));
   assert.ok(error.includes("reset"));
   assert.ok(error.includes("Try again"));

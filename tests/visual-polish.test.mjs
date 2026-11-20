@@ -19,8 +19,8 @@ test("Official logo is optional and neither preview photos nor placeholder are f
   const closing=read("src/components/PremiumClosing.tsx");
   const guide=read("docs/HOTEL_MEDIA_HANDOFF.md");
   assert.ok(assets.includes("officialLogoSrc: null"));
-  assert.ok(assets.includes('origin:"design-demo"'));
-  assert.ok(assets.includes("not Opal Legacy"));
+  assert.ok(assets.includes('origin:"placeholder" as const'));
+  assert.ok(assets.includes("never presented as a photograph"));
   assert.ok(closing.includes("hotelBrand.officialLogoSrc"));
   assert.ok(guide.includes("not"));
   assert.ok(guide.includes("public/media/hotel/"));
@@ -50,7 +50,7 @@ test("Mobile menu and gallery maintain keyboard-friendly focus",()=>{
   assert.ok(shell.includes('onOpenPhoto={openPhoto}'));
 });
 
-test("Floating booking shortcut stays preview-only and skip link supports reduced motion",()=>{
+test("Floating booking shortcut and skip link support reduced motion",()=>{
   const head=read("src/components/PremiumMasthead.tsx");
   const css=read("src/app/visual-polish.css");
   assert.ok(head.includes("opal-stay-dock"));
@@ -58,7 +58,8 @@ test("Floating booking shortcut stays preview-only and skip link supports reduce
   assert.ok(head.includes("firstVisible"));
   // Navigation follows the published CMS section order.
   assert.ok(head.includes("orderedNav"));
-  assert.ok(head.includes("cms.sections.filter(item=>item.visible)"));
+  assert.ok(head.includes("const orderedNav=shownSections"));
+  assert.ok(read("src/components/CmsProvider.tsx").includes("cms.sections.filter(item=>item.visible"));
   assert.ok(head.includes("beforeFooter"));
   assert.ok(css.includes(".opal-skip-link:focus-visible"));
   assert.ok(css.includes("prefers-reduced-motion:reduce"));

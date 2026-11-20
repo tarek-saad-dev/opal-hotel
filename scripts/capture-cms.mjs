@@ -163,7 +163,7 @@ try{
     await publicLogo.locator(".premium-mark img.premium-mark-official").waitFor();
     check(await publicLogo.locator(".premium-mark img.premium-mark-official").getAttribute("src")===uploaded.src,
       "Published CMS logo must replace O emblem on mobile and desktop header");
-    check(await publicLogo.locator(".premium-hero-photo").getAttribute("data-media-origin")==="design-demo",
+    check(await publicLogo.locator(".premium-hero-photo").getAttribute("data-media-origin")==="placeholder",
       "Published logo must not activate unapproved hotel photos");
     await publicLogo.locator(".premium-hamburger").click();
     check(await publicLogo.locator(".premium-menu-brand img.premium-mark-official").getAttribute("src")===uploaded.src,
@@ -404,18 +404,16 @@ try{
         "Owner selected first still hero should render in "+code);
       check(await vpage.locator(".opal-gallery-film video").count()===1,
         "Gallery should show the approved video in "+code);
-      check(await vpage.locator(".opal-gallery-mosaic img").count()===1,
+      check(await vpage.locator(".opal-gallery-grid img").count()===1,
         "Gallery should use only selected images, not six old demos in "+code);
       check(await vpage.locator(".opal-media-section-figure img").count()===2,
         "Location and facilities section images should render in "+code);
+      // Room slot photos are shown in the homepage Rooms section.
+      check(await vpage.locator(".opal-rooms-photo img").first().getAttribute("src")===v2Photo,
+        "Rooms section should use the room cover image in "+code);
+      check(await vpage.locator(".opal-rooms-photo img").count()===2,
+        "Rooms section should show each assigned room photo once in "+code);
       await vpage.close();
-      const room=await approvedVisitor.newPage();
-      await room.goto(origin+"/"+code+"/rooms/light-and-stillness",{waitUntil:"domcontentloaded"});
-      check(await room.locator(".room-exp-gallery-main img").getAttribute("src")===v2Photo,
-        "Room gallery should use its own cover image in "+code);
-      check(await room.locator(".room-exp-feature-film video").getAttribute("src")===galleryFilmSrc,
-        "Room detail should use its assigned hotel film in "+code);
-      await room.close();
     }
   }finally{await approvedVisitor.close();}
 

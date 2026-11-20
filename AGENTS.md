@@ -5,6 +5,13 @@ The owner has approved **Premium Frontend First**: a luxury/boutique hotel websi
 
 Read `docs/PREMIUM_UI_DIRECTION.md` for tokens, component scope and acceptance.
 
+## Owner decision — production content (2026-11-20)
+The owner asked to remove every "preview / illustrative / not enabled" message from the public site and to use the hotel's real information.
+- Facts come from the hotel listing (opal-legacy.luxor-hotels-eg.com), rewritten in our own words, in `src/lib/hotel-content.ts`.
+- No stock photography. Until the hotel's own photos are uploaded through the CMS, photo slots show a neutral brand panel (`/media/brand-panel.svg`, decorative, empty alt) and the gallery section is hidden.
+- Forms (booking request, contact, review) post to the backend API (`src/lib/api-client.ts`, contract in `docs/BACKEND_API.md`). They show success only on a 2xx response and an honest error otherwise. A booking request is not a confirmed reservation and the UI says so.
+- This supersedes the earlier "label illustrative imagery / forms must say they are not sent" rules below.
+
 ## Design and code rules
 - Optimize first for excellent visual craft on desktop, tablet and mobile (EN + AR RTL).
 - The previous `docs/reference-lock` inventory remains a *historical reference*, not the binding visual mandate after this new decision.

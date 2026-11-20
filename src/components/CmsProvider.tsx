@@ -87,7 +87,11 @@ export function useHotelMedia(){
         &&approvedAsset(visual,placed.overviewMain)
         &&approvedAsset(visual,placed.overviewInset)),
       heroIndices:heroIndices.length?heroIndices:[0,1,2],
-      galleryIndices:galleryImagesIndices.length||galleryVideos.length?galleryImagesIndices:images.map((_,i)=>i).slice(0,6),
+      // Only real hotel photos appear in the gallery; brand panels never do.
+      galleryIndices:galleryImagesIndices.length||galleryVideos.length
+        ?galleryImagesIndices
+        :images.map((_,i)=>i).filter(i=>images[i].origin==="hotel-approved"),
+      isReal:(index:number)=>images[index]?.origin==="hotel-approved",
       galleryVideos,
       overviewVideo:overviewFilm,
       overviewMain:resolve(placed.overviewMain,4),
@@ -97,4 +101,13 @@ export function useHotelMedia(){
       roomMedia
     };
   },[cms,preview]);
+}
+
+/** Published, visible sections that actually have something to show.
+ * The gallery stays hidden until the hotel's own photos or films are placed. */
+export function useVisibleSections(){
+  const cms=useCmsSite();
+  const media=useHotelMedia();
+  const hasGallery=media.galleryIndices.some(index=>media.isReal(index))||media.galleryVideos.length>0;
+  return cms.sections.filter(item=>item.visible&&(item.id!=="gallery"||hasGallery)).map(item=>item.id);
 }

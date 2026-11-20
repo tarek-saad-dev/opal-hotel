@@ -13,14 +13,17 @@ test("premium closing sections replace generic review and contact forms",()=>{
   assert.ok(shell.includes('className="opal-end-footer"'));
 });
 
-test("review and contact remain preview-only, no fake success or network request",()=>{
+test("review and contact submit through the API client and only claim success on 2xx",()=>{
   const closing=read("src/components/PremiumClosing.tsx");
-  assert.ok(closing.includes("c.labels.noBackend"));
-  assert.ok(closing.includes("Reviews are not stored, published or sent"));
-  assert.ok(closing.includes("Messages are not delivered"));
-  assert.ok(closing.includes("No network request, storage, or review publication"));
+  assert.ok(closing.includes("submitReview({"));
+  assert.ok(closing.includes("submitContactMessage({"));
+  assert.ok(closing.includes('if(result.ok){setStatus({state:"sent"});onSuccess();}'));
+  assert.ok(closing.includes("apiErrorMessage(result.error,locale)"));
   assert.ok(!closing.includes("fetch("));
-  assert.ok(!closing.includes("bookingConfirmed"));
+  assert.ok(!/not (yet )?(connected|delivered|stored)|preview only|design preview/i.test(closing));
+  const api=read("src/lib/api-client.ts");
+  assert.ok(api.includes('post("/contact-messages", payload)'));
+  assert.ok(api.includes('post("/reviews", payload)'));
 });
 
 test("guest rating has real keyboard-accessible radio inputs",()=>{

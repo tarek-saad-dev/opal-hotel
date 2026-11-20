@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent, SVGProps, MouseEvent as ReactMouseEvent } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
 import { hotelBrand, responsivePhotoSrcSet } from "@/lib/gallery";
-import { useCmsSite,useHotelMedia } from "@/components/CmsProvider";
+import { useCmsSite,useHotelMedia,useVisibleSections } from "@/components/CmsProvider";
 import { hasApprovedCmsHeroVideo,hasApprovedCmsFullFilm } from "@/lib/cms-schema";
 import { HeroVideoBackground,FullHotelFilm } from "@/components/HeroVideo";
 
@@ -63,9 +63,11 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
   const heroScenes=media.heroIndices.map((index,i)=>({...media.images[index],label:String(i+1).padStart(2,"0")}));
   const logoSrc=media.logoSrc??hotelBrand.officialLogoSrc;
   const heroCopy=cms.locales[locale].hero;
-  const firstVisible=cms.sections.find(item=>item.visible)?.id||"booking";
+  const shownSections=useVisibleSections();
+  const firstVisible=shownSections[0]||"booking";
+  const hasRealPhotos=media.images.some(image=>image.origin==="hotel-approved");
   // Follow the published section order so the menu matches the page top-to-bottom.
-  const orderedNav=cms.sections.filter(item=>item.visible).map(item=>item.id)
+  const orderedNav=shownSections
     .filter((id):id is typeof navItems[number]=>(navItems as readonly string[]).includes(id));
   const desktopNav=orderedNav.filter(id=>id!=="reviews"&&id!=="contact").slice(0,5);
   const ar = locale === "ar";
@@ -274,9 +276,8 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
     second: "وحكايات تبقى.", description: "اكتشف هدوء المكان وروح العمارة المصرية في تجربة إقامة ذات طابع خاص.",
     discover: "اكتشف المكان", photos: "استعرض الصور", scroll: "اكتشف المزيد", aesthetic: "تفاصيل تصنع الفرق",
     reserve: "خطط لإقامتك", nights: "إقامة لا تُنسى تبدأ هنا", guests: "الضيوف",
-    guestPlural: "ضيف", adult: "البالغون", child: "الأطفال", plan: "استعرض الإقامة",
-    preview: media.approved ? "صور الفندق معتمدة · الحجز الإلكتروني لا يزال في مرحلة المعاينة" : "عرض تصميمي — الصور توضيحية لحين اعتماد صور الفندق",
-    menuTitle: "اكتشف أوبال", helper: "الحجز الإلكتروني قريبًا — اختيار التواريخ هنا للتخطيط فقط.",
+    guestPlural: "ضيف", adult: "البالغون", child: "الأطفال", plan: "احجز إقامتك",
+    menuTitle: "اكتشف أوبال",
     guestsHint: "عدد الضيوف", rooms: "تعرف على الغرف",
   } : {
     home: "Home", label: "STAY SOMEWHERE MEANINGFUL", destination: "LUXOR, EGYPT",
@@ -284,9 +285,8 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
     second: "stay with you.", description: "An intimate escape inspired by the warmth, texture and timeless spirit of Luxor.",
     discover: "Discover our story", photos: "Explore the gallery", scroll: "SCROLL TO EXPLORE", aesthetic: "THE ART OF FEELING AT HOME",
     reserve: "Plan your stay", nights: "YOUR LUXOR STORY STARTS HERE", guests: "Guests",
-    guestPlural: "guests", adult: "Adults", child: "Children", plan: "Explore your stay",
-    preview: media.approved ? "Approved hotel photography · booking is still a design preview" : "Design preview · illustrative photography until hotel assets are approved",
-    menuTitle: "Explore Opal", helper: "Online booking is coming soon — dates here are for planning only.",
+    guestPlural: "guests", adult: "Adults", child: "Children", plan: "Book your stay",
+    menuTitle: "Explore Opal",
     guestsHint: "Your party", rooms: "Explore the rooms",
   };
 
@@ -376,7 +376,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
               ? <img key={slide} className="premium-hero-photo" data-media-origin={heroScenes[slide].origin} src={heroScenes[slide].src}
                   srcSet={responsivePhotoSrcSet(heroScenes[slide].src)} sizes="100vw"
                   width={1920} height={1080} loading="eager" decoding="async" fetchPriority={slide===0?"high":"auto"}
-                  alt={ar ? heroScenes[slide].altAr : heroScenes[slide].alt} onError={() => setImageFailed(true)} />
+                  alt={heroScenes[slide].origin==="placeholder" ? "" : ar ? heroScenes[slide].altAr : heroScenes[slide].alt} onError={() => setImageFailed(true)} />
               : <div className="premium-hero-fallback" role="img" aria-label="Decorative boutique architecture illustration">
                   <span className="arch arch-one"/><span className="arch arch-two"/><span className="arch arch-three"/>
                 </div>}
@@ -389,9 +389,9 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
             <p className="premium-hero-description">{heroCopy.description}</p>
             <div className="premium-hero-actions">
               <a href={`#${firstVisible}`} className="premium-hero-button">{t.discover}<Glyph name="arrow" /></a>
-              <button type="button" className="premium-photo-button" onClick={onOpenGallery} aria-label={t.photos}>
+              {hasRealPhotos&&<button type="button" className="premium-photo-button" onClick={onOpenGallery} aria-label={t.photos}>
                 <span><Glyph name="camera"/></span>{t.photos}
-              </button>
+              </button>}
               {fullFilmSrc&&<button type="button" className="opal-hero-watch" ref={filmTriggerRef}
                 onClick={()=>setFilmOpen(true)}>{ar?"▶ شاهد فيلم الفندق":"▶ Watch Our Film"}</button>}
             </div>
@@ -405,7 +405,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
           <a href={`#${firstVisible}`} className="premium-scroll-cue">
             <span className="premium-scroll-mark" /><span>{t.scroll}</span>
           </a>
-          {!showVideo&&<div className="premium-hero-scene-navigation">
+          {!showVideo&&hasRealPhotos&&heroScenes.length>1&&<div className="premium-hero-scene-navigation">
             <span className="premium-scene-number" aria-label={ar ? `الصورة ${slide+1} من ${heroScenes.length}` : `Image ${slide + 1} of ${heroScenes.length}`}>
               {heroScenes[slide].label} <i/> 0{heroScenes.length}
             </span>
@@ -413,9 +413,6 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
             <button type="button" aria-label={c.labels.next} onClick={() => moveSlide(1)}><Glyph name="arrow" /></button>
           </div>}
         </div>
-        <p className="premium-photo-disclaimer">{showVideo
-          ?(ar?"فيلم الفندق · الحجز الإلكتروني قريبًا":"Hotel film · Online booking coming soon")
-          :t.preview}</p>
       </section>
       {filmOpen&&fullFilmSrc&&<FullHotelFilm src={fullFilmSrc} locale={locale} onClose={closeFilm}/>}
 
@@ -476,7 +473,6 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
             <button type="submit" className="premium-booking-submit">{t.plan}<Glyph name="arrow" /></button>
             {error && <p role="alert" className="premium-booking-error">{error}</p>}
           </form>
-          <p className="premium-booking-note">{t.helper}</p>
         </div>
       </section>
       <a className={`opal-stay-dock${dockVisible&&!menuOpen?" is-visible":""}`}

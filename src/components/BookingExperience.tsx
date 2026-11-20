@@ -6,27 +6,31 @@ import type { FormEvent, SyntheticEvent } from "react";
 import type { Locale } from "@/lib/hotel-content";
 import { hotelBrand, responsivePhotoSrcSet } from "@/lib/gallery";
 import { useHotelMedia } from "@/components/CmsProvider";
-import { roomConcepts } from "@/lib/room-concepts";
 import {
   type BookingPreviewInput, bookingCopy, nightsBetween, nextDay, parseDateStamp, todayLocal,
 } from "@/lib/booking-preview";
+import { apiErrorMessage, submitBookingRequest } from "@/lib/api-client";
 
 type Props={locale:Locale;initial:BookingPreviewInput};
 type Step=1|2|3;
+type Guest={fullName:string;email:string;phone:string;country:string;arrivalTime:string;notes:string};
 
-function PreviewPhoto({index,locale}:{index:number;locale:Locale}) {
-  const image=useHotelMedia().images[index];
+function SummaryPhoto({locale}:{locale:Locale}) {
+  const media=useHotelMedia();
+  const index=media.images.findIndex(image=>image.origin==="hotel-approved");
+  const image=index>=0?media.images[index]:media.images[0];
   const fallback=(e:SyntheticEvent<HTMLImageElement>)=>{
     const img=e.currentTarget;
     if(img.dataset.placeholder==="true")return;
     img.dataset.placeholder="true";
     img.removeAttribute("srcset");
-    img.src="/media/photo-placeholder.svg";
+    img.src="/media/brand-panel.svg";
   };
   // eslint-disable-next-line @next/next/no-img-element
   return <img className="opal-book-photo" data-media-origin={image.origin} src={image.src}
     srcSet={responsivePhotoSrcSet(image.src)} sizes="(max-width: 700px) 100vw, 40vw"
-    width={900} height={650} alt={locale==="ar"?image.altAr:image.alt} loading="lazy" decoding="async" onError={fallback}/>;
+    width={900} height={650} alt={image.origin==="placeholder"?"":locale==="ar"?image.altAr:image.alt}
+    loading="lazy" decoding="async" onError={fallback}/>;
 }
 
 function StepNumber({number,step,label,onNavigate}:{number:Step;step:Step;label:string;onNavigate:(step:Step)=>void}) {
@@ -56,6 +60,9 @@ function Counter({label,value,min,max,update}:{
   </div>;
 }
 
+const emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const phonePattern=/^[+()\d\s-]{7,20}$/;
+
 export function BookingExperience({locale,initial}:Props) {
   const media=useHotelMedia();
   const logoSrc=media.logoSrc??hotelBrand.officialLogoSrc;
@@ -67,10 +74,11 @@ export function BookingExperience({locale,initial}:Props) {
   const [checkout,setCheckout]=useState(initial.checkout);
   const [adults,setAdults]=useState(initial.adults);
   const [children,setChildren]=useState(initial.children);
-  const [selectedRoom,setSelectedRoom]=useState(initial.room);
+  const [guest,setGuest]=useState<Guest>({fullName:"",email:"",phone:"",country:"",arrivalTime:"",notes:""});
   const [error,setError]=useState("");
+  const [sending,setSending]=useState(false);
+  const [sent,setSent]=useState<{reference:string|null}|null>(null);
   const nights=nightsBetween(checkin,checkout);
-  const chosen=roomConcepts.find(room=>room.slug===selectedRoom);
   const validDates=Boolean(parseDateStamp(checkin)!==null&&parseDateStamp(checkout)!==null
     &&nights>0&&(!today||checkin>=today));
   const guestCount=adults+children;
@@ -86,10 +94,10 @@ export function BookingExperience({locale,initial}:Props) {
       return parseDateStamp(old)!==null&&old>start?old:nextDay(start);
     });
     // Guests arriving from the homepage form already chose dates and party:
-    // start at the concept step instead of asking for the same details again.
+    // go straight to their details instead of asking for the same data again.
     if(parseDateStamp(initial.checkin)!==null&&parseDateStamp(initial.checkout)!==null
-      &&initial.checkin>=current&&initial.checkout>initial.checkin&&!initial.room) setStep(2);
-  },[initial.checkin,initial.checkout,initial.room]);
+      &&initial.checkin>=current&&initial.checkout>initial.checkin) setStep(2);
+  },[initial.checkin,initial.checkout]);
 
   const formatDate=(stamp:string)=>{
     const parts=stamp.split("-").map(Number);
@@ -100,32 +108,55 @@ export function BookingExperience({locale,initial}:Props) {
 
   const query=new URLSearchParams({
     checkin,checkout,adults:String(adults),children:String(children),
-    ...(selectedRoom?{room:selectedRoom}:{}),
   }).toString();
+
+  const goTo=(next:Step)=>{
+    setError("");
+    setStep(next);
+    window.scrollTo({top:0,behavior:"instant"});
+  };
 
   function continueStay(event:FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if(!validDates) {
-      setError(t.dateError);
-      return;
-    }
-    setError("");
-    setStep(2);
-    window.scrollTo({top:0,behavior:"instant"});
+    if(!validDates) { setError(t.dateError); return; }
+    goTo(2);
   }
 
-  function continueRoom() {
-    if(!chosen)return;
-    setStep(3);
-    window.scrollTo({top:0,behavior:"instant"});
+  const detailsValid=guest.fullName.trim().length>=2&&emailPattern.test(guest.email.trim())
+    &&phonePattern.test(guest.phone.trim());
+  function continueDetails(event:FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if(!detailsValid) { setError(t.detailsError); return; }
+    goTo(3);
+  }
+
+  async function send() {
+    if(sending||!validDates||!detailsValid)return;
+    setSending(true);
+    setError("");
+    const result=await submitBookingRequest({
+      locale,checkin,checkout,adults,children,
+      guest:{fullName:guest.fullName.trim(),email:guest.email.trim(),phone:guest.phone.trim(),country:guest.country.trim()},
+      arrivalTime:guest.arrivalTime.trim(),notes:guest.notes.trim(),
+    });
+    setSending(false);
+    if(result.ok) {
+      setSent({reference:result.reference});
+      window.scrollTo({top:0,behavior:"instant"});
+    } else {
+      setError(apiErrorMessage(result.error,locale));
+    }
   }
 
   function navigateTo(newStep:Step) {
-    if(newStep>step)return;
-    setError("");
-    setStep(newStep);
-    window.scrollTo({top:0,behavior:"instant"});
+    if(newStep>step||sending)return;
+    goTo(newStep);
   }
+
+  const update=(key:keyof Guest)=>(e:{target:{value:string}})=>{
+    setGuest(old=>({...old,[key]:e.target.value}));
+    setError("");
+  };
 
   const steps=[t.stepOne,t.stepTwo,t.stepThree] as const;
   const title=step===1?t.helperOne:step===2?t.helperTwo:t.helperThree;
@@ -143,7 +174,6 @@ export function BookingExperience({locale,initial}:Props) {
         </Link>
         <nav className="opal-book-header-links" aria-label={t.breadcrumb}>
           <Link href={`/${locale}`} className="opal-header-home">{ar?"الرئيسية":"Home"}</Link>
-          <Link href={`/${locale}/rooms`}>{t.exploreRooms}</Link>
           <Link href={`/${ar?"en":"ar"}/booking?${query}`}
             lang={ar?"en":"ar"} hrefLang={ar?"en":"ar"} className="opal-book-lang">{t.language}</Link>
         </nav>
@@ -156,8 +186,18 @@ export function BookingExperience({locale,initial}:Props) {
           <h1>{t.headline} <em>{t.emphasis}</em></h1>
           <p>{t.intro}</p>
         </div>
-        <span className="opal-book-preview-label"><span aria-hidden="true">✳</span>{t.status}</span>
       </div>
+      {sent ? <div className="opal-book-sent" role="status">
+        <span className="opal-book-final-symbol" aria-hidden="true">✓</span>
+        <h2>{t.sentTitle}</h2>
+        <p>{t.sentBody}</p>
+        {sent.reference&&<p className="opal-book-reference">{t.reference}: <strong dir="ltr">{sent.reference}</strong></p>}
+        <dl className="opal-book-sent-lines">
+          <div><dt>{t.checkin} / {t.checkout}</dt><dd>{formatDate(checkin)} — {formatDate(checkout)}</dd></div>
+          <div><dt>{t.guests}</dt><dd>{guestCount} ({adults} {t.adults} · {children} {t.children})</dd></div>
+        </dl>
+        <Link href={`/${locale}`} className="opal-book-primary">{t.backHome}<span aria-hidden="true">→</span></Link>
+      </div> : <>
       <div className="opal-book-stepbar">
         <ol>{([1,2,3] as Step[]).map(number=><StepNumber key={number}
           number={number} step={step} label={steps[number-1]} onNavigate={navigateTo}/>)}</ol>
@@ -193,50 +233,49 @@ export function BookingExperience({locale,initial}:Props) {
               <Counter label={t.adults} value={adults} min={1} max={8} update={setAdults}/>
               <Counter label={t.children} value={children} min={0} max={6} update={setChildren}/>
             </div>
-            <p className="opal-book-helper">{t.note}</p>
             {error&&<p role="alert" className="opal-book-error">{error}</p>}
-            <button className="opal-book-primary" type="submit">{t.continue}<span aria-hidden="true">↗</span></button>
+            <button className="opal-book-primary" type="submit">{t.continue}<span aria-hidden="true">→</span></button>
           </form>}
-          {step===2&&<div className="opal-book-choose">
-            <p className="opal-book-section-notice">{t.selectionHint}</p>
-            <div className="opal-book-room-grid" role="group" aria-label={t.available}>
-              {roomConcepts.map((room,i)=><article className={`opal-book-room${selectedRoom===room.slug?" is-selected":""}`} key={room.slug}>
-                <button type="button" className="opal-book-room-select"
-                  aria-pressed={selectedRoom===room.slug}
-                  aria-label={`${t.choose}: ${room.name[locale]}`}
-                  onClick={()=>setSelectedRoom(room.slug)}>
-                  <div className="opal-book-room-media">
-                    <PreviewPhoto locale={locale} index={media.roomMedia[room.slug]?.cover??room.imageIndices[0]}/>
-                    <span className="opal-book-room-index">{String(i+1).padStart(2,"0")} / 03</span>
-                    <span className="opal-book-room-check" aria-hidden="true">{selectedRoom===room.slug?"✓":"+"}</span>
-                  </div>
-                  <span className="opal-book-room-text">
-                    <small>{room.label[locale]}</small>
-                    <strong>{room.name[locale]}</strong>
-                    <span>{room.introduction[locale]}</span>
-                  </span>
-                </button>
-                <Link className="opal-book-room-more" href={`/${locale}/rooms/${room.slug}`}>
-                  {t.view}<span aria-hidden="true">↗</span>
-                </Link>
-              </article>)}
+          {step===2&&<form className="opal-book-details" onSubmit={continueDetails} noValidate>
+            <div className="opal-book-field-grid">
+              <label>{t.fullName}<span className="opal-required-mark" aria-hidden="true"> *</span>
+                <input name="fullName" required autoComplete="name" maxLength={120}
+                  value={guest.fullName} onChange={update("fullName")}/>
+              </label>
+              <label>{t.email}<span className="opal-required-mark" aria-hidden="true"> *</span>
+                <input name="email" type="email" required autoComplete="email" maxLength={254} dir="ltr"
+                  value={guest.email} onChange={update("email")}/>
+              </label>
+              <label>{t.phone}<span className="opal-required-mark" aria-hidden="true"> *</span>
+                <input name="phone" type="tel" required autoComplete="tel" maxLength={20} dir="ltr"
+                  value={guest.phone} onChange={update("phone")}/>
+              </label>
+              <label>{t.country}
+                <input name="country" autoComplete="country-name" maxLength={80}
+                  value={guest.country} onChange={update("country")}/>
+              </label>
+              <label>{t.arrival}
+                <input name="arrivalTime" maxLength={40} placeholder={t.arrivalHint}
+                  value={guest.arrivalTime} onChange={update("arrivalTime")}/>
+              </label>
             </div>
+            <label className="opal-book-notes">{t.notes}
+              <textarea name="notes" rows={4} maxLength={1000} placeholder={t.notesHint}
+                value={guest.notes} onChange={update("notes")}/>
+            </label>
+            <p className="opal-book-helper">{t.privacy}</p>
+            {error&&<p role="alert" className="opal-book-error">{error}</p>}
             <div className="opal-book-actions">
               <button type="button" className="opal-book-back" onClick={()=>navigateTo(1)}>{t.previous}</button>
-              <button type="button" className="opal-book-primary" onClick={continueRoom}
-                disabled={!chosen}>{t.review}<span aria-hidden="true">↗</span></button>
+              <button className="opal-book-primary" type="submit">{t.review}<span aria-hidden="true">→</span></button>
             </div>
-          </div>}
+          </form>}
           {step===3&&<div className="opal-book-review">
-            <div className="opal-book-review-heading">
-              <span className="opal-book-eyebrow">{t.reviewHeading}</span>
-              <strong>{t.status}</strong>
-            </div>
             <div className="opal-book-review-lines">
               <div>
                 <span>{t.checkin} / {t.checkout}</span>
                 <strong>{formatDate(checkin)} — {formatDate(checkout)}</strong>
-                <button type="button" onClick={()=>navigateTo(1)}>{t.editDates}<span aria-hidden="true">↗</span></button>
+                <button type="button" onClick={()=>navigateTo(1)}>{t.editDates}</button>
               </div>
               <div>
                 <span>{t.stay}</span>
@@ -247,32 +286,32 @@ export function BookingExperience({locale,initial}:Props) {
                 <strong>{guestCount} ({adults} {t.adults} · {children} {t.children})</strong>
               </div>
               <div>
-                <span>{t.selected}</span>
-                <strong>{chosen?.name[locale]}</strong>
-                <button type="button" onClick={()=>navigateTo(2)}>{t.editRoom}<span aria-hidden="true">↗</span></button>
+                <span>{t.fullName}</span>
+                <strong>{guest.fullName}</strong>
+                <button type="button" onClick={()=>navigateTo(2)}>{t.editDetails}</button>
               </div>
+              <div><span>{t.email}</span><strong dir="ltr">{guest.email}</strong></div>
+              <div><span>{t.phone}</span><strong dir="ltr">{guest.phone}</strong></div>
+              {guest.country&&<div><span>{t.country}</span><strong>{guest.country}</strong></div>}
+              {guest.arrivalTime&&<div><span>{t.arrival}</span><strong>{guest.arrivalTime}</strong></div>}
+              {guest.notes&&<div><span>{t.notes}</span><strong>{guest.notes}</strong></div>}
             </div>
-            <div className="opal-book-final-note" role="status">
-              <span className="opal-book-final-symbol" aria-hidden="true">✳</span>
-              <div><h3>{t.done}</h3><p>{t.reviewNotice}</p><strong>{t.noBooking}</strong></div>
-            </div>
+            <p className="opal-book-helper">{t.confirmNote}</p>
+            {error&&<p role="alert" className="opal-book-error">{error}</p>}
             <div className="opal-book-actions">
-              <button type="button" className="opal-book-back" onClick={()=>navigateTo(2)}>{t.previous}</button>
-              <Link href={`/${locale}/rooms`} className="opal-book-primary">{t.exploreRooms}<span aria-hidden="true">↗</span></Link>
+              <button type="button" className="opal-book-back" onClick={()=>navigateTo(2)} disabled={sending}>{t.previous}</button>
+              <button type="button" className="opal-book-primary" onClick={()=>void send()}
+                disabled={sending} aria-busy={sending}>{sending?t.sending:t.send}<span aria-hidden="true">→</span></button>
             </div>
           </div>}
         </div>
-        <aside className="opal-book-summary" aria-label={t.reviewHeading}>
+        <aside className="opal-book-summary" aria-label={t.summary}>
           <div className="opal-book-summary-top">
-            <span className="opal-book-eyebrow">{t.breadcrumb}</span>
+            <span className="opal-book-eyebrow">{t.summary}</span>
             <span className="opal-book-summary-ornament" aria-hidden="true">✳</span>
           </div>
-          <div className="opal-book-summary-image">
-            <PreviewPhoto locale={locale} index={chosen?(media.roomMedia[chosen.slug]?.cover??chosen.imageIndices[0]):(media.roomMedia[roomConcepts[0].slug]?.cover??2)}/>
-            <span>{media.approved ? (ar?"صور الفندق المعتمدة":"HOTEL-APPROVED PHOTOS") : t.source}</span>
-          </div>
-          <h2>{chosen?chosen.name[locale]:validDates?t.choose:t.datePlaceholder}</h2>
-          <p className="opal-book-summary-room">{chosen?chosen.introduction[locale]:t.selectionHint}</p>
+          <div className="opal-book-summary-image"><SummaryPhoto locale={locale}/></div>
+          <h2>Opal Legacy Luxor</h2>
           <div className="opal-book-summary-rows">
             <div><span>{t.checkin}</span><strong>{validDates?formatDate(checkin):"—"}</strong></div>
             <div><span>{t.checkout}</span><strong>{validDates?formatDate(checkout):"—"}</strong></div>
@@ -281,16 +320,16 @@ export function BookingExperience({locale,initial}:Props) {
           </div>
           <div className="opal-book-unavailable">
             <span aria-hidden="true">✳</span>
-            <p><strong>{t.noAvailability}</strong>{t.help}</p>
+            <p><strong>{t.checkinTime}</strong>{t.checkoutTime}</p>
           </div>
         </aside>
       </div>
-      <div className="opal-book-bottom-note">{t.note}</div>
+      </>}
     </main>
     <footer className="opal-book-footer">
       <strong>OPAL LEGACY</strong>
-      <p>{t.noBooking}</p>
-      <Link href={`/${locale}`}>{t.home}<span aria-hidden="true">↗</span></Link>
+      <p>Rd Lead To Esna, Luxor, Egypt</p>
+      <Link href={`/${locale}`}>{t.home}<span aria-hidden="true">→</span></Link>
     </footer>
   </>;
 }

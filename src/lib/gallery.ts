@@ -4,7 +4,7 @@ export type HotelImage = {
   src: string;
   alt: string;
   altAr: string;
-  origin: "design-demo" | "third-party-reference" | "hotel-approved";
+  origin: "placeholder" | "third-party-reference" | "hotel-approved";
 };
 
 type ApprovalPhoto = {
@@ -62,24 +62,21 @@ export const officialMediaActive =
 
 
 /**
- * Visual prototyping imagery from Unsplash. These are NOT photographs of Opal Legacy.
- * Clearly labelled as illustrative in the hero and project docs. Replace the entire
- * manifest with hotel-owned, approved and locally served photos before launching.
+ * Until the hotel's own photographs are uploaded through the CMS (or the
+ * official manifest is activated), every photo slot shows a neutral brand
+ * panel. It is decorative (empty alt) and never presented as a photograph.
  */
-const demoGalleryImages: HotelImage[] = [
-  {src:"https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1400&q=80",alt:"Illustrative boutique hotel exterior (design preview, not Opal Legacy)",altAr:"واجهة فندق توضيحية للتصميم، ليست فندق أوبال ليجاسي",origin:"design-demo"},
-  {src:"https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1400&q=80",alt:"Illustrative landscaped hotel pool (design preview)",altAr:"صورة توضيحية لحمام سباحة وحدائق فندق، ليست من فندق أوبال ليجاسي",origin:"design-demo"},
-  {src:"https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=1200&q=80",alt:"Illustrative guest bedroom (design preview)",altAr:"غرفة ضيوف توضيحية، ليست غرفة معتمدة في أوبال ليجاسي",origin:"design-demo"},
-  {src:"https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80",alt:"Illustrative hotel guest bedroom (design preview)",altAr:"غرفة فندقية توضيحية لا تمثل مخزون غرف أوبال ليجاسي",origin:"design-demo"},
-  {src:"https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1200&q=80",alt:"Illustrative resort architecture (design preview)",altAr:"تفاصيل معمارية توضيحية لا تمثل فندق أوبال ليجاسي",origin:"design-demo"},
-  {src:"https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80",alt:"Illustrative hotel suite (design preview)",altAr:"جناح فندقي توضيحي لا يمثل جناحًا مؤكّدًا في أوبال ليجاسي",origin:"design-demo"},
-];
+export const BRAND_PANEL_SRC="/media/brand-panel.svg";
+const placeholderImages: HotelImage[] = Array.from({length:6},()=>({
+  src:BRAND_PANEL_SRC,alt:"",altAr:"",origin:"placeholder" as const,
+}));
 
 
-/** One approved slot replaces the matching preview image only when the
+
+/** One approved slot replaces the matching placeholder only when the
  * complete six-photo, logo, rights and factual-content approval is present. */
 export const galleryImages: HotelImage[] = officialMediaActive
-  ? demoGalleryImages.map((demo,index)=>{
+  ? placeholderImages.map((_,index)=>{
       const approved=official.photos[photoOrder[index]];
       return {
         src:approved.src!,
@@ -88,7 +85,7 @@ export const galleryImages: HotelImage[] = officialMediaActive
         origin:"hotel-approved",
       };
     })
-  : demoGalleryImages;
+  : placeholderImages;
 
 export function photoAlt(index:number,locale:"en"|"ar"):string {
   return locale==="ar"?galleryImages[index].altAr:galleryImages[index].alt;
@@ -119,11 +116,8 @@ export const heroScenes = [
   { src: galleryImages[2].src, alt: galleryImages[2].alt, altAr: galleryImages[2].altAr, label: "03" },
 ] as const;
 
-/**
- * Use smaller responsive downloads for our clearly illustrative Unsplash
- * concepts. Locally-hosted, approved hotel photos remain untouched; they
- * should be pre-sized before upload (see docs/HOTEL_MEDIA_HANDOFF.md).
- */
+/** Responsive candidates for remote CDN images; local hotel photos are
+ * pre-sized before upload (see docs/HOTEL_MEDIA_HANDOFF.md). */
 export function responsivePhotoSrcSet(src: string): string | undefined {
   if (!src.startsWith("https://images.unsplash.com/")) return undefined;
   const image = src.split("?")[0];
@@ -132,10 +126,7 @@ export function responsivePhotoSrcSet(src: string): string | undefined {
     .join(", ");
 }
 
-/**
- * Old external image URLs are retained as source references only. They are not
- * used in this design preview; rights and availability must be verified.
- */
+/** Original listing photo URLs, kept as a reference for the photo handoff. */
 export const referencePhotoUrls = [
   "https://opal-legacy.luxor-hotels-eg.com/data/Photos/OriginalPhoto/17490/1749064/1749064282/luxor-opal-legacy-luxor-photo-22.JPEG",
   "https://opal-legacy.luxor-hotels-eg.com/data/Photos/OriginalPhoto/17490/1749037/1749037857/luxor-opal-legacy-luxor-photo-16.JPEG",
@@ -144,4 +135,4 @@ export const referencePhotoUrls = [
   "https://opal-legacy.luxor-hotels-eg.com/data/Photos/OriginalPhoto/17492/1749236/1749236351/luxor-opal-legacy-luxor-photo-9.JPEG",
   "https://opal-legacy.luxor-hotels-eg.com/data/Photos/OriginalPhoto/17490/1749037/1749037748/luxor-opal-legacy-luxor-photo-27.JPEG"
 ];
-// Replace with owned, local copies before production. Never imply demo imagery is of the hotel.
+// Reference only: not loaded by the site. Use owned, local copies.

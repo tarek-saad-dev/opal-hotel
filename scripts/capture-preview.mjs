@@ -9,7 +9,8 @@ import path from 'node:path';
 
 const origin = process.env.OPAL_PREVIEW_URL || 'http://127.0.0.1:3000';
 const mediaConfig=JSON.parse(await fs.readFile('src/config/hotel-media.json','utf8'));
-const expectedPhotoOrigin=mediaConfig.mode==='official'?'hotel-approved':'design-demo';
+// A fresh CMS has no hotel photos yet: every slot is a decorative brand panel.
+const expectedPhotoOrigin=mediaConfig.mode==='official'?'hotel-approved':'placeholder';
 const out = path.resolve('artifacts/frontend-preview');
 const screens = [
   {id:'desktop-1440',width:1440,height:900,isMobile:false},
@@ -45,6 +46,15 @@ for(const lang of langs)for(const screen of screens){
   });
   // This job tests our frontend; do not repeatedly request the rate-limited reference host.
   await ctx.route('https://opal-legacy.luxor-hotels-eg.com/**', route=>route.abort('blockedbyclient'));
+  // Stand-in for the future backend (docs/BACKEND_API.md): record payloads and
+  // answer 201, so the forms' success paths are exercised end to end.
+  const apiCalls=[];
+  await ctx.route('**/api/v1/**', async route=>{
+    const request=route.request();
+    apiCalls.push({path:new URL(request.url()).pathname,body:request.postDataJSON()});
+    await route.fulfill({status:201,contentType:'application/json',
+      body:JSON.stringify({reference:'OPL-TEST-001'})});
+  });
   const page=await ctx.newPage();
   const errors=[];
   page.on('pageerror',err=>errors.push({type:'pageerror',message:String(err.message).slice(0,200)}));
@@ -106,15 +116,19 @@ for(const lang of langs)for(const screen of screens){
     if(await header.count()) await header.evaluate(element => element.style.visibility='');
     // Exercise actual UI interactions after the pristine visual screenshots.
     const interactions={slides:false,guests:false,menu:false,booking:false,
-      amenities:false,galleryFilter:false,galleryLightbox:false,rooms:false,
+      amenities:false,galleryHidden:false,rooms:false,policies:false,
       review:false,contact:false,footer:false,
-      responsiveMedia:false,dock:false,lightboxFocus:false,menuFocus:false,
+      decorativePanels:false,noPreviewCopy:false,dock:false,menuFocus:false,
       menuGeometry:false,menuScrollLock:false,menuNavigate:false};
     try{
-      const scene=page.locator('.premium-scene-number');
-      const before=await scene.innerText();
-      await page.locator('.premium-hero-scene-navigation button').last().click();
-      interactions.slides=(await scene.innerText())!==before;
+      // Slide controls only exist once there are several real hero photos.
+      const sceneNav=page.locator('.premium-hero-scene-navigation');
+      if(await sceneNav.count()){
+        const scene=page.locator('.premium-scene-number');
+        const before=await scene.innerText();
+        await sceneNav.locator('button').last().click();
+        interactions.slides=(await scene.innerText())!==before;
+      } else interactions.slides=true;
 
       await page.locator('.premium-guest-trigger').click();
       const counter=page.locator('.premium-guest-row').first().locator('output');
@@ -126,7 +140,7 @@ for(const lang of langs)for(const screen of screens){
       if(screen.width<=1040){
         // Regression: the old menu was fixed *inside* the blurred sticky header,
         // which made it header-sized on Safari/Chrome while scrolled.
-        await page.locator('#gallery').scrollIntoViewIfNeeded();
+        await page.locator('#rooms').scrollIntoViewIfNeeded();
         await page.locator('.premium-hamburger').click();
         const surface=page.locator('.premium-menu-surface');
         interactions.menu=await surface.isVisible();
@@ -196,6 +210,8 @@ for(const lang of langs)for(const screen of screens){
         state:'visible',timeout:8000
       });
       const homepageHandoff=new URL(page.url());
+      // Dates and party come from the homepage, so the flow opens on step 2.
+      await page.locator('input[name="fullName"]').waitFor({state:'visible',timeout:8000});
       interactions.booking=homepageHandoff.pathname===`/${lang}/booking`
         &&homepageHandoff.searchParams.has('checkin')
         &&homepageHandoff.searchParams.has('checkout')
@@ -204,51 +220,48 @@ for(const lang of langs)for(const screen of screens){
       // Continue the existing homepage checks on a fresh page after handoff.
       await load(page,url);
 
-      interactions.rooms=(await page.locator('.opal-room-card').count())===3;
+      interactions.rooms=(await page.locator('.opal-rooms-info').count())===1
+        &&(await page.locator('.opal-rooms-features li').count())>=10
+        &&(await page.locator('.opal-rooms-plan').getAttribute('href'))==='#booking';
+      interactions.policies=(await page.locator('.opal-policies li').count())>=4;
       const detail=page.locator('.opal-amenity-details').first();
       await detail.locator('summary').click();
       interactions.amenities=(await detail.getAttribute('open'))!==null
         &&(await detail.locator('li').count())>0;
       await detail.locator('summary').click();
 
-      const galleryTabs=page.locator('.opal-gallery-tabs button');
-      await galleryTabs.nth(1).click();
-      const spacesCount=await page.locator('.opal-gallery-item').count();
-      await galleryTabs.nth(2).click();
-      const momentsCount=await page.locator('.opal-gallery-item').count();
-      await galleryTabs.nth(0).click();
-      const allCount=await page.locator('.opal-gallery-item').count();
-      // V2 categorizes the gallery by actual hotel scene, not the old
-      // hardcoded "spaces" (4) / "moments" (2) demo-image buckets.
-      interactions.galleryFilter=(await galleryTabs.count())>=3
-        &&spacesCount>0&&momentsCount>0
-        &&spacesCount<allCount&&momentsCount<allCount&&allCount>=6;
-      await page.locator('.opal-gallery-item').first().click();
-      await page.locator('.lightbox').waitFor({state:'visible',timeout:3000});
-      await page.keyboard.press('Escape');
-      await page.locator('.lightbox').waitFor({state:'detached',timeout:3000});
-      interactions.galleryLightbox=true;
-      interactions.lightboxFocus=await page.locator('.opal-gallery-item').first().evaluate(el=>el===document.activeElement);
+      // No hotel photos on a fresh CMS: the gallery and its nav link stay hidden.
+      interactions.galleryHidden=(await page.locator('#gallery').count())===0
+        &&(await page.locator('a[href="#gallery"]').count())===0
+        &&(await page.locator('.premium-photo-button').count())===0;
 
       await page.locator('.opal-end-rating input[value="9"]').check();
       await page.locator('input[name="reviewName"]').fill('Preview Guest');
       await page.locator('textarea[name="reviewStory"]').fill('Sample UI-only review. Nothing is sent.');
       await page.locator('.opal-end-review-paper button[type="submit"]').click();
-      interactions.review=(await page.locator('.opal-end-review-paper [role="status"]').count())===1
-        && (await page.locator('.opal-end-score-row strong').innerText()).includes('09');
+      await page.locator('.opal-end-review-paper .opal-end-status.is-success').waitFor({timeout:5000});
+      const reviewCall=apiCalls.find(call=>call.path==='/api/v1/reviews');
+      interactions.review=Boolean(reviewCall)&&reviewCall.body.rating===9
+        &&reviewCall.body.locale===lang;
 
       await page.locator('input[name="contactName"]').fill('Preview Guest');
       await page.locator('input[name="contactEmail"]').fill('preview@example.org');
       await page.locator('input[name="contactSubject"]').fill('UI preview');
       await page.locator('textarea[name="contactMessage"]').fill('Design preview only; do not send.');
       await page.locator('.opal-end-contact-submit').click();
-      interactions.contact=(await page.locator('.opal-end-contact-paper [role="status"]').count())===1;
+      await page.locator('.opal-end-contact-paper .opal-end-status.is-success').waitFor({timeout:5000});
+      const contactCall=apiCalls.find(call=>call.path==='/api/v1/contact-messages');
+      interactions.contact=Boolean(contactCall)&&contactCall.body.email==='preview@example.org';
 
-      interactions.footer=(await page.locator('.opal-end-footer nav a').count())===7
+      interactions.footer=(await page.locator('.opal-end-footer nav a').count())===6
         &&(await page.locator('.opal-end-backtop').getAttribute('href'))==='#top'
         &&(await page.locator('.opal-end-footer a[hreflang]').count())===1;
 
-      interactions.responsiveMedia=(await page.locator('img[srcset]').count())>=8;
+      interactions.decorativePanels=await page.evaluate(()=>
+        [...document.querySelectorAll('img[data-media-origin="placeholder"]')].every(img=>img.alt===''));
+      interactions.noPreviewCopy=await page.evaluate(()=>
+        !/design preview|illustrative|not (yet )?(enabled|connected|delivered)|preview only|نسخة (العرض|تجريبية)|توضيحية|غير مفعل/i
+          .test(document.body.innerText));
 
       if(screen.width<=800){
         await page.locator('#rooms').scrollIntoViewIfNeeded();
@@ -265,86 +278,20 @@ for(const lang of langs)for(const screen of screens){
     }catch(e){
       errors.push({type:'interaction',message:String(e.message).slice(0,320)});
     }
-    // Validate both new bilingual Rooms V2 routes with a browser, not just
-    // source assertions. These paths are concept previews, never inventory.
-    const roomsQA={collection:false,detail:false,thumbnails:false,lightbox:false,
-      language:false,navigation:false,previewOnly:false,noOverflow:false,
-      imagesReady:false};
+    // Retired room concept URLs must land on the homepage Rooms section.
+    const roomsQA={redirect:false,slugRedirect:false};
     try{
       await load(page,`${origin}/${lang}/rooms`);
-      await page.waitForTimeout(450);
-      roomsQA.collection=(await page.locator('.room-exp-catalogue-card').count())===3
-        &&(await page.locator('.room-exp-concept-badge').count())>=1;
-      // Eagerly load the gallery/catalgoue images for screenshot fidelity.
-      // When the user navigates quickly, remote images may still be loading
-      // even though the route itself has rendered.
-      await page.evaluate(()=>document.querySelectorAll('.room-exp-page img').forEach(img=>{
-        img.loading='eager';
-      }));
-      await page.waitForFunction(()=>[...document.querySelectorAll('.room-exp-page img')]
-        .every(img=>img.complete&&img.naturalWidth>0),null,{timeout:15000});
-      const catalogueMetrics=await page.evaluate(()=>({
-        width:document.documentElement.scrollWidth,
-        viewport:innerWidth,
-      }));
-      roomsQA.noOverflow=catalogueMetrics.width<=screen.width+2;
-      await page.screenshot({path:path.join(dir,'rooms-collection.png'),
-        fullPage:true,animations:'disabled',timeout:60000});
-
-      await page.locator('.room-exp-card-visual').first().click();
-      await page.waitForURL(`**/${lang}/rooms/light-and-stillness`,{timeout:8000});
-      roomsQA.detail=(await page.locator('.room-exp-detail-heading h1').count())===1
-        &&(await page.locator('.room-exp-related-card').count())===2;
-      await page.evaluate(()=>document.querySelectorAll('.room-exp-page img').forEach(img=>{
-        img.loading='eager';
-      }));
-      await page.waitForFunction(()=>[...document.querySelectorAll('.room-exp-page img')]
-        .every(img=>img.complete&&img.naturalWidth>0),null,{timeout:15000});
-      roomsQA.imagesReady=await page.locator('.room-exp-gallery-open img')
-        .evaluate(img=>img.complete&&img.naturalWidth>0);
-      await page.screenshot({path:path.join(dir,'room-detail.png'),
-        fullPage:true,animations:'disabled',timeout:60000});
-      await page.locator('.room-exp-gallery-controls button').nth(1).click();
-      roomsQA.thumbnails=await page.locator('.room-exp-gallery-controls button').nth(1)
-        .getAttribute('aria-pressed')==='true';
-      const beforeZoom=await page.locator('.room-exp-gallery-counter').innerText();
-      roomsQA.thumbnails=roomsQA.thumbnails&&beforeZoom.includes('02');
-      await page.locator('.room-exp-gallery-open').click();
-      await page.locator('.room-exp-lightbox').waitFor({state:'visible',timeout:3000});
-      await page.keyboard.press('ArrowRight');
-      const zoomCounter=await page.locator('.room-exp-lightbox-image p').innerText();
-      await page.keyboard.press('Escape');
-      await page.locator('.room-exp-lightbox').waitFor({state:'detached',timeout:3000});
-      const zoomFocus=await page.locator('.room-exp-gallery-open')
-        .evaluate(el=>el===document.activeElement);
-      roomsQA.lightbox=zoomCounter.includes('3 / 3')&&zoomFocus;
-
-      const notice=await page.locator('.room-exp-truth-note').innerText();
-      roomsQA.previewOnly=lang==='ar'
-        ? notice.includes('نموذج UI')&&notice.includes('لا توجد أسعار')
-        : notice.includes('Design preview only')&&notice.includes('rates');
-      const detailMetrics=await page.evaluate(()=>({
-        width:document.documentElement.scrollWidth,viewport:innerWidth
-      }));
-      roomsQA.noOverflow=roomsQA.noOverflow&&detailMetrics.width<=screen.width+2;
-
-      const targetLang=lang==='en'?'ar':'en';
-      roomsQA.language=(await page.locator('.room-exp-language').getAttribute('href'))
-        ===`/${targetLang}/rooms/light-and-stillness`;
-      await page.locator('.room-exp-related-card').first().click();
-      await page.waitForURL(`**/${lang}/rooms/quiet-comforts`,{timeout:8000});
-      roomsQA.navigation=(await page.locator('.room-exp-detail-heading h1').count())===1;
-      await page.locator('.room-exp-breadcrumb a').nth(1).click();
-      await page.waitForURL(`**/${lang}/rooms`,{timeout:8000});
-      roomsQA.navigation=roomsQA.navigation
-        &&(await page.locator('.room-exp-catalogue-card').count())===3;
+      roomsQA.redirect=new URL(page.url()).pathname===`/${lang}`
+        &&(await page.locator('#rooms').count())===1;
+      await load(page,`${origin}/${lang}/rooms/light-and-stillness`);
+      roomsQA.slugRedirect=new URL(page.url()).pathname===`/${lang}`;
     }catch(err){
-      errors.push({type:'rooms-v2',message:String(err.message).slice(0,320)});
+      errors.push({type:'rooms-redirect',message:String(err.message).slice(0,320)});
     }
-    // Full client-side Booking UI V2 progression. This verifies no payment,
-    // booking confirmation or inventory claim is presented at any step.
-    const bookingQA={start:false,guests:false,dates:false,rooms:false,selection:false,
-      review:false,edit:false,locale:false,noReservation:false,noOverflow:false};
+    // Booking request flow: stay → details (validated) → review → API → sent.
+    const bookingQA={start:false,guests:false,dates:false,validation:false,details:false,
+      review:false,edit:false,locale:false,sent:false,noOverflow:false};
     try{
       await load(page,`${origin}/${lang}/booking`);
       await page.waitForFunction(()=>
@@ -352,8 +299,7 @@ for(const lang of langs)for(const screen of screens){
         &&!!document.querySelector('input[name="checkout"]')?.value,
         null,{timeout:5000});
       bookingQA.start=(await page.locator('.opal-book-step').count())===3
-        &&(await page.locator('.opal-book-step.is-current').count())===1
-        &&(await page.locator('.opal-book-preview-label').count())===1;
+        &&(await page.locator('.opal-book-step.is-current').count())===1;
       const initialAdults=Number(await page.locator('.opal-book-counter').first().locator('output').innerText());
       await page.locator('.opal-book-counter').first().locator('button').last().click();
       bookingQA.guests=Number(await page.locator('.opal-book-counter').first().locator('output').innerText())
@@ -366,45 +312,51 @@ for(const lang of langs)for(const screen of screens){
       await page.screenshot({path:path.join(dir,'booking-step-1.png'),fullPage:true,
         animations:'disabled',timeout:60000});
       await page.locator('.opal-book-dates button[type="submit"]').click();
-      bookingQA.rooms=(await page.locator('.opal-book-room-select').count())===3
-        &&(await page.locator('.opal-book-step.is-current').count())===1;
-      await page.locator('.opal-book-room-select').nth(1).click();
-      bookingQA.selection=(await page.locator('.opal-book-room-select').nth(1)
-        .getAttribute('aria-pressed'))==='true';
-      // Required media is loaded before the screenshot is captured.
-      await page.evaluate(()=>document.querySelectorAll('.opal-book-page img').forEach(img=>{
-        img.loading='eager';
-      }));
-      await page.waitForFunction(()=>[...document.querySelectorAll('.opal-book-page img')]
-        .every(img=>img.complete&&img.naturalWidth>0),null,{timeout:16000});
+      await page.locator('input[name="fullName"]').waitFor({state:'visible',timeout:5000});
+      // Empty details must be rejected before the review step.
+      await page.locator('.opal-book-details button[type="submit"]').click();
+      bookingQA.validation=(await page.locator('.opal-book-error').count())===1
+        &&(await page.locator('.opal-book-review').count())===0;
+      await page.locator('input[name="fullName"]').fill('Preview Guest');
+      await page.locator('input[name="email"]').fill('guest@example.org');
+      await page.locator('input[name="phone"]').fill('+20 100 000 0000');
+      await page.locator('input[name="country"]').fill('Egypt');
+      bookingQA.details=(await page.locator('.opal-book-error').count())===0;
       await page.screenshot({path:path.join(dir,'booking-step-2.png'),fullPage:true,
         animations:'disabled',timeout:60000});
-      await page.locator('.opal-book-choose .opal-book-primary').click();
-      bookingQA.review=(await page.locator('.opal-book-review').count())===1
+      await page.locator('.opal-book-details button[type="submit"]').click();
+      await page.locator('.opal-book-review').waitFor({state:'visible',timeout:5000});
+      bookingQA.review=(await page.locator('.opal-book-review-lines>div').count())>=6
         &&(await page.locator('.opal-book-step.is-current').count())===1;
-      const reviewNote=await page.locator('.opal-book-final-note').innerText();
-      bookingQA.noReservation=lang==='ar'
-        ? reviewNote.includes('لم يتم إنشاء أو تأكيد أي حجز')
-        : reviewNote.includes('No reservation has been created or confirmed');
       await page.screenshot({path:path.join(dir,'booking-step-3.png'),fullPage:true,
         animations:'disabled',timeout:60000});
       const otherLocale=lang==='en'?'ar':'en';
       bookingQA.locale=(await page.locator('.opal-book-lang').getAttribute('href'))
         .startsWith(`/${otherLocale}/booking?`);
+      await page.locator('.opal-book-review-lines button').first().click();
+      bookingQA.edit=(await page.locator('input[name="checkin"]').count())===1;
+      // Back through to review and send.
+      await page.locator('.opal-book-dates button[type="submit"]').click();
+      await page.locator('.opal-book-details button[type="submit"]').click();
+      await page.locator('.opal-book-review .opal-book-primary').click();
+      await page.locator('.opal-book-sent').waitFor({state:'visible',timeout:5000});
+      const bookingCall=apiCalls.find(call=>call.path==='/api/v1/booking-requests');
+      bookingQA.sent=Boolean(bookingCall)&&bookingCall.body.guest.email==='guest@example.org'
+        &&bookingCall.body.adults===initialAdults+1
+        &&(await page.locator('.opal-book-reference').innerText()).includes('OPL-TEST-001');
+      await page.screenshot({path:path.join(dir,'booking-sent.png'),fullPage:true,
+        animations:'disabled',timeout:60000});
       const finalMetrics=await page.evaluate(()=>
         ({width:document.documentElement.scrollWidth,viewport:innerWidth}));
       bookingQA.noOverflow=bookingQA.noOverflow&&finalMetrics.width<=screen.width+2;
-      await page.locator('.opal-book-review-lines button').first().click();
-      bookingQA.edit=(await page.locator('input[name="checkin"]').count())===1
-        &&(await page.locator('.opal-book-step.is-current').count())===1;
     }catch(err){
-      errors.push({type:'booking-v2',message:String(err.message).slice(0,320)});
+      errors.push({type:'booking-request',message:String(err.message).slice(0,320)});
     }
     const routeQA={language:false,missing:false,recovery:false,noOverflow:false};
     try {
       // Verify the top-level HTML language/direction, not just a nested RTL
       // container. This matters for screen readers and browser translation.
-      await load(page,`${origin}/${lang}/rooms`);
+      await load(page,`${origin}/${lang}/booking`);
       await page.waitForFunction((loc)=>document.documentElement.lang===loc
         &&document.documentElement.dir===(loc==='ar'?'rtl':'ltr'),
         lang,{timeout:5000});
@@ -414,7 +366,7 @@ for(const lang of langs)for(const screen of screens){
 
       // An unknown concept must return an actual 404 and expose localized,
       // keyboard-accessible recovery actions rather than a broken room page.
-      const response=await page.goto(`${origin}/${lang}/rooms/not-an-opal-room`,
+      const response=await page.goto(`${origin}/${lang}/not-an-opal-page`,
         {waitUntil:'domcontentloaded',timeout:12000});
       await page.locator('.opal-recovery').waitFor({state:'visible',timeout:5000});
       routeQA.missing=response?.status()===404
@@ -432,12 +384,15 @@ for(const lang of langs)for(const screen of screens){
     const overflow=audit.document.width > screen.width+2;
     const provenancePhotos=audit.images.filter(i=>i.origin!==null);
     const mediaQA={
-      sameOrigin:provenancePhotos.length>=5
+      sameOrigin:provenancePhotos.length>=3
         &&provenancePhotos.every(i=>i.origin===expectedPhotoOrigin),
-      localizedHero:lang==='ar'
-        ? audit.images.some(i=>i.origin===expectedPhotoOrigin
-            &&[...i.alt].some(char=>char.charCodeAt(0)>=0x600&&char.charCodeAt(0)<=0x6ff))
-        : audit.images.some(i=>i.origin===expectedPhotoOrigin&&i.alt.length>10),
+      // Real photos need a localized description; brand panels are decorative.
+      localizedHero:expectedPhotoOrigin==='placeholder'
+        ? provenancePhotos.every(i=>i.alt==='')
+        : lang==='ar'
+          ? audit.images.some(i=>i.origin===expectedPhotoOrigin
+              &&[...i.alt].some(char=>char.charCodeAt(0)>=0x600&&char.charCodeAt(0)<=0x6ff))
+          : audit.images.some(i=>i.origin===expectedPhotoOrigin&&i.alt.length>10),
     };
     const passed=validHeadings&&validAnchors&&!overflow&&errors.length===0
       &&Object.values(mediaQA).every(Boolean)

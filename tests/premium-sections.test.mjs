@@ -14,11 +14,11 @@ test("Premium phases are integrated in the correct visual narrative", () => {
   assert.ok(shell.includes("onOpenPhoto={openPhoto}"));
 });
 
-test("Rooms are clearly concepts, with no fake inventory or rates", () => {
+test("Rooms present real facts without invented room types or rates", () => {
   const src=read("src/components/PremiumSections.tsx");
-  assert.ok(src.includes("Not actual room types or bookable inventory"));
-  assert.ok(src.includes("c.labels.noBooking"));
-  assert.ok(src.includes("attemptedBooking"));
+  assert.ok(src.includes("c.roomFacts.summary"));
+  assert.ok(!src.includes("DESIGN STORY"));
+  assert.ok(!/illustrative|not actual room types/i.test(src));
   assert.ok(!src.includes("booking confirmed"));
   assert.ok(!src.includes("/api/booking"));
 });
