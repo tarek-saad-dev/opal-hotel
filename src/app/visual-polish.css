@@ -92,6 +92,9 @@ html{scroll-behavior:smooth;scroll-padding-top:104px}
 .opal-cms-more-story>summary{cursor:pointer;font-size:11px;font-weight:700;color:#41634e;list-style-position:inside}
 .opal-cms-more-story>p{font-size:13px;line-height:1.9;color:#647568;margin-top:12px;max-width:720px}
 .opal-cms-quick-facts{list-style:none;margin:17px 0 31px;padding:0;display:flex;gap:9px;flex-wrap:wrap}
-.opal-cms-quick-facts>li{background:#eee9dc;color:#45604e;border:1px solid #e1d9c7;
- padding:9px 13px;font-size:11px;font-weight:650;line-height:1.5}
-@media(max-width:600px){.opal-cms-quick-facts{gap:7px}.opal-cms-quick-facts>li{padding:8px 10px;font-size:10px}}
+/* Facts, not controls: no button-like box, a quiet check mark instead. */
+.opal-cms-quick-facts>li{background:transparent;color:#45604e;border:0;
+ padding:4px 14px 4px 0;font-size:12px;font-weight:600;line-height:1.5;cursor:default}
+.opal-cms-quick-facts>li::before{content:"✓";margin-inline-end:7px;color:#a3825a}
+[dir="rtl"] .opal-cms-quick-facts>li{padding:4px 0 4px 14px}
+@media(max-width:600px){.opal-cms-quick-facts{gap:4px}.opal-cms-quick-facts>li{font-size:11px}}

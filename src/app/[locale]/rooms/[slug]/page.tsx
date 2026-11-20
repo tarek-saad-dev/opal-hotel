@@ -22,7 +22,7 @@ export async function generateMetadata({params}:Props):Promise<Metadata>{
   const concept=getRoomConcept(slug);
   if(!concept)return {};
   return {
-    title:`${concept.name[locale]} | ${locale==="ar"?"تصور تصميمي":"Room Design Concept"} | Opal Legacy`,
+    title:`${concept.name[locale]} | ${locale==="ar"?"تصور تصميمي":"Room Design Concept"}`,
     description:concept.introduction[locale],
     alternates:{languages:{en:`/en/rooms/${slug}`,ar:`/ar/rooms/${slug}`}},
     robots:{index:false,follow:false},

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import type { HotelContent, Locale } from "@/lib/hotel-content";
 import { hotelBrand } from "@/lib/gallery";
@@ -9,11 +9,16 @@ import { useCmsSite,useHotelMedia } from "@/components/CmsProvider";
 type Props = { locale: Locale; content: HotelContent };
 const mapUrl = (address:string) => "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(address);
 
-function Arrow({ diagonal = false }: { diagonal?: boolean }) {
+function Arrow({ diagonal = false, up = false }: { diagonal?: boolean; up?: boolean }) {
   return <svg width="21" height="21" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
       viewBox="0 0 24 24" aria-hidden="true">
-    {diagonal ? <><path d="M6 18 18 6M7 6h11v11"/></> : <><path d="M4 12h16m-7-7 7 7-7 7"/></>}
+    {up ? <><path d="M12 20V4m-7 7 7-7 7 7"/></>
+      : diagonal ? <><path d="M6 18 18 6M7 6h11v11"/></> : <><path d="M4 12h16m-7-7 7 7-7 7"/></>}
   </svg>;
+}
+
+function RequiredMark() {
+  return <span className="opal-required-mark" aria-hidden="true"> *</span>;
 }
 
 function Eyebrow({number,children}: {number:string;children:ReactNode}) {
@@ -23,8 +28,14 @@ function Eyebrow({number,children}: {number:string;children:ReactNode}) {
 export function PremiumReviews({locale,content:c}:Props) {
   const heading=useCmsSite().locales[locale].headings.reviews;
   const ar=locale==="ar";
-  const [rating,setRating]=useState(8);
+  // No preselected score: a default value nudges the guest's rating.
+  const [rating,setRating]=useState<number|null>(null);
   const [submitted,setSubmitted]=useState(false);
+  const [thisMonth,setThisMonth]=useState("");
+  useEffect(()=>{
+    const now=new Date();
+    setThisMonth(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`);
+  },[]);
   const t=ar ? {
     kicker:"كلمات تترك أثرًا",
     heading:"بعض الذكريات", accent:"تستحق الحكاية.",
@@ -79,28 +90,28 @@ export function PremiumReviews({locale,content:c}:Props) {
       <form className="opal-end-form" onSubmit={submit} aria-label={c.labels.reviewsTitle}>
         <div className="opal-end-score-row">
           <span>{t.score}</span>
-          <strong aria-live="polite" dir="ltr"><span>{String(rating).padStart(2,"0")}</span> / 10</strong>
+          <strong aria-live="polite" dir="ltr"><span>{rating===null?"—":String(rating).padStart(2,"0")}</span> / 10</strong>
         </div>
         <fieldset className="opal-end-rating" aria-label={t.score}>
           <legend className="opal-sr-only">{t.score}</legend>
           {Array.from({length:10},(_,i)=>i+1).map(value=>
             <label key={value} className={rating===value?"is-selected":""}>
-              <input type="radio" name="rating" value={value} checked={rating===value}
+              <input type="radio" name="rating" value={value} checked={rating===value} required
                 onChange={()=>{setRating(value);setSubmitted(false);}}/>
               <span>{value}</span>
             </label>
           )}
         </fieldset>
         <div className="opal-end-form-two">
-          <label>{t.name}
+          <label>{t.name}<RequiredMark/>
             <input required name="reviewName" type="text" autoComplete="name" maxLength={100}
               onChange={()=>setSubmitted(false)} placeholder={t.nameExample}/>
           </label>
           <label>{t.visit}
-            <input name="visitDate" type="month" onChange={()=>setSubmitted(false)}/>
+            <input name="visitDate" type="month" max={thisMonth||undefined} onChange={()=>setSubmitted(false)}/>
           </label>
         </div>
-        <label>{t.story}
+        <label>{t.story}<RequiredMark/>
           <textarea name="reviewStory" rows={3} maxLength={1200} required
             onChange={()=>setSubmitted(false)} placeholder={t.storyPlaceholder}/>
         </label>
@@ -177,20 +188,20 @@ export function PremiumContact({locale,content:c}:Props) {
       <h3>{t.formTitle}</h3>
       <form className="opal-end-form opal-end-contact-form" onSubmit={submit} aria-label={c.labels.contactTitle}>
         <div className="opal-end-form-two">
-          <label>{c.labels.name}
+          <label>{c.labels.name}<RequiredMark/>
             <input name="contactName" type="text" autoComplete="name" required maxLength={100}
               placeholder={t.nameExample} onChange={()=>setSubmitted(false)}/>
           </label>
-          <label>{t.email}
+          <label>{t.email}<RequiredMark/>
             <input name="contactEmail" type="email" autoComplete="email" required maxLength={254}
               placeholder={t.emailExample} onChange={()=>setSubmitted(false)}/>
           </label>
         </div>
-        <label>{c.labels.subject}
+        <label>{c.labels.subject}<RequiredMark/>
           <input name="contactSubject" type="text" required maxLength={160}
             placeholder={t.subjectExample} onChange={()=>setSubmitted(false)}/>
         </label>
-        <label>{c.labels.message}
+        <label>{c.labels.message}<RequiredMark/>
           <textarea name="contactMessage" rows={5} required maxLength={2000}
             placeholder={t.messageExample} onChange={()=>setSubmitted(false)}/>
         </label>
@@ -204,7 +215,6 @@ export function PremiumContact({locale,content:c}:Props) {
 
 export function PremiumFooter({locale,content:c}:Props) {
   const cms=useCmsSite();
-  const visible=new Set(cms.sections.filter(item=>item.visible).map(item=>item.id));
   const media=useHotelMedia();
   const logoSrc=media.logoSrc??hotelBrand.officialLogoSrc;
   const ar=locale==="ar";
@@ -213,7 +223,7 @@ export function PremiumFooter({locale,content:c}:Props) {
     kicker:"اكتشف الأقصر بطريقة مختلفة",
     title:"الحكايات الجميلة", accent:"بتبدأ من هنا.",
     pre:"فندق أوبال ليجاسي", discover:"اكتشف", connect:"روابط سريعة",
-    next:"مستعد تكتشف أكثر؟", map:"شوف الموقع", language:"English",
+    next:"مستعد تكتشف أكثر؟", plan:"خطط لإقامتك", map:"شوف الموقع", language:"English",
     demo:media.approved ? "صور الفندق معتمدة؛ الحجز والتواصل الإلكتروني غير مفعلين بعد." : "نسخة العرض — الصور التوضيحية لا تمثل الفندق، والحجز والتواصل غير مفعلين.",
     credits:"صُمم بهدوء ليبقى في الذاكرة",
   } : {
@@ -221,17 +231,20 @@ export function PremiumFooter({locale,content:c}:Props) {
     kicker:"A NEW WAY TO FEEL LUXOR",
     title:"Beautiful stories", accent:"begin here.",
     pre:"Opal Legacy Hotel", discover:"EXPLORE", connect:"DISCOVER",
-    next:"READY FOR YOUR NEXT STORY?", map:"FIND US ON THE MAP", language:"العربية",
+    next:"READY FOR YOUR NEXT STORY?", plan:"PLAN YOUR STAY", map:"FIND US ON THE MAP", language:"العربية",
     demo:media.approved ? "Approved hotel imagery. Booking and online contact remain disabled." : "Design preview. Imagery is illustrative; bookings and contact delivery are not enabled.",
     credits:"CONSIDERED DETAILS. LASTING FEELINGS.",
   };
-  const explore=(["overview","facilities","rooms","gallery"] as const);
-  const other=(["location","reviews","contact"] as const);
+  // Same order as the page sections (and the header menu).
+  const ordered=cms.sections.filter(item=>item.visible).map(item=>item.id);
+  const explore=ordered.filter((id):id is "overview"|"facilities"|"location"|"rooms"|"gallery"=>
+    ["overview","facilities","location","rooms","gallery"].includes(id));
+  const other=ordered.filter((id):id is "reviews"|"contact"=>id==="reviews"||id==="contact");
   return <div className="opal-end-footer-inner">
     <div className="opal-end-footer-heading">
       <div><span className="opal-end-footer-kicker">{t.kicker}</span>
         <h2>{t.title} <em>{t.accent}</em></h2></div>
-      <a href="#top" className="opal-end-backtop">{t.top}<Arrow diagonal/></a>
+      <a href="#top" className="opal-end-backtop">{t.top}<Arrow up/></a>
     </div>
     <div className="opal-end-footer-columns">
       <div className="opal-end-footer-brand">
@@ -244,20 +257,21 @@ export function PremiumFooter({locale,content:c}:Props) {
       </div>
       <nav aria-label={t.discover}>
         <h3>{t.discover}</h3>
-        {explore.filter(key=>visible.has(key)).map(key=><a href={`#${key}`} key={key}>{c.nav[key]}</a>)}
+        {explore.map(key=><a href={`#${key}`} key={key}>{c.nav[key]}</a>)}
       </nav>
       <nav aria-label={t.connect}>
         <h3>{t.connect}</h3>
-        {other.filter(key=>visible.has(key)).map(key=><a href={`#${key}`} key={key}>{c.nav[key]}</a>)}
+        {other.map(key=><a href={`#${key}`} key={key}>{c.nav[key]}</a>)}
       </nav>
       <div className="opal-end-footer-last">
         <span>{t.next}</span>
+        <a href="#booking">{t.plan}<Arrow/></a>
         <a href={mapUrl(c.address)} rel="noopener noreferrer" target="_blank">{t.map}<Arrow diagonal/></a>
         <a href={ar?"/en":"/ar"} lang={ar?"en":"ar"} hrefLang={ar?"en":"ar"}>{t.language}</a>
       </div>
     </div>
     <div className="opal-end-footer-bottom">
-      <span>© OPAL LEGACY · LUXOR</span><p>{t.demo}</p><span>{t.credits}</span>
+      <span suppressHydrationWarning>© {new Date().getFullYear()} OPAL LEGACY · LUXOR</span><p>{t.demo}</p><span>{t.credits}</span>
     </div>
   </div>;
 }

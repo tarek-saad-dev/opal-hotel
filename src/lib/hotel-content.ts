@@ -55,11 +55,12 @@ const en: HotelContent = {
     {title:"Room Amenities",items:["Air conditioning","Heating","Mini-bar","Soundproofed rooms","Sitting area","Patio","Terrace","Garden furniture","Tea and coffee facilities","Dining table","Ironing facilities","Free toiletries","Flat-screen TV","AM/FM alarm clock","Cots","Babysitting/Child services","Baby pushchair","Children's buffet","Children's play area"]}
   ],
   attractions: [
+    {name:"Nady Land Amusement Park & Zoo",distance:"1.4 km"},
     {name:"Salem Hot Air Balloons Luxor",distance:"1.5 km"},
     {name:"Banana Island",distance:"2.6 km"},
-    {name:"Local Tours Egypt",distance:"2.4 km"},
-    {name:"Luxor International Airport",distance:"14 km"},
-    {name:"Luxor Train Station",distance:"4.5 km"}
+    {name:"Luxor Train Station",distance:"4.5 km"},
+    {name:"Luxor Temple",distance:"4.6 km"},
+    {name:"Luxor International Airport",distance:"14 km"}
   ]
 };
 const ar: HotelContent = {
@@ -99,11 +100,12 @@ const ar: HotelContent = {
     {title:"مرافق الغرفة",items:["تكييف","تدفئة","ميني بار","نوافذ عازلة للصوت","منطقة الجلوس","فناء","شرفة","مفروشات الحدائق","مرافق الشاي والقهوة","طاولة الطعام","مرافق الكي","مستلزمات الحمام المجانية","تلفاز بشاشة مسطحة","منبه AM/FM","أسرة أطفال","خدمة مجالسة الأطفال","عربة أطفال","بوفيه للأطفال","منطقة لعب الأطفال"]}
   ],
   attractions:[
-    {name:"Salem Hot Air Balloons Luxor",distance:"1.5 كم"},
     {name:"ملاهي وحديقة حيوان الندي لاند",distance:"1.4 كم"},
-    {name:"Luxor Temple",distance:"4.6 كم"},
-    {name:"مطار الأقصر الدولي",distance:"14 كم"},
-    {name:"محطة قطار الأقصر",distance:"4.5 كم"}
+    {name:"سالم للمناطيد بالأقصر",distance:"1.5 كم"},
+    {name:"جزيرة الموز",distance:"2.6 كم"},
+    {name:"محطة قطار الأقصر",distance:"4.5 كم"},
+    {name:"معبد الأقصر",distance:"4.6 كم"},
+    {name:"مطار الأقصر الدولي",distance:"14 كم"}
   ]
 };
 const content:Record<Locale,HotelContent>={en,ar};

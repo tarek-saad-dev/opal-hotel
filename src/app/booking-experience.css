@@ -227,7 +227,7 @@
   .opal-book-brand strong{font-size:19px}
   .opal-book-mark{width:35px;height:35px;font-size:32px}
   .opal-book-header-links{gap:12px}
-  .opal-book-header-links>a:first-child{display:none}
+  .opal-book-header-links>a:nth-child(2){display:none}
   .opal-book-header-links .opal-book-lang{padding:9px;min-height:39px;font-size:11px}
   .opal-book-introduction{padding:63px 19px 34px;display:block}
   .opal-book-introduction h1{font-size:clamp(56px,12vw,78px);margin:20px 0}

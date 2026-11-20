@@ -19,7 +19,7 @@ export async function generateMetadata({params}:Pick<PageProps,"params">):Promis
   if(!isLocale(locale))return {};
   const t=bookingCopy(locale);
   return {
-    title:locale==="ar"?"معاينة رحلة الحجز | أوبال ليجاسي":"Booking Journey Preview | Opal Legacy",
+    title:locale==="ar"?"معاينة رحلة الحجز":"Booking Journey Preview",
     description:t.intro,
     alternates:{languages:{en:"/en/booking",ar:"/ar/booking"}},
     robots:{index:false,follow:false},

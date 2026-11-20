@@ -17,12 +17,14 @@
 .opal-hero-watch:hover{background:#254536}
 .opal-film-backdrop{position:fixed;inset:0;z-index:200;background:#06150ff2;
   display:grid;place-items:center;padding:clamp(12px,4vw,45px)}
-.opal-film-panel{width:min(100%,1150px);background:#10231c;border:1px solid #fff4}
+.opal-film-panel{width:fit-content;max-width:min(100%,1150px);background:#10231c;border:1px solid #fff4}
 .opal-film-top{display:flex;justify-content:space-between;align-items:center;
   color:#f5e8d5;padding:12px 20px;font-size:12px;letter-spacing:.1em}
 .opal-film-top button{border:1px solid #ffffff55;background:transparent;color:#fff;
   font-size:30px;line-height:1;width:45px;height:45px;cursor:pointer}
-.opal-full-film-player{display:block;width:100%;max-height:min(75svh,740px);background:#000;aspect-ratio:16/9}
+/* Size to the film's own aspect ratio (the hotel film is portrait) instead of
+   forcing 16:9 with wide black bars. */
+.opal-full-film-player{display:block;width:auto;max-width:100%;height:min(75svh,740px);min-width:min(320px,100%);background:#000}
 @media(max-width:800px){
   .opal-hero-video-toggle{top:108px;inset-inline-end:25px}
   .opal-hero-watch{padding:10px 12px;font-size:11px;min-height:44px}

@@ -31,7 +31,7 @@ test("Homepage cards link to room routes without breaking gallery",()=>{
   assert.ok(src.includes("roomConcepts[i].slug"));
   assert.ok(src.includes("opal-room-details-link"));
   assert.ok(src.includes("opal-rooms-collection-link"));
-  assert.ok(src.includes("onOpenPhoto(roomPhotos[i])"));
+  assert.ok(src.includes("onOpenPhoto(roomPhoto(i))"));
   assert.ok(src.includes("Not actual room types or bookable inventory"));
 });
 
