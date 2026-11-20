@@ -54,6 +54,8 @@ jobs:
         run: npm run capture:preview
       - name: Measure section height and overflow on all public routes
         run: npm run audit:sections
+      - name: Verify cinematic route loader on desktop/mobile, EN/AR and reduced motion
+        run: npm run test:route-loader
       - name: Show Next server output on failure
         if: failure()
         run: cat /tmp/opal-next.log || true
