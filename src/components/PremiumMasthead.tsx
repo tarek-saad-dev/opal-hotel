@@ -308,8 +308,10 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
           </nav>
           <div className="premium-header-controls">
             {/* Full document navigation reads the latest published CMS snapshot in either locale. */}
-            <a href={ar ? "/en" : "/ar"} className="premium-locale" lang={ar ? "en" : "ar"} hrefLang={ar ? "en" : "ar"}>
-              {ar ? "English" : "العربية"}
+            <a href={ar ? "/en" : "/ar"} className="premium-locale" lang={ar ? "en" : "ar"} hrefLang={ar ? "en" : "ar"}
+              aria-label={ar ? "English" : "العربية"}>
+              <span className="premium-locale-full">{ar ? "English" : "العربية"}</span>
+              <span className="premium-locale-short" aria-hidden="true">{ar ? "EN" : "ع"}</span>
             </a>
             <a className="premium-header-cta" href="#booking">{t.reserve}<Glyph name="arrow" /></a>
             <button className="premium-hamburger" type="button" ref={menuTriggerRef}

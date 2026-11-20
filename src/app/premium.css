@@ -299,3 +299,8 @@ a,button,input,textarea,select{-webkit-tap-highlight-color:transparent}
 .premium-field-copy input[type="date"]::-webkit-calendar-picker-indicator{
   position:absolute;inset:0;width:auto;height:auto;margin:0;padding:0;opacity:0;cursor:pointer
 }
+.premium-locale-short{display:none}
+@media(max-width:380px){
+  .premium-locale-full{display:none}
+  .premium-locale-short{display:inline}
+}
