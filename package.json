@@ -11,6 +11,7 @@
     "capture:preview": "node scripts/capture-preview.mjs",
     "capture:cms": "node scripts/capture-cms.mjs",
     "audit:sections": "node scripts/audit-section-heights.mjs",
+    "test:route-loader": "node scripts/test-route-loading.mjs",
     "media:check": "node scripts/verify-official-media.mjs",
     "media:launch-check": "node scripts/verify-official-media.mjs --launch"
   },
