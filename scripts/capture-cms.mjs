@@ -36,7 +36,7 @@ try{
 
   const rawPublic=await page.goto(origin+"/en",{waitUntil:"domcontentloaded"});
   check(rawPublic?.status()===200,"Public homepage not found");
-  const before=await page.locator("#hotel-name").innerText();
+  const before=(await page.locator("#hotel-name").textContent())?.replace(/\s+/g," ").trim();
   await page.goto(origin+"/admin",{waitUntil:"domcontentloaded"});
   await page.locator('input[type="password"]').fill(password);
   await page.getByRole("button",{name:/دخول لوحة الإدارة/}).click();
@@ -52,7 +52,10 @@ try{
 
   const publicBeforePublish=await context.newPage();
   await publicBeforePublish.goto(origin+"/en",{waitUntil:"domcontentloaded"});
-  check((await publicBeforePublish.locator("#hotel-name").innerText())===before,
+  // Compare semantic content, not font-dependent line wrapping.
+  const beforePublishTitle=(await publicBeforePublish.locator("#hotel-name")
+    .textContent())?.replace(/\s+/g," ").trim();
+  check(beforePublishTitle===before,
     "Draft leaked to public homepage before publish");
   await publicBeforePublish.close();
 
