@@ -223,7 +223,9 @@ for(const lang of langs)for(const screen of screens){
 
       interactions.rooms=(await page.locator('.opal-rooms-info').count())===1
         &&(await page.locator('.opal-rooms-features li').count())>=10
-        &&(await page.locator('.opal-rooms-plan').getAttribute('href'))==='#booking';
+        &&(await page.locator('.opal-room-type').count())===6
+        &&(await page.locator('.opal-room-type-cta').first().getAttribute('href'))===`/${lang}/booking?room=single-garden-view`
+        &&(await page.locator('.opal-location-map iframe').count())===1;
       interactions.policies=(await page.locator('.opal-policies li').count())>=4;
       const detail=page.locator('.opal-amenity-details').first();
       await detail.locator('summary').click();
@@ -238,21 +240,25 @@ for(const lang of langs)for(const screen of screens){
 
       await page.locator('.opal-end-rating input[value="9"]').check();
       await page.locator('input[name="reviewName"]').fill('Preview Guest');
+      await page.locator('input[name="reviewEmail"]').fill('guest@example.org');
+      await page.locator('textarea[name="reviewPros"]').fill('Quiet garden');
       await page.locator('textarea[name="reviewStory"]').fill('Sample UI-only review. Nothing is sent.');
       await page.locator('.opal-end-review-paper button[type="submit"]').click();
       await page.locator('.opal-end-review-paper .opal-end-status.is-success').waitFor({timeout:5000});
       const reviewCall=apiCalls.find(call=>call.path==='/api/v1/reviews');
       interactions.review=Boolean(reviewCall)&&reviewCall.body.rating===9
+        &&reviewCall.body.pros==='Quiet garden'&&reviewCall.body.email==='guest@example.org'
         &&reviewCall.body.locale===lang;
 
       await page.locator('input[name="contactName"]').fill('Preview Guest');
       await page.locator('input[name="contactEmail"]').fill('preview@example.org');
-      await page.locator('input[name="contactSubject"]').fill('UI preview');
+      await page.locator('select[name="contactSubject"]').selectOption('group_booking');
       await page.locator('textarea[name="contactMessage"]').fill('Design preview only; do not send.');
       await page.locator('.opal-end-contact-submit').click();
       await page.locator('.opal-end-contact-paper .opal-end-status.is-success').waitFor({timeout:5000});
       const contactCall=apiCalls.find(call=>call.path==='/api/v1/contact-messages');
-      interactions.contact=Boolean(contactCall)&&contactCall.body.email==='preview@example.org';
+      interactions.contact=Boolean(contactCall)&&contactCall.body.email==='preview@example.org'
+        &&contactCall.body.subject==='group_booking';
 
       interactions.footer=(await page.locator('.opal-end-footer nav a').count())===6
         &&(await page.locator('.opal-end-backtop').getAttribute('href'))==='#top'
@@ -310,6 +316,7 @@ for(const lang of langs)for(const screen of screens){
       const initialBookingMetrics=await page.evaluate(()=>
         ({width:document.documentElement.scrollWidth,viewport:innerWidth}));
       bookingQA.noOverflow=initialBookingMetrics.width<=screen.width+2;
+      await page.locator('select[name="roomType"]').selectOption('family-suite');
       await page.screenshot({path:path.join(dir,'booking-step-1.png'),fullPage:true,
         animations:'disabled',timeout:60000});
       await page.locator('.opal-book-dates button[type="submit"]').click();
@@ -344,6 +351,7 @@ for(const lang of langs)for(const screen of screens){
       const bookingCall=apiCalls.find(call=>call.path==='/api/v1/booking-requests');
       bookingQA.sent=Boolean(bookingCall)&&bookingCall.body.guest.email==='guest@example.org'
         &&bookingCall.body.adults===initialAdults+1
+        &&bookingCall.body.roomType==='family-suite'&&bookingCall.body.rooms===1
         &&(await page.locator('.opal-book-reference').innerText()).includes('OPL-TEST-001');
       await page.screenshot({path:path.join(dir,'booking-sent.png'),fullPage:true,
         animations:'disabled',timeout:60000});

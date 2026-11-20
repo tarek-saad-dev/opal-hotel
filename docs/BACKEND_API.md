@@ -33,6 +33,8 @@ afterwards. No payment is taken on the website.
   "checkout": "2026-12-23",
   "adults": 2,
   "children": 1,
+  "rooms": 1,
+  "roomType": "family-suite",
   "guest": {
     "fullName": "Jane Doe",
     "email": "jane@example.com",
@@ -46,7 +48,9 @@ afterwards. No payment is taken on the website.
 
 Validation the site already applies (the API must re-validate):
 - `checkin` ≥ today (hotel local date), `checkout` > `checkin`, both `YYYY-MM-DD`
-- `adults` 1–8, `children` 0–6
+- `adults` 1–8, `children` 0–6, `rooms` 1–2 (bigger groups use the contact form, subject `group_booking`)
+- `roomType`: `""` (no preference) or one of `single-garden-view`, `double-private-bathroom`,
+  `deluxe-double-twin`, `triple-garden-view`, `one-bedroom-suite`, `family-suite` (see `src/lib/room-types.ts`)
 - `fullName` ≥ 2 chars (max 120), `email` valid (max 254), `phone` 7–20 chars of `+ ( ) digits space -`
 - `country` ≤ 80, `arrivalTime` ≤ 40, `notes` ≤ 1000 (all optional, `""` when empty)
 
@@ -56,19 +60,22 @@ hotel team, send the guest an acknowledgement email, return a `reference`.
 ## `POST /contact-messages`
 
 ```json
-{ "locale": "ar", "name": "…", "email": "…", "subject": "…", "message": "…" }
+{ "locale": "ar", "name": "…", "email": "…", "subject": "group_booking", "message": "…" }
 ```
 
-Limits: `name` ≤ 100, `email` ≤ 254, `subject` ≤ 160, `message` ≤ 2000, all required.
+Limits: `name` ≤ 100, `email` ≤ 254, `message` ≤ 2000, all required.
+`subject` is one of `booking_question`, `change_booking`, `cancel_booking`, `hotel_info`, `group_booking`, `other`.
 
 ## `POST /reviews`
 
 ```json
-{ "locale": "en", "name": "…", "rating": 9, "visitMonth": "2026-10", "story": "…" }
+{ "locale": "en", "name": "…", "email": "…", "rating": 9, "visitMonth": "2026-10",
+  "story": "…", "pros": "…", "cons": "" }
 ```
 
 - `rating` integer 1–10 (required), `visitMonth` `YYYY-MM` not in the future or `""`
-- `name` ≤ 100, `story` ≤ 1200 (required)
+- `name` ≤ 100, `email` ≤ 254 (required, never published), `story` ≤ 1200 (required)
+- `pros`, `cons` ≤ 600 each (optional)
 - The site tells guests that reviews are checked before publishing, so new
   reviews should be stored as `pending` and published from the dashboard.
 

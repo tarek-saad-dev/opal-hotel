@@ -2,10 +2,12 @@
 
 import { useRef,useState } from "react";
 import type { ReactNode, SyntheticEvent } from "react";
-import type { HotelContent, Locale } from "@/lib/hotel-content";
+import { hotelGeo, hotelMapUrl, type HotelContent, type Locale } from "@/lib/hotel-content";
 import { responsivePhotoSrcSet } from "@/lib/gallery";
 import { useCmsSite,useHotelMedia } from "@/components/CmsProvider";
-import { roomConcepts } from "@/lib/room-concepts";
+import Link from "next/link";
+import { generalRoomSlots } from "@/lib/room-concepts";
+import { roomAmenities, roomTypes } from "@/lib/room-types";
 
 type SharedProps = { locale: Locale; content: HotelContent };
 type StoryProps = SharedProps & { onOpenPhoto: (index: number) => void };
@@ -199,7 +201,10 @@ export function PremiumLocation({ locale, content: c }: SharedProps) {
     explore: "OPEN IN GOOGLE MAPS", nearby: "IN THE NEIGHBOURHOOD",
     notice: "Distances are approximate.",
   };
-  const map = "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(c.address);
+  const map = hotelMapUrl;
+  // OpenStreetMap embed centred on the hotel's exact pin (no API key, no cookies).
+  const d=0.012;
+  const embed=`https://www.openstreetmap.org/export/embed.html?bbox=${hotelGeo.lng-d}%2C${hotelGeo.lat-d*0.7}%2C${hotelGeo.lng+d}%2C${hotelGeo.lat+d*0.7}&layer=mapnik&marker=${hotelGeo.lat}%2C${hotelGeo.lng}`;
   return <div className="opal-location-layout">
     <div className="opal-location-copy">
       <div className="opal-heading-kicker"><A>03</A><span>{heading.kicker}</span></div>
@@ -211,6 +216,10 @@ export function PremiumLocation({ locale, content: c }: SharedProps) {
       <a className="opal-location-map-cta" href={map} target="_blank" rel="noopener noreferrer">
         {t.explore}<span aria-hidden="true">↗</span>
       </a>
+      <div className="opal-location-map">
+        <iframe title={ar?"خريطة موقع الفندق":"Map of the hotel location"} src={embed}
+          loading="lazy" referrerPolicy="no-referrer"/>
+      </div>
     </div>
     <div className="opal-location-nearby">
       <div className="opal-location-nearby-head"><span className="opal-label-mini">{t.nearby}</span><span>↗</span></div>
@@ -232,17 +241,19 @@ export function PremiumRooms({ locale, content: c, onOpenPhoto }: RoomsProps) {
   const heading=cms.locales[locale].headings.rooms;
   const media=useHotelMedia();
   const ar = locale === "ar";
-  // Every photo the owner placed in any room slot, real photos only.
-  const photos=Array.from(new Set(roomConcepts.flatMap(room=>{
-    const m=media.roomMedia[room.slug];
+  // General room photos (the three legacy slots), real photos only.
+  const photos=Array.from(new Set(generalRoomSlots.flatMap(slug=>{
+    const m=media.roomMedia[slug];
     return m?[m.cover,...m.gallery]:[];
   }))).filter(index=>media.isReal(index)).slice(0,5);
   const t = ar ? {
-    rooms:"غرف الفندق", features:"في كل غرفة", plan:"خطط لإقامتك", view:"عرض صورة الغرفة",
-    checkin:"الوصول", checkout:"المغادرة",
+    rooms:"غرف الفندق", features:"في كل الغرف", plan:"خطط لإقامتك", view:"عرض صورة الغرفة",
+    types:"أنواع الغرف", beds:"الأسرّة", size:"المساحة", sqm:"م²", request:"اطلب هذه الغرفة",
+    also:"وأيضًا",
   } : {
     rooms:"THE ROOMS", features:"IN EVERY ROOM", plan:"Plan your stay", view:"View room photo",
-    checkin:"CHECK-IN", checkout:"CHECK-OUT",
+    types:"ROOM TYPES", beds:"Beds", size:"Size", sqm:"m²", request:"Request this room",
+    also:"Also",
   };
   const [checkinRule,checkoutRule]=c.policies;
   return <div className="opal-rooms-wrap">
@@ -253,12 +264,11 @@ export function PremiumRooms({ locale, content: c, onOpenPhoto }: RoomsProps) {
         <p className="opal-rooms-count">{c.roomFacts.count}</p>
         <p className="opal-rooms-summary">{c.roomFacts.summary}</p>
         <span className="opal-label-mini">{t.features}</span>
-        <ul className="opal-rooms-features">{c.roomFacts.features.map(item=><li key={item}>{item}</li>)}</ul>
+        <ul className="opal-rooms-features">{roomAmenities[locale].map(item=><li key={item}>{item}</li>)}</ul>
         <div className="opal-rooms-times">
           {checkinRule&&<p>{checkinRule}</p>}
           {checkoutRule&&<p>{checkoutRule}</p>}
         </div>
-        <a className="opal-rooms-plan" href="#booking">{t.plan}<span aria-hidden="true">→</span></a>
       </div>
       {photos.length>0&&<div className={`opal-rooms-photos opal-rooms-photos-${photos.length}`}>
         {photos.map(index=><button type="button" key={index} className="opal-rooms-photo"
@@ -266,6 +276,33 @@ export function PremiumRooms({ locale, content: c, onOpenPhoto }: RoomsProps) {
           <PreviewImage locale={locale} index={index}/>
         </button>)}
       </div>}
+    </div>
+    <span className="opal-label-mini opal-room-types-label">{t.types}</span>
+    <div className="opal-room-types">
+      {roomTypes.map(room=>{
+        const m=media.roomMedia[room.slug];
+        const cover=m&&media.isReal(m.cover)?m.cover:null;
+        return <article className={`opal-room-type${cover!==null?" has-photo":""}`} key={room.slug} id={"room-"+room.slug}>
+          {cover!==null&&<button type="button" className="opal-room-type-photo" onClick={()=>onOpenPhoto(cover)}
+            aria-label={`${t.view}: ${room.name[locale]}`}>
+            <PreviewImage locale={locale} index={cover}/>
+          </button>}
+          <div className="opal-room-type-body">
+            <h3>{room.name[locale]}</h3>
+            <dl className="opal-room-type-specs">
+              <div><dt>{t.beds}</dt><dd>{room.beds[locale]}</dd></div>
+              <div><dt>{t.size}</dt><dd><span dir="ltr">{room.sizeM2}</span> {t.sqm}</dd></div>
+            </dl>
+            <p>{room.description[locale]}</p>
+            {room.extras[locale].length>0&&<ul className="opal-room-type-extras" aria-label={t.also}>
+              {room.extras[locale].map(item=><li key={item}>{item}</li>)}
+            </ul>}
+            <Link className="opal-room-type-cta" href={`/${locale}/booking?room=${room.slug}`}>
+              {t.request}<span aria-hidden="true">→</span>
+            </Link>
+          </div>
+        </article>;
+      })}
     </div>
   </div>;
 }

@@ -74,3 +74,10 @@ The current **Rooms V2 and Booking V2 are visual concepts**, not verified bookab
 - `Missing alt`: write real, useful English and Arabic alternatives.
 - `mode is "preview"`: expected until the owner gives written approval and the full media handoff passes.
 - Preview still shows the O/Unsplash: the all-or-nothing gate has not been approved; **this is intentional**.
+
+## Room type photo slots (2026-11-20)
+The CMS media studio now has one photo slot per room type (cover + gallery),
+plus three general "Room photos" slots for the Rooms section strip. The hotel
+listing groups its photos per room; their listing photo IDs are kept in
+`photoRefs` in `src/lib/room-types.ts` to help match the owner's originals to
+the right room. The site never loads photos from the listing.

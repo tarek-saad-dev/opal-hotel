@@ -1,4 +1,5 @@
 import type { Locale } from "@/lib/hotel-content";
+import { roomTypes } from "@/lib/room-types";
 
 /** Stay details passed from the homepage booking bar (no personal data in the URL). */
 export type BookingPreviewInput = {
@@ -6,6 +7,7 @@ export type BookingPreviewInput = {
   checkout: string;
   adults: number;
   children: number;
+  room: string;
 };
 
 function onlyString(value:string|string[]|undefined):string {
@@ -19,7 +21,9 @@ function boundedInteger(raw:string,minimum:number,maximum:number,defaultValue:nu
 export function parsePreviewParams(
   input:Record<string,string|string[]|undefined>
 ):BookingPreviewInput {
+  const room=onlyString(input.room);
   return {
+    room:roomTypes.some(item=>item.slug===room)?room:"",
     checkin:onlyString(input.checkin).slice(0,10),
     checkout:onlyString(input.checkout).slice(0,10),
     adults:boundedInteger(onlyString(input.adults),1,8,2),
@@ -56,6 +60,8 @@ export const bookingCopy=(locale:Locale) => locale==="ar" ? {
   previous:"الرجوع",continue:"متابعة",review:"راجع الطلب",send:"أرسل طلب الحجز",sending:"جارٍ الإرسال…",
   checkin:"تاريخ الوصول",checkout:"تاريخ المغادرة",adults:"البالغون",children:"الأطفال",guests:"الضيوف",
   stay:"عدد الليالي",night:"ليلة",total:"إجمالي الضيوف",dateError:"اختر تاريخ وصول صحيحًا وتاريخ مغادرة بعده.",
+  roomType:"نوع الغرفة",anyRoom:"بدون تفضيل",roomsCount:"عدد الغرف",
+  groupNote:"تحتاج أكثر من غرفتين؟ أرسل لنا طلب حجز مجموعة.",groupLink:"طلب حجز مجموعة",
   fullName:"الاسم بالكامل",email:"البريد الإلكتروني",phone:"رقم الهاتف (واتساب إن أمكن)",country:"الدولة",
   arrival:"موعد الوصول المتوقع",arrivalHint:"مثال: 10:00 صباحًا",notes:"طلبات خاصة",notesHint:"سرير أطفال، نقل من المطار، احتياجات غذائية…",
   detailsError:"من فضلك أكمل الاسم والبريد الإلكتروني ورقم الهاتف بشكل صحيح.",
@@ -74,6 +80,8 @@ export const bookingCopy=(locale:Locale) => locale==="ar" ? {
   previous:"Back",continue:"Continue",review:"Review request",send:"Send booking request",sending:"Sending…",
   checkin:"Check-in date",checkout:"Check-out date",adults:"Adults",children:"Children",guests:"Guests",
   stay:"Nights",night:"nights",total:"Total guests",dateError:"Choose valid dates, with check-out after check-in.",
+  roomType:"Room type",anyRoom:"No preference",roomsCount:"Rooms",
+  groupNote:"Need more than 2 rooms? Send us a group booking request.",groupLink:"Group booking request",
   fullName:"Full name",email:"Email",phone:"Phone (WhatsApp if possible)",country:"Country",
   arrival:"Expected arrival time",arrivalHint:"e.g. 10:00 am",notes:"Special requests",notesHint:"Cot, airport shuttle, dietary needs…",
   detailsError:"Please enter your full name, a valid email and a phone number.",

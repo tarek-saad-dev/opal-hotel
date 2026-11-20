@@ -334,3 +334,34 @@
   .opal-gallery-tile{margin-bottom:8px}
   .opal-gallery-more{width:100%;justify-content:center}
 }
+
+/* ---- Room types (six cards from the hotel listing) --------------------- */
+.opal-room-types-label{display:block;margin:clamp(40px,6vw,70px) 0 18px}
+.opal-room-types{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.opal-room-type{display:flex;flex-direction:column;background:#fffdf8;border:1px solid #e3dbcb;min-width:0}
+.opal-room-type-photo{display:block;border:0;padding:0;background:#e7e1d4;cursor:zoom-in;overflow:hidden;aspect-ratio:4/3}
+.opal-room-type-photo img{width:100%;height:100%;object-fit:cover;transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.opal-room-type-photo:hover img{transform:scale(1.03)}
+.opal-room-type-body{display:flex;flex-direction:column;gap:12px;padding:22px 22px 24px;flex:1}
+.opal-room-type h3{font:400 25px/1.2 var(--premium-serif,Georgia,serif);color:#203a2e;margin:0}
+[dir="rtl"] .opal-room-type h3{font-family:"Cairo",Tahoma,sans-serif;font-size:19px;font-weight:700;line-height:1.6}
+.opal-room-type-specs{display:flex;flex-wrap:wrap;gap:6px 22px;margin:0;padding:10px 0;border-block:1px solid #ece5d7}
+.opal-room-type-specs div{display:flex;gap:6px;font-size:13px}
+.opal-room-type-specs dt{color:#7a8478}
+.opal-room-type-specs dd{margin:0;color:#2d4537;font-weight:700}
+.opal-room-type p{margin:0;color:#4e5d53;font-size:14px;line-height:1.8}
+.opal-room-type-extras{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.opal-room-type-extras li{font-size:12px;color:#45604e;background:#f1ece0;padding:4px 9px}
+.opal-room-type-cta{margin-top:auto;align-self:flex-start;display:inline-flex;align-items:center;gap:12px;
+  min-height:44px;padding:0 18px;border:1px solid #263f33;color:#263f33;font-size:13px;font-weight:600;transition:background .2s,color .2s}
+.opal-room-type-cta:hover{background:#263f33;color:#fff}
+[dir="rtl"] .opal-room-type-cta span{transform:scaleX(-1)}
+@media(max-width:1040px){.opal-room-types{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){
+  .opal-room-types{grid-template-columns:1fr}
+  .opal-room-type-cta{align-self:stretch;justify-content:center}
+}
+
+/* Location map (exact pin from the hotel listing). */
+.opal-location-map{margin-top:28px;width:100%;aspect-ratio:16/10;border:1px solid #ffffff2e;background:#1d352b;overflow:hidden}
+.opal-location-map iframe{display:block;width:100%;height:100%;border:0;filter:saturate(.85)}

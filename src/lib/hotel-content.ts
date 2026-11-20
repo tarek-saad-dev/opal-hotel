@@ -20,9 +20,13 @@ export type HotelContent = {
   attractions: {name:string; distance:string}[];
   /** House rules shown under "Important information". */
   policies: string[];
-  /** In-room features used by the Rooms section. */
+  /** Headline facts for the Rooms section (room types live in room-types.ts). */
   roomFacts: { count: string; summary: string; features: string[] };
 };
+
+/** Exact map pin from the hotel listing. */
+export const hotelGeo = { lat: 25.660151, lng: 32.625835 } as const;
+export const hotelMapUrl = `https://www.google.com/maps/place/${hotelGeo.lat},${hotelGeo.lng}/@${hotelGeo.lat},${hotelGeo.lng},17z`;
 
 const en: HotelContent = {
   hotelName: "Hotel Opal Legacy Luxor",
@@ -47,9 +51,10 @@ const en: HotelContent = {
   },
   overview: [
     "Opal Legacy Luxor Hotel sits on the road to Esna on Luxor's East Bank, with air-conditioned rooms, garden views and an à la carte restaurant.",
-    "Each of the hotel's 40 rooms has a flat-screen TV with satellite channels, a minibar and tea and coffee facilities. Bathrooms come with a shower and bidet, and some rooms add a hairdryer and bathrobes.",
+    "The hotel's 40 rooms come in six types, from a single room to a family suite. Rooms have a terrace and seating area, climate control, a flat-screen TV with satellite channels, a desk, a minibar and tea and coffee facilities; bathrooms have a shower and bidet, and some add a hairdryer and bathrobes.",
     "The Opal restaurant serves international cuisine alongside an outdoor bar. Spend the day on the sun terrace or in the picnic area, the evening at the nightclub, or ask the team to arrange horseback-riding tours and cycling.",
-    "Luxor Temple and the Temple of Karnak are on the same bank: Luxor Temple is about 4.7 km away and the Corniche 4.8 km. The Colossi of Memnon are around 15 minutes by car, and Sopranos Land amusement park and zoo is roughly a 20-minute walk."
+    "Luxor Temple and the Temple of Karnak are on the same bank: Luxor Temple is about 4.6 km away, the city centre 4 km and the Corniche 4.8 km. Abu Haggag Mosque is about 10 minutes by car, the Colossi of Memnon around 15 minutes, and Luxor International Airport about 15 minutes. Nady Land amusement park and zoo is within walking distance.",
+    "Luggage storage and Wi-Fi throughout the property make arrivals and departures easy, and a pizzeria serving European food is about a 25-minute walk away."
   ],
   quick: ["Wi-Fi","Free parking","24-hour reception","Express check-in/-out","Airport shuttle","On-site dining","Meeting facilities","Child-friendly","Horseback riding"],
   facilities: [
@@ -60,12 +65,14 @@ const en: HotelContent = {
     {title:"Room Amenities",items:["Air conditioning","Heating","Mini-bar","Soundproofed rooms","Sitting area","Patio","Terrace","Garden furniture","Tea and coffee facilities","Dining table","Ironing facilities","Free toiletries","Flat-screen TV","AM/FM alarm clock","Cots","Babysitting/Child services","Baby pushchair","Children's buffet","Children's play area"]}
   ],
   attractions: [
+    {name:"Nady Land amusement park & zoo",distance:"1.4 km"},
     {name:"Salem Hot Air Balloons Luxor",distance:"1.5 km"},
-    {name:"Sopranos Land amusement park & zoo",distance:"1.7 km"},
     {name:"Banana Island",distance:"2.6 km"},
+    {name:"Luxor city centre",distance:"4 km"},
     {name:"Luxor Train Station",distance:"4.5 km"},
-    {name:"Luxor Temple",distance:"4.7 km"},
+    {name:"Luxor Temple",distance:"4.6 km"},
     {name:"Luxor Corniche",distance:"4.8 km"},
+    {name:"Abu Haggag Mosque",distance:"10 min by car"},
     {name:"Luxor International Airport",distance:"14 km"},
     {name:"Colossi of Memnon",distance:"15 min by car"}
   ],
@@ -78,7 +85,7 @@ const en: HotelContent = {
   ],
   roomFacts: {
     count: "40 rooms",
-    summary: "Air-conditioned rooms with garden views, a flat-screen satellite TV, minibar and tea and coffee facilities. Bathrooms have a shower and bidet; some rooms also include a hairdryer and bathrobes.",
+    summary: "Six room types from 19 to 60 m², all air-conditioned with a terrace and garden views. Rates and availability are confirmed by the hotel when you send a booking request.",
     features: ["Air conditioning","Heating","Garden views","Flat-screen satellite TV","Mini-bar","Tea and coffee facilities","Soundproofed rooms","Sitting area","Patio / terrace","Shower and bidet","Free toiletries","Ironing facilities","Cots","In-room breakfast","Room service"]
   }
 };
@@ -106,9 +113,10 @@ const ar: HotelContent = {
   },
   overview:[
     "يقع فندق أوبال ليجاسي على طريق إسنا بالبر الشرقي في الأقصر، ويضم غرفًا مكيفة بإطلالات على الحديقة ومطعمًا يقدّم قائمة طعام متنوعة.",
-    "تضم كل غرفة من غرف الفندق الأربعين تلفزيونًا بشاشة مسطحة مع قنوات فضائية، وميني بار، ومستلزمات إعداد الشاي والقهوة. يحتوي الحمام على دش وشطّاف، وتتوفر في بعض الغرف مجففات شعر وأرواب حمام.",
+    "تنقسم غرف الفندق الأربعون إلى ستة أنواع، من الغرفة المفردة إلى الجناح العائلي. في الغرف تراس ومنطقة جلوس وتحكم في درجة الحرارة وتلفزيون بشاشة مسطحة وقنوات فضائية ومكتب وميني بار ومستلزمات الشاي والقهوة؛ والحمام به دش وشطّاف، وتتوفر في بعض الغرف مجففات شعر وأرواب حمام.",
     "يقدّم مطعم أوبال المأكولات العالمية إلى جانب بار خارجي. استمتع بيومك على تراس التشمس أو في منطقة النزهات، وبأمسيتك في الملهى الليلي، ويمكن ترتيب جولات ركوب الخيل وركوب الدراجات.",
-    "معبد الأقصر ومعبد الكرنك على نفس البر: يبعد معبد الأقصر نحو 4.7 كم والكورنيش 4.8 كم. ويستغرق الوصول إلى تمثالي ممنون نحو 15 دقيقة بالسيارة، بينما تبعد ملاهي وحديقة حيوان سوبرانوز لاند نحو 20 دقيقة سيرًا."
+    "معبد الأقصر ومعبد الكرنك على نفس البر: يبعد معبد الأقصر نحو 4.6 كم، ووسط المدينة 4 كم، والكورنيش 4.8 كم. ويبعد مسجد أبي الحجاج نحو 10 دقائق بالسيارة، وتمثالا ممنون ومطار الأقصر الدولي نحو 15 دقيقة. وملاهي وحديقة حيوان الندي لاند على مسافة قريبة سيرًا.",
+    "يوفر الفندق مكانًا لتخزين الأمتعة وواي فاي في جميع الأرجاء، ويوجد مطعم بيتزا يقدّم المأكولات الأوروبية على بُعد نحو 25 دقيقة سيرًا."
   ],
   quick:["واي فاي","موقف سيارات مجاني","مكتب استقبال 24 ساعة","تسجيل سريع للوصول والمغادرة",
     "خدمة نقل المطار","مطعم في الفندق","قاعات اجتماعات","مناسب للأطفال","ركوب الخيل"],
@@ -120,12 +128,14 @@ const ar: HotelContent = {
     {title:"مرافق الغرفة",items:["تكييف","تدفئة","ميني بار","نوافذ عازلة للصوت","منطقة الجلوس","فناء","شرفة","مفروشات الحدائق","مرافق الشاي والقهوة","طاولة الطعام","مرافق الكي","مستلزمات الحمام المجانية","تلفاز بشاشة مسطحة","منبه AM/FM","أسرة أطفال","خدمة مجالسة الأطفال","عربة أطفال","بوفيه للأطفال","منطقة لعب الأطفال"]}
   ],
   attractions:[
+    {name:"ملاهي وحديقة حيوان الندي لاند",distance:"1.4 كم"},
     {name:"سالم للمناطيد بالأقصر",distance:"1.5 كم"},
-    {name:"ملاهي وحديقة حيوان سوبرانوز لاند",distance:"1.7 كم"},
     {name:"جزيرة الموز",distance:"2.6 كم"},
+    {name:"وسط مدينة الأقصر",distance:"4 كم"},
     {name:"محطة قطار الأقصر",distance:"4.5 كم"},
-    {name:"معبد الأقصر",distance:"4.7 كم"},
+    {name:"معبد الأقصر",distance:"4.6 كم"},
     {name:"كورنيش الأقصر",distance:"4.8 كم"},
+    {name:"مسجد أبي الحجاج الأقصري",distance:"10 دقائق بالسيارة"},
     {name:"مطار الأقصر الدولي",distance:"14 كم"},
     {name:"تمثالا ممنون",distance:"15 دقيقة بالسيارة"}
   ],
@@ -138,7 +148,7 @@ const ar: HotelContent = {
   ],
   roomFacts:{
     count:"40 غرفة",
-    summary:"غرف مكيفة بإطلالة على الحديقة، مع تلفزيون بشاشة مسطحة وقنوات فضائية، وميني بار، ومستلزمات إعداد الشاي والقهوة. الحمام مزود بدش وشطّاف، وتتوفر في بعض الغرف مجففات شعر وأرواب حمام.",
+    summary:"ستة أنواع غرف من 19 إلى 60 م²، كلها مكيفة وبها تراس وإطلالة على الحديقة. يؤكد الفندق الأسعار والإتاحة عند إرسال طلب الحجز.",
     features:["تكييف","تدفئة","إطلالة على الحديقة","تلفزيون بشاشة مسطحة وقنوات فضائية","ميني بار","مستلزمات الشاي والقهوة","غرف عازلة للصوت","منطقة جلوس","فناء / شرفة","دش وشطّاف","مستلزمات حمام مجانية","مستلزمات الكي","أسرّة أطفال","إفطار في الغرفة","خدمة الغرف"]
   }
 };

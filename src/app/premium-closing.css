@@ -21,12 +21,12 @@
 .opal-end-review-paper h3,.opal-end-contact-paper h3{font-family:var(--premium-serif,Georgia,serif);font-weight:400;color:#2a4437;letter-spacing:-.04em;font-size:clamp(40px,4.2vw,62px);line-height:1.08;margin:24px 0 29px}
 .opal-end-form{display:flex;flex-direction:column;gap:22px}
 .opal-end-form label{display:flex;flex-direction:column;gap:8px;font-size:11px;font-weight:650;color:#4d6556;letter-spacing:.055em;min-width:0}
-.opal-end-form input:not([type=radio]),.opal-end-form textarea{
+.opal-end-form input:not([type=radio]),.opal-end-form textarea,.opal-end-form select{
   font-family:inherit;font-weight:400;letter-spacing:0;display:block;width:100%;max-width:100%;
   appearance:none;border:none;border-bottom:1px solid #cfc5b5;border-radius:0;background:transparent;
   color:#2e483b;padding:12px 1px;min-height:47px;font-size:13px;line-height:1.6;transition:border-color .2s;
 }
-.opal-end-form input:not([type=radio]):focus,.opal-end-form textarea:focus{outline:none;border-bottom-color:#345c48;box-shadow:0 1px 0 #345c48}
+.opal-end-form input:not([type=radio]):focus,.opal-end-form textarea:focus,.opal-end-form select:focus{outline:none;border-bottom-color:#345c48;box-shadow:0 1px 0 #345c48}
 .opal-end-form input::placeholder,.opal-end-form textarea::placeholder{color:#a9aa9d;opacity:1}
 .opal-end-form textarea{resize:vertical;min-height:110px}
 .opal-end-form-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
@@ -191,3 +191,6 @@
 .opal-end-status.is-success{background:#e6efe6;border-inline-start-color:#3f7a55;color:#2c5a3d}
 .opal-end-status.is-error{background:#f6e7e2;border-inline-start-color:#b5543a;color:#8a3a26}
 .opal-end-form button[disabled]{opacity:.6;cursor:progress}
+
+.opal-end-form select{appearance:auto;cursor:pointer}
+.opal-end-form .opal-end-form-two textarea{min-height:76px}
