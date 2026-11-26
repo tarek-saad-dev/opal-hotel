@@ -33,5 +33,13 @@ jobs:
           exit 1
       - run: node scripts/test-poolside-flow.mjs
       - run: node scripts/test-agency-bff.mjs
+      - name: Upload fixture-only feature screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: poolside-feature-preview
+          path: artifacts/poolside-feature/
+          if-no-files-found: warn
+          retention-days: 14
       - if: failure()
         run: cat /tmp/poolside-next.log || true
