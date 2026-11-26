@@ -3,6 +3,10 @@ import Link from "next/link";
 import { useEffect,useMemo,useRef,useState,type FormEvent } from "react";
 import { agencyApi,AgencyError,type AgencyIdentity,type AgencyBooking } from "@/lib/agency-client";
 import { paymentDestination,shouldPoll,type Accommodation,type DayUse,type Availability,type Gateway,type Guest,type BookingInput } from "@/lib/opal-api";
+import { allocations,validUnits,MAX_ONLINE_UNITS,type UnitSelection,type UnitAvailability } from "@/lib/poolside-allocation";
+import { PoolsidePass } from "@/components/PoolsidePass";
+import "./poolside-booking.css";
+import { isConfirmed } from "@/lib/opal-api";
 import { bookingStatusCopy } from "@/lib/poolside-status";
 import { useHotelMedia } from "@/components/CmsProvider";
 import { nextDay,parseDateStamp } from "@/lib/booking-preview";
@@ -24,17 +28,20 @@ export function AgencyPortal({locale,origin,gateway}:{locale:"en"|"ar";origin:st
  const [date,setDate]=useState(""),[out,setOut]=useState(""),[guests,setGuests]=useState(1);
  const [today,setToday]=useState("");
  const [guest,setGuest]=useState<Guest>({guest_name:"",guest_email:"",guest_phone:""});
- const [available,setAvailable]=useState<{key:string;data:Availability}|null>(null),[checking,setChecking]=useState(false);
+ const [available,setAvailable]=useState<{key:string;data:UnitAvailability}|null>(null),[checking,setChecking]=useState(false);
+ const [units,setUnits]=useState<UnitSelection[]>([{key:1,typeId:null,guests:1,bubbleId:null}]);
+ const [automatic,setAutomatic]=useState(true),nextKey=useRef(2);
  const [unknownCreate,setUnknownCreate]=useState(false);
  const created=useRef(new Set<string>()),lock=useRef(false);
- const chosen=kind==="day_use"?days.find(p=>String(p.id)===product):stays.find(p=>String(p.id)===product);
- const stay=kind==="bubble_stay"?stays.find(p=>String(p.id)===product):undefined;
+ const chosen=days.find(p=>String(p.id)===product);
  const dateValid=!!today&&parseDateStamp(date)!==null&&date>=today;
- const stayValid=!!stay&&dateValid&&parseDateStamp(out)!==null&&out>date&&Number.isInteger(guests)&&guests>0&&guests<=stay.max_guests;
- const availabilityKey=JSON.stringify([product,date,out,guests]);
- const validAvailability=available?.key===availabilityKey&&available.data.availability===true;
- const valid=!!chosen&&Number.isInteger(guests)&&guests>0&&dateValid&&(kind==="day_use"||stayValid&&validAvailability);
- function clearSession(){setIdentity(null);setBookings([]);setSelected(null);setDays([]);setStays([]);setCatalogReady(false);setGuest({guest_name:"",guest_email:"",guest_phone:""});created.current.clear();setTab("dashboard");setUnknownCreate(false);}
+ const stayGuests=units.reduce((sum,u)=>sum+u.guests,0);
+ const stayValid=dateValid&&parseDateStamp(out)!==null&&out>date&&validUnits(units,stays);
+ const availabilityKey=JSON.stringify([date,out,units.map(({key,typeId,guests})=>({key,typeId,guests}))]);
+ const selectedAllocations=available?.key===availabilityKey?allocations(units,available.data,automatic):null;
+ const valid=kind==="day_use"?!!chosen&&dateValid&&Number.isInteger(guests)&&guests>0:stayValid&&!!selectedAllocations;
+ function editUnit(key:number,patch:Partial<Omit<UnitSelection,"key">>){setUnits(old=>old.map(u=>u.key===key?{...u,...patch,...("typeId" in patch||"guests" in patch?{bubbleId:null}:{})}:u));}
+ function clearSession(){setIdentity(null);setBookings([]);setSelected(null);setDays([]);setStays([]);setCatalogReady(false);setGuest({guest_name:"",guest_email:"",guest_phone:""});created.current.clear();setTab("dashboard");setUnknownCreate(false);setUnits([{key:1,typeId:null,guests:1,bubbleId:null}]);setProduct("");setAvailable(null);setAutomatic(true);}
  function report(e:unknown){
   if(e instanceof AgencyError&&e.status===401){clearSession();setError(t("Sign in again to continue.","سجل الدخول مرة أخرى."));return;}
   setError(e instanceof AgencyError&&e.status===403?t("This action is not permitted for your account.","هذا الإجراء غير مسموح لحسابك."):e instanceof AgencyError&&e.status===409?t("Availability or booking state changed. Refresh and try again.","تغير التوافر أو حالة الحجز. حدّث البيانات."):e instanceof AgencyError&&e.status===429?t("Too many requests. Try later.","طلبات كثيرة. حاول لاحقًا."):t("The request could not be completed. Verify details and try again.","تعذر إكمال الطلب. راجع البيانات وحاول مرة أخرى."));
@@ -58,12 +65,21 @@ export function AgencyPortal({locale,origin,gateway}:{locale:"en"|"ar";origin:st
   return()=>{active=false;};
  },[api,identity,version]);
  useEffect(()=>{
-  setAvailable(null);setChecking(false);
-  if(!identity||tab!=="create"||!stayValid||!stay)return;
+  setAvailable(null);setChecking(false);setUnits(old=>old.map(u=>u.bubbleId===null?u:{...u,bubbleId:null}));
+  if(!identity||tab!=="create"||kind!=="bubble_stay"||!stayValid)return;
   let active=true;setChecking(true);
-  const timer=setTimeout(()=>{api.availability(stay.slug_en,date,out,guests).then(data=>{if(active)setAvailable({key:availabilityKey,data});}).catch(e=>{if(active)report(e);}).finally(()=>{if(active)setChecking(false);});},400);
+  const [, , requested]=JSON.parse(availabilityKey) as [string,string,Pick<UnitSelection,"key"|"typeId"|"guests">[]];
+  const timer=setTimeout(()=>{
+   const requests=new Map<string,Promise<Availability>>();
+   Promise.all(requested.map(async u=>{
+    const type=stays.find(p=>p.id===u.typeId)!;
+    const key=type.slug_en+":"+u.guests;
+    if(!requests.has(key))requests.set(key,api.availability(type.slug_en,date,out,u.guests));
+    return [u.key,await requests.get(key)!] as const;
+   })).then(rows=>{if(active)setAvailable({key:availabilityKey,data:Object.fromEntries(rows)});}).catch(e=>{if(active)report(e);}).finally(()=>{if(active)setChecking(false);});
+  },400);
   return()=>{active=false;clearTimeout(timer);};
- },[api,identity,tab,stayValid,stay,date,out,guests,availabilityKey]);
+ },[api,identity,tab,kind,stayValid,stays,date,out,availabilityKey,version]);
  const selectedRef=selected?.booking_reference;
  const selectedStatus=selected?.status;
  useEffect(()=>{
@@ -81,11 +97,11 @@ export function AgencyPortal({locale,origin,gateway}:{locale:"en"|"ar";origin:st
  function signIn(e:FormEvent){e.preventDefault();void action(async()=>{try{const session=await api.login(email.trim(),password);setIdentity(session);setVersion(v=>v+1);}finally{setPassword("");}});}
  function logout(){void action(async()=>{try{await api.logout();}finally{clearSession();}});}
  function create(e:FormEvent){
-  e.preventDefault();if(!valid||!chosen||unknownCreate)return;
+  e.preventDefault();if(!valid||unknownCreate)return;
   void action(async()=>{
    const details={guest_name:guest.guest_name.trim(),guest_email:guest.guest_email.trim(),guest_phone:guest.guest_phone.trim()};
    if(Object.values(details).some(v=>!v))return;
-   const input:BookingInput=kind==="day_use"?{...details,product_type:kind,guests,visit_date:date,day_use_product_id:chosen.id}:{...details,product_type:kind,guests,check_in:date,check_out:out,random_assignment:true,bubbles:[{accommodation_type_id:chosen.id,bubble_id:null,guests}]};
+   const input:BookingInput=kind==="day_use"?{...details,product_type:kind,guests,visit_date:date,day_use_product_id:chosen!.id}:{...details,product_type:kind,guests:stayGuests,check_in:date,check_out:out,random_assignment:automatic,bubbles:selectedAllocations!};
    try{
     const b=await api.create(input);if(!b.booking_reference)throw Error("Missing reference");
     created.current.add(b.booking_reference);setSelected(b);setGuest({guest_name:"",guest_email:"",guest_phone:""});setTab("bookings");setVersion(v=>v+1);
@@ -105,10 +121,13 @@ export function AgencyPortal({locale,origin,gateway}:{locale:"en"|"ar";origin:st
  {tab==="dashboard"&&<><div className={styles.metrics}><article><span>{t("Visible bookings (loaded)","الحجوزات الظاهرة (المحملة)")}</span><strong>{bookings.length}</strong></article><article><span>{t("Day use products","التجارب اليومية")}</span><strong>{catalogReady?days.length:"—"}</strong></article><article><span>{t("Overnight types","أنواع الإقامة")}</span><strong>{catalogReady?stays.length:"—"}</strong></article></div><h2>{t("Agency rates","أسعار الشركات")}</h2><div className={styles.metrics}>{[...days,...stays].map(p=><article key={("slug" in p?"day":"stay")+p.id}><span>{ar?p.name_ar:p.name_en}</span><strong dir="ltr">{p.currency} {"price_per_guest" in p?p.price_per_guest:p.price_per_night}</strong><small>{"price_per_guest" in p?t("Per guest","للفرد"):t("Per unit / night","للوحدة / الليلة")}</small></article>)}</div></>}
  {tab==="bookings"&&<><div className={styles.filters}><label>{t("Status","الحالة")}<select value={status} onChange={e=>setStatus(e.target.value)}><option value="">{t("All","الكل")}</option>{Object.entries(bookingStatusCopy).map(([key,value])=><option key={key} value={key}>{value.title[ar?1:0]}</option>)}</select></label><label>{t("Product","المنتج")}<select value={filter} onChange={e=>setFilter(e.target.value)}><option value="">{t("All","الكل")}</option><option value="day_use">{t("Day use","استخدام يومي")}</option><option value="bubble_stay">{t("Overnight","إقامة ليلية")}</option></select></label><button onClick={()=>setVersion(v=>v+1)}>{t("Refresh","تحديث")}</button></div>
  <div className={styles.rows}>{bookings.map(b=><button key={b.booking_reference} onClick={()=>openBooking(b.booking_reference)} disabled={busy}><strong dir="ltr">{b.booking_code}</strong><span>{label(b)}</span><span dir="ltr">{b.currency} {b.total}</span></button>)}{!bookings.length&&<p>{t("No bookings in this list.","لا توجد حجوزات في القائمة.")}</p>}</div>
- {selected&&<section className={styles.panel}><h2>{label(selected)}</h2><p dir="ltr">{selected.booking_code}</p><p>{t("Guests","الضيوف")}: {selected.guests}</p><p dir="ltr">{selected.currency} {selected.total}</p>{selected.tickets?.map(ticket=><p key={ticket.ticket_code} dir="ltr">{ticket.ticket_code}</p>)}<button disabled={busy} onClick={()=>openBooking(selected.booking_reference)}>{t("Refresh status","تحديث الحالة")}</button>{canPay?<button className={styles.primary} disabled={busy} onClick={pay}>{t("Continue to payment","المتابعة للدفع")}</button>:selected.status==="pending_payment"&&<p>{t("Payment is available only to the booking creator with verified permission.","الدفع متاح لمنشئ الحجز وفق الصلاحية المؤكدة فقط.")}</p>}</section>}</>}
- {tab==="create"&&<form className={styles.panel} onSubmit={create}><h2>{t("Create agency booking","إنشاء حجز شركة")}</h2><fieldset disabled={busy||unknownCreate||!catalogReady}><label>{t("Experience type","نوع التجربة")}<select value={kind} onChange={e=>{setKind(e.target.value==="day_use"?"day_use":"bubble_stay");setProduct("");}}><option value="day_use">{t("Day use","استخدام يومي")}</option><option value="bubble_stay">{t("Overnight","إقامة ليلية")}</option></select></label><label>{t("Product","المنتج")}<select required value={product} onChange={e=>setProduct(e.target.value)}><option value="">{t("Choose","اختر")}</option>{(kind==="day_use"?days:stays).map(p=><option key={p.id} value={p.id}>{ar?p.name_ar:p.name_en}</option>)}</select></label><div className={styles.filters}><label>{kind==="day_use"?t("Visit date","تاريخ الزيارة"):t("Check in","الوصول")}<input required type="date" min={today} value={date} onChange={e=>{setDate(e.target.value);if(out<=e.target.value)setOut(nextDay(e.target.value));}}/></label>{kind==="bubble_stay"&&<label>{t("Check out","المغادرة")}<input required type="date" min={nextDay(date)} value={out} onChange={e=>setOut(e.target.value)}/></label>}<label>{t("Guests","الضيوف")}<input required type="number" min={1} max={stay?.max_guests} value={guests} onChange={e=>setGuests(Number(e.target.value))}/></label></div>
- {kind==="bubble_stay"&&<p role="status">{checking?t("Checking availability…","جارٍ التحقق من التوافر…"):validAvailability?t("One unit available for automatic assignment.","وحدة متاحة للتخصيص التلقائي."):t("Select dates and check availability.","اختر التواريخ وتحقق من التوافر.")}</p>}
- {chosen&&<p dir="ltr">{chosen.currency} {"price_per_guest" in chosen?chosen.price_per_guest:chosen.price_per_night} {t("unit rate","سعر الوحدة")}</p>}
+ {selected&&<section className={styles.panel}><h2>{label(selected)}</h2><p dir="ltr">{selected.booking_code}</p><p>{t("Guests","الضيوف")}: {selected.guests}</p><p dir="ltr">{selected.currency} {selected.total}</p>{isConfirmed(selected.status)&&<PoolsidePass booking={selected} origin={origin} locale={locale}/>}<button disabled={busy} onClick={()=>openBooking(selected.booking_reference)}>{t("Refresh status","تحديث الحالة")}</button>{canPay?<button className={styles.primary} disabled={busy} onClick={pay}>{t("Continue to payment","المتابعة للدفع")}</button>:selected.status==="pending_payment"&&<p>{t("Payment is available only to the booking creator with verified permission.","الدفع متاح لمنشئ الحجز وفق الصلاحية المؤكدة فقط.")}</p>}</section>}</>}
+ {tab==="create"&&<form className={styles.panel} onSubmit={create}><h2>{t("Create agency booking","إنشاء حجز شركة")}</h2><fieldset disabled={busy||unknownCreate||!catalogReady}><label>{t("Experience type","نوع التجربة")}<select value={kind} onChange={e=>{setKind(e.target.value==="day_use"?"day_use":"bubble_stay");setProduct("");}}><option value="day_use">{t("Day use","استخدام يومي")}</option><option value="bubble_stay">{t("Overnight","إقامة ليلية")}</option></select></label>{kind==="day_use"&&<label>{t("Product","المنتج")}<select required value={product} onChange={e=>setProduct(e.target.value)}><option value="">{t("Choose","اختر")}</option>{days.map(p=><option key={p.id} value={p.id}>{ar?p.name_ar:p.name_en}</option>)}</select></label>}
+ <div className={styles.filters}><label>{kind==="day_use"?t("Visit date","تاريخ الزيارة"):t("Check in","الوصول")}<input required type="date" min={today} value={date} onChange={e=>{setDate(e.target.value);if(out<=e.target.value)setOut(nextDay(e.target.value));}}/></label>{kind==="bubble_stay"&&<label>{t("Check out","المغادرة")}<input required type="date" min={nextDay(date)} value={out} onChange={e=>setOut(e.target.value)}/></label>}{kind==="day_use"&&<label>{t("Guests","الضيوف")}<input required type="number" min={1} value={guests} onChange={e=>setGuests(Number(e.target.value))}/></label>}</div>
+ {kind==="bubble_stay"&&<div className="opal-pool-units"><h2>{t("Accommodation units","وحدات الإقامة")}</h2><label className="opal-pool-assignment"><input type="checkbox" checked={automatic} onChange={e=>{setAutomatic(e.target.checked);setUnits(old=>old.map(u=>({...u,bubbleId:null})));}}/>{t("Automatically assign all units","تخصيص كل الوحدات تلقائيًا")}</label>
+ {units.map((u,i)=>{const type=stays.find(p=>p.id===u.typeId);const result=available?.key===availabilityKey?available.data[u.key]:undefined;return <section className="opal-pool-unit" key={u.key}><div className="opal-pool-unit-head"><strong>{t("Unit","وحدة")} {i+1}</strong>{units.length>1&&<button type="button" onClick={()=>setUnits(old=>old.filter(x=>x.key!==u.key))}>{t("Remove","حذف")}</button>}</div><label>{t("Accommodation","نوع الإقامة")}<select required value={u.typeId??""} onChange={e=>editUnit(u.key,{typeId:e.target.value?Number(e.target.value):null})}><option value="">{t("Choose","اختر")}</option>{stays.map(p=><option key={p.id} value={p.id}>{ar?p.name_ar:p.name_en}</option>)}</select></label><label>{t("Guests in unit","ضيوف الوحدة")}<input type="number" required min={1} max={type?.max_guests} step={1} value={u.guests} onChange={e=>editUnit(u.key,{guests:Number(e.target.value)})}/></label>{result&&<p>{t("Available units","الوحدات المتاحة")}: {result.available_bubbles}</p>}{!automatic&&result?.availability&&<label>{t("Physical unit","الوحدة الفعلية")}<select required value={u.bubbleId??""} onChange={e=>editUnit(u.key,{bubbleId:e.target.value?Number(e.target.value):null})}><option value="">{t("Choose","اختر")}</option>{result.bubbles.filter(b=>b.accommodation_type_id===u.typeId).map(b=><option key={b.id} value={b.id} disabled={units.some(x=>x.key!==u.key&&x.bubbleId===b.id)}>{b.code}</option>)}</select></label>}{result?.availability&&<p dir="ltr">{result.currency} {result.total_estimate} · {t("Unit estimate","تقدير الوحدة")}</p>}</section>;})}
+ <button type="button" disabled={units.length>=MAX_ONLINE_UNITS} onClick={()=>{const key=nextKey.current++;setUnits(old=>[...old,{key,typeId:old[0]?.typeId??null,guests:1,bubbleId:null}]);}}>{t("+ Add unit","+ إضافة وحدة")}</button><p>{t("Total guests","إجمالي الضيوف")}: {stayGuests}</p><p role="status">{checking?t("Checking availability…","جارٍ التحقق من التوافر…"):selectedAllocations?t("All selected units are available.","الوحدات المختارة متاحة."):t("Select valid dates and distinct available units.","اختر تواريخ ووحدات مختلفة متاحة.")}</p></div>}
+ {kind==="day_use"&&chosen&&<p dir="ltr">{chosen.currency} {chosen.price_per_guest} {t("per guest","للفرد")}</p>}
  {(["guest_name","guest_email","guest_phone"] as const).map(k=><label key={k}>{k==="guest_name"?t("Guest name","اسم الضيف"):k==="guest_email"?t("Guest email","بريد الضيف"):t("Guest phone","هاتف الضيف")}<input required type={k==="guest_email"?"email":k==="guest_phone"?"tel":"text"} value={guest[k]} onChange={e=>setGuest(v=>({...v,[k]:e.target.value}))}/></label>)}</fieldset>
  {unknownCreate&&<p role="alert">{t("The result is uncertain. Check existing bookings before submitting again.","نتيجة الطلب غير مؤكدة. راجع الحجوزات قبل تكرار الطلب.")}</p>}<button className={styles.primary} disabled={busy||!valid||unknownCreate||!catalogReady}>{t("Create and review total","إنشاء ومراجعة الإجمالي")}</button></form>}
  </>}
