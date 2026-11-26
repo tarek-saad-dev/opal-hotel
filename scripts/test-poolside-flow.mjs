@@ -16,7 +16,7 @@ try{
   status="pending_payment";
   const context=await browser.newContext({viewport:{width:390,height:844}});
   const page=await context.newPage();
-  await page.route(api+"/mock-payment",route=>route.fulfill({status:302,headers:{location:base+"/"+locale+"/booking/return?success=true&status=confirmed"}}));
+  await page.route(api+"/mock-payment",route=>route.fulfill({status:200,contentType:"text/html",body:"<html><body>Mock payment</body></html>"}));
   await page.route(api+"/api/v1/**",async route=>{
     const req=route.request(),url=new URL(req.url());
     const headers={"access-control-allow-origin":"*","access-control-allow-headers":"content-type,accept,accept-language","access-control-allow-methods":"GET,POST,OPTIONS"};
@@ -52,6 +52,8 @@ try{
   // returns a forged confirmed flag, but API state is still paid.
   await page.screenshot({path:artifacts+"/payment-pending-"+locale+".png",fullPage:true,animations:"disabled"});
   await page.getByRole("button",{name:locale==="ar"?"المتابعة للدفع":"Continue to payment"}).click();
+  await page.waitForURL(api+"/mock-payment");
+  await page.goto(base+"/"+locale+"/booking/return?success=true&status=confirmed");
   await page.waitForURL("**/booking?reference=*");
   await page.getByRole("heading",{name:locale==="ar"?"جارٍ التحقق من الدفع":"Payment verification"}).waitFor();
   assert.equal(await page.locator(".opal-pool-pass").count(),0);
