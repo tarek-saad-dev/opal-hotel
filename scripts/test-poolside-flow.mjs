@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
+import { futureWindow } from "./poolside-preflight.mjs";
 import { chromium } from "playwright";
 const base=process.env.OPAL_TEST_FRONTEND||"http://127.0.0.1:3001";
 const api=process.env.OPAL_API_BASE_URL||"http://127.0.0.1:8000";
@@ -72,5 +73,51 @@ try{
   await context.close();
  }
  assert.equal(creates,2);assert.equal(pays,2);
+ // Separate public overnight journey: confirm automatic payload and prove
+ // a duplicate physical unit cannot be submitted in manual mode.
+ for(const locale of ["en","ar"]){
+  const context=await browser.newContext({viewport:{width:390,height:844}});
+  const page=await context.newPage(),t=(en,ar)=>locale==="ar"?ar:en;
+  let posted=0;
+  const window=futureWindow();
+  const bubbles=[20,21].map(id=>({id,code:"B"+id,accommodation_type_id:stay.id,status:"available"}));
+  await page.route(api+"/api/v1/**",async route=>{
+   const req=route.request(),url=new URL(req.url());
+   const headers={"access-control-allow-origin":"*","access-control-allow-headers":"content-type,accept,accept-language","access-control-allow-methods":"GET,POST,OPTIONS"};
+   if(req.method()==="OPTIONS"){await route.fulfill({status:204,headers});return;}
+   let data;
+   if(url.pathname==="/api/v1/day-use")data=[day];
+   else if(url.pathname==="/api/v1/accommodations")data=[stay];
+   else if(url.pathname==="/api/v1/accommodations/"+stay.slug_en+"/availability"){
+    assert.equal(url.searchParams.get("check_in"),window.check_in);assert.equal(url.searchParams.get("check_out"),window.check_out);
+    data={availability:true,available_bubbles:2,price_per_night:"700.00",total_estimate:"700.00",currency:"EGP",bubbles};
+   }else if(url.pathname==="/api/v1/bookings"&&req.method()==="POST"){
+    const body=req.postDataJSON();assert.equal(body.product_type,"bubble_stay");assert.equal(body.guests,3);assert.equal(body.random_assignment,true);
+    assert.deepEqual(body.bubbles,[{accommodation_type_id:2,bubble_id:null,guests:2},{accommodation_type_id:2,bubble_id:null,guests:1}]);
+    assert.equal(body.check_in,window.check_in);assert.equal(body.check_out,window.check_out);posted++;
+    data={...booking(),status:"pending_payment",product_type:"bubble_stay",guests:3,total:"1400.00"};
+   }else if(url.pathname==="/api/v1/bookings/"+reference)data={...booking(),status:"pending_payment",product_type:"bubble_stay",guests:3,total:"1400.00"};
+   else{await route.fulfill({status:404,headers,json:{success:false}});return;}
+   await route.fulfill({status:200,headers,json:{success:true,data}});
+  });
+  await page.goto(base+"/"+locale+"/booking?"+new URLSearchParams({product:"bubble_stay",slug:stay.slug_en,checkin:window.check_in,checkout:window.check_out,adults:"2"}));
+  await page.getByLabel(t("Accommodation","نوع الإقامة"),{exact:true}).waitFor();
+  await page.getByRole("button",{name:t("+ Add accommodation unit","+ إضافة وحدة إقامة"),exact:true}).click();
+  await page.getByLabel(t("Automatically assign all units","اختيار كل الوحدات تلقائيًا")).uncheck();
+  const physical=page.getByLabel(t("Choose physical unit","اختر الوحدة الفعلية"),{exact:true});
+  await physical.first().selectOption("20");
+  await physical.nth(1).waitFor();
+  assert.equal(await physical.nth(1).locator('option[value="20"]').isDisabled(),true);
+  await physical.nth(1).selectOption("21");
+  await page.getByLabel(t("Automatically assign all units","اختيار كل الوحدات تلقائيًا")).check();
+  await page.locator('input[name="guest_name"]').fill("Test Guest");
+  await page.locator('input[name="guest_email"]').fill("guest@example.invalid");
+  await page.locator('input[name="guest_phone"]').fill("+201000000000");
+  await page.screenshot({path:artifacts+"/overnight-units-"+locale+".png",fullPage:true,animations:"disabled"});
+  await page.getByRole("button",{name:t("Create booking & review total","إنشاء الحجز ومراجعة الإجمالي"),exact:true}).click();
+  await page.getByRole("heading",{name:t("Complete your payment","أكمل الدفع"),exact:true}).waitFor();
+  assert.equal(posted,1);
+  await context.close();
+ }
  console.log("Poolside isolated bilingual detail / booking / status flow passed");
 }finally{await browser.close();}
