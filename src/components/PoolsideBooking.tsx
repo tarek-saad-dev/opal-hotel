@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect,useMemo,useRef,useState,type FormEvent } from "react";
 import { useHotelMedia } from "@/components/CmsProvider";
 import "./poolside-booking.css";
+import { bookingStatusCopy } from "@/lib/poolside-status";
 import { PoolsidePass } from "@/components/PoolsidePass";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { makeOpalApi,OpalApiError,isConfirmed,shouldPoll,paymentDestination,type Gateway,type DayUse,type Accommodation,type Availability,type Booking,type BookingInput,type Guest } from "@/lib/opal-api";
@@ -200,12 +201,8 @@ export function PoolsideBooking({locale,origin,gateway,initial,reference:initial
   const expires=booking?.payment_expires_at?Date.parse(booking.payment_expires_at):NaN;
   const remaining=Number.isFinite(expires)&&now?Math.max(0,Math.ceil((expires-now)/1000)):null;
   const expired=remaining===0;
-  const statusNames:Record<string,[string,string]>={
-    pending_payment:["Awaiting payment","في انتظار الدفع"],paid:["Payment under verification","جارٍ التحقق من الدفع"],
-    confirmed:["Booking confirmed","تم تأكيد الحجز"],checked_in:["Checked in","تم تسجيل الوصول"],
-    pending_check_out:["Awaiting check-out","في انتظار المغادرة"],checked_out:["Checked out","تم تسجيل المغادرة"],completed:["Completed","مكتمل"],
-    failed:["Payment failed","فشل الدفع"],cancelled:["Cancelled","ملغي"],expired:["Expired","منتهي"],no_show:["No show","لم يحضر الضيف"]
-  };
+  const status=booking?bookingStatusCopy[booking.status]:undefined;
+  const countdown=remaining===null?null:Math.floor(remaining/60)+":"+String(remaining%60).padStart(2,"0");
   const fieldLabels:Record<string,string>={guest_name:t("Full name","الاسم الكامل"),guest_email:t("Email","البريد الإلكتروني"),guest_phone:t("Phone","رقم الهاتف")};
   const langQuery=new URLSearchParams(); if(reference)langQuery.set("reference",reference);
   else {langQuery.set("product",mode);const selectedSlug=mode==="day_use"?day?.slug:stay?.slug_en;if(selectedSlug)langQuery.set("slug",selectedSlug);langQuery.set("checkin",mode==="day_use"?visit:checkIn);langQuery.set("checkout",checkOut);langQuery.set("adults",String(mode==="day_use"?guests:units[0]?.guests??1));}
@@ -222,13 +219,13 @@ export function PoolsideBooking({locale,origin,gateway,initial,reference:initial
       <ol className="opal-pool-step" aria-label={t("Booking progress","مراحل الحجز")}><li aria-current={!reference?"step":undefined}>{t("1. Choose experience","١. اختيار التجربة")}</li><li aria-current={reference&&!isConfirmed(booking?.status??"pending_payment")?"step":undefined}>{t("2. Review & pay","٢. مراجعة ودفع")}</li><li aria-current={booking&&isConfirmed(booking.status)?"step":undefined}>{t("3. Booking pass","٣. بطاقة الحجز")}</li></ol>
       {reference?<div className="opal-book-workspace">
         <p className="opal-book-helper">{t("Booking reference","مرجع الحجز")}: <strong dir="ltr">{reference}</strong></p>
-        {booking?<><h2 role="status">{statusNames[booking.status]?.[ar?1:0]??booking.status}</h2>
-          <div className="opal-book-review-lines"><div><span>{t("Booking code","كود الحجز")}</span><strong dir="ltr">{booking.booking_code}</strong></div><div><span>{t("Total","الإجمالي")}</span><strong dir="ltr">{money(booking.total,booking.currency,ar)}</strong></div></div>
-          {booking.status==="pending_payment"&&<><p>{remaining!==null?(expired?t("Payment window ended; refresh status.","انتهت مهلة الدفع؛ حدّث الحالة."):t("Payment time remaining: ","الوقت المتبقي للدفع: ")+Math.floor(remaining/60)+":"+String(remaining%60).padStart(2,"0")):t("Awaiting payment","في انتظار الدفع")}</p>
+        {booking?<><div className="opal-pool-status" data-tone={status?.tone??"waiting"} role="status"><span className="opal-pool-status-mark" aria-hidden="true">{status?.tone==="success"?"✓":status?.tone==="error"?"!":status?.tone==="closed"?"—":"◷"}</span><div><span className="opal-book-eyebrow">{t("BOOKING STATUS","حالة الحجز")}</span><h2>{status?.title[ar?1:0]??t("Status unavailable","الحالة غير متاحة")}</h2><p>{status?.message[ar?1:0]??t("Refresh to verify the booking state.","حدّث الحالة للتحقق من الحجز.")}</p></div></div>
+          <div className="opal-book-review-lines"><div><span>{t("Guests","الضيوف")}</span><strong dir="ltr">{booking.guests}</strong></div><div><span>{t("Booking code","كود الحجز")}</span><strong dir="ltr">{booking.booking_code}</strong></div><div><span>{t("Total","الإجمالي")}</span><strong dir="ltr">{money(booking.total,booking.currency,ar)}</strong></div></div>
+          {booking.status==="pending_payment"&&<><div className="opal-pool-payment-clock"><div><strong>{expired?t("Payment window ended","انتهت مهلة الدفع"):t("Payment window","مهلة الدفع")}</strong><p>{expired?t("Refresh to verify the final state before making a new booking.","حدّث الحالة للتحقق قبل حجز جديد."):t("The total below is calculated by the hotel system.","الإجمالي محسوب من نظام حجوزات الفندق.")}</p></div>{countdown!==null&&<strong className="opal-pool-countdown" dir="ltr">{countdown}</strong>}</div>
             <button className="opal-book-primary" type="button" disabled={busy||expired||!!pollError} onClick={()=>void pay()}>{busy?t("Opening payment…","جارٍ فتح الدفع…"):t("Continue to payment","المتابعة للدفع")}</button></>}
-          {booking.status==="paid"&&<p>{t("Payment is being verified. Do not pay again.","الدفع قيد التحقق. لا تدفع مرة أخرى.")}</p>}
+          
           {isConfirmed(booking.status)&&<PoolsidePass booking={booking} origin={origin} locale={locale}/>}
-        </>:<p role="status">{t("Checking booking status…","جارٍ التحقق من حالة الحجز…")}</p>}
+        </>:<div className="opal-pool-status" data-tone="waiting" role="status"><span className="opal-pool-status-mark" aria-hidden="true">◷</span><div><h2>{t("Checking booking status…","جارٍ التحقق من حالة الحجز…")}</h2><p>{t("Only the hotel system can confirm payment.","تأكيد الدفع يتم من نظام الفندق فقط.")}</p></div></div>}
         {pollError&&<p className="opal-book-error" role="alert">{pollError}</p>}{error&&<p className="opal-book-error" role="alert">{error}</p>}
         <div className="opal-book-actions"><button className="opal-book-back" type="button" disabled={busy} onClick={()=>setPollVersion(v=>v+1)}>{t("Refresh status","تحديث الحالة")}</button>{((booking&&!shouldPoll(booking.status))||(!booking&&!!pollError))&&<button className="opal-book-back" type="button" onClick={reset}>{t("New booking","حجز جديد")}</button>}</div>
       </div>:<>
