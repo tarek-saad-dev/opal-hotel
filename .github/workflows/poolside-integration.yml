@@ -10,6 +10,8 @@ jobs:
     timeout-minutes: 15
     env:
       OPAL_BOOKING_ENABLED: "true"
+      OPAL_AGENCY_ENABLED: "true"
+      OPAL_AGENCY_PUBLIC_ORIGIN: http://127.0.0.1:3001
       OPAL_API_BASE_URL: http://127.0.0.1:8000
       OPAL_PAYMENT_GATEWAY: mock
       OPAL_TEST_FRONTEND: http://127.0.0.1:3001
@@ -30,5 +32,6 @@ jobs:
           done
           exit 1
       - run: node scripts/test-poolside-flow.mjs
+      - run: node scripts/test-agency-bff.mjs
       - if: failure()
         run: cat /tmp/poolside-next.log || true
