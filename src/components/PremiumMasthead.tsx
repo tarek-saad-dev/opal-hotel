@@ -13,6 +13,7 @@ import { DateRangePicker } from "@/components/DateRangePicker";
 
 type Props = {
   locale: Locale;
+  poolside?: boolean;
   content: HotelContent;
   onAvailability: (range: { checkin: string; checkout: string; guests: number; adults: number; children: number }) => void;
   onOpenGallery: () => void;
@@ -51,7 +52,7 @@ function dayAfter(input: string) {
   return dateStamp(d);
 }
 
-export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGallery }: Props) {
+export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGallery, poolside }: Props) {
   const cms=useCmsSite();
   const media=useHotelMedia();
   const showVideo=hasApprovedCmsHeroVideo(cms);
@@ -307,7 +308,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
           </Link>
           <nav className="premium-desktop-nav" aria-label={c.labels.menu}>
             {desktopNav.map(id =>
-              <a key={id} href={`#${id}`} aria-current={activeSection===id?"location":undefined}>{c.nav[id]}</a>
+              <a key={id} href={`#${id}`} aria-current={activeSection===id?"location":undefined}>{poolside&&id==="rooms"?(ar?"التجارب":"Experiences"):c.nav[id]}</a>
             )}
           </nav>
           <div className="premium-header-controls">
@@ -353,7 +354,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
                 <a href={`#${id}`} key={id} aria-current={activeSection===id?"location":undefined}
                   onClick={event => navigateFromMenu(event, id)}>
                   <span className="premium-menu-number">{String(i + 1).padStart(2, "0")}</span>
-                  <span className="premium-menu-link-text">{c.nav[id]}</span>
+                  <span className="premium-menu-link-text">{poolside&&id==="rooms"?(ar?"التجارب":"Experiences"):c.nav[id]}</span>
                   <Glyph name="arrow" />
                 </a>
               )}
@@ -392,7 +393,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
             <h1 id="hotel-name"><span className="opal-visually-hidden">{c.hotelName}: </span><span>{heroCopy.title}</span><em>{heroCopy.accent}</em></h1>
             <p className="premium-hero-description">{heroCopy.description}</p>
             <div className="premium-hero-actions">
-              <a href={`#${roomsTarget}`} className="premium-hero-button">{t.rooms}<Glyph name="arrow" /></a>
+              <a href={`#${roomsTarget}`} className="premium-hero-button">{poolside?(ar?"اكتشف التجارب":"Explore experiences"):t.rooms}<Glyph name="arrow" /></a>
               {fullFilmSrc&&<button type="button" className="premium-photo-button opal-hero-watch" ref={filmTriggerRef}
                 onClick={()=>setFilmOpen(true)}>
                 <span><Glyph name="play"/></span>{t.film}
