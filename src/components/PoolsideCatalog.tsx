@@ -5,6 +5,7 @@ import { useEffect,useState } from "react";
 import { useHotelMedia } from "@/components/CmsProvider";
 import { makeOpalApi,type DayUse,type Accommodation } from "@/lib/opal-api";
 import type { Locale } from "@/lib/hotel-content";
+import { bookingPath,productPath } from "@/lib/poolside-products";
 import styles from "./poolside-catalog.module.css";
 
 type Props={locale:Locale;origin:string;onOpenPhoto:(index:number)=>void};
@@ -40,19 +41,20 @@ export function PoolsideCatalog({locale,origin,onOpenPhoto}:Props){
           const movie=mapping?.video;
           const title=ar?p.name_ar:p.name_en;
           const price="price_per_guest" in p?p.price_per_guest:p.price_per_night;
-          const href=`/${locale}/booking?`+new URLSearchParams({product:kind,slug});
+          const href=bookingPath(locale,kind,slug);
           return <article className={styles.card} key={slug}>
             {cover!==undefined?<button type="button" className={styles.photo} onClick={()=>onOpenPhoto(cover)} aria-label={t("View photo: ","عرض صورة: ")+title}>
               <img src={media.images[cover].src} alt={ar?media.images[cover].altAr:media.images[cover].alt} loading="lazy" width={640} height={400} onError={e=>{e.currentTarget.hidden=true;}}/>
             </button>:<div className={styles.placeholder} aria-hidden="true">OPAL <span>POOLSIDE</span></div>}
             <div className={styles.body}>
               <span className={styles.kicker}>{day?t("DAY EXPERIENCE","تجربة يومية"):t("OVERNIGHT EXPERIENCE","تجربة إقامة")}</span>
-              <h4>{title}</h4>
+              <h4><Link href={productPath(locale,kind,slug)}>{title}</Link></h4>
               <p>{ar?p.description_ar:p.description_en}</p>
               {"max_guests" in p&&<p className={styles.capacity}>{t("Up to","حتى")} <b dir="ltr">{p.max_guests}</b> {t("guests per unit","ضيوف لكل وحدة")}</p>}
               {gallery.length>1&&<div className={styles.thumbs}>{gallery.slice(1,5).map(i=><button type="button" key={i} onClick={()=>onOpenPhoto(i)} aria-label={t("View photo","عرض الصورة")}><img loading="lazy" src={media.images[i].src} alt={ar?media.images[i].altAr:media.images[i].alt}/></button>)}</div>}
               {movie&&<video className={styles.video} src={movie.src} controls playsInline preload="none" aria-label={t("Experience video: ","فيديو التجربة: ")+title}/>}
               <div className={styles.bottom}><div><strong dir="ltr">{p.currency} {price}</strong><small>{day?t("per guest","للفرد"):t("per night","لليلة")}</small></div>
+              <Link href={productPath(locale,kind,slug)} className={styles.details}>{t("View details","عرض التفاصيل")}</Link>
               <Link href={href} className={styles.cta}>{t("Book now","احجز الآن")} <span aria-hidden="true">↗</span></Link></div>
             </div>
           </article>;
