@@ -73,7 +73,7 @@ export function useHotelMedia(){
     const roomMedia=Object.fromEntries(roomConcepts.map(room=>{
       const assigned=placed.rooms[room.slug];
       const overrides=assigned?.gallery.map(indexOf).filter((n):n is number=>n!==null)??[];
-      const cover=resolve(assigned?.cover||"",room.imageIndices[0]);
+      const cover=resolve(assigned?.cover||"",room.imageIndices[0]??-1);
       const gallery=overrides.length?Array.from(new Set([cover,...overrides])):[...room.imageIndices];
       const movie=lookup(assigned?.video||"");
       return [room.slug,{cover,gallery,video:movie?.kind==="video"?movie:undefined}];
