@@ -3,7 +3,7 @@
 import { useMemo,useState,type ChangeEvent,type DragEvent } from "react";
 import type { CmsSite } from "@/lib/cms-schema";
 import { approvedAsset,visualCategories,type VisualAsset,type CmsVisualLibrary } from "@/lib/cms-media";
-import { roomConcepts } from "@/lib/room-concepts";
+import { roomConcepts, isPoolsideProductSlot } from "@/lib/room-concepts";
 import { MediaPicker } from "@/components/MediaPicker";
 
 const labels:Record<string,string>={
@@ -303,14 +303,14 @@ export function MediaStudio({draft,published,change,upload,uploading}:Props){
       {renderOrder("gallery")}
     </section>
     <section className="opal-cms-editor-card">
-      <div className="opal-cms-editor-head"><span>04 / ROOMS</span><h3>صور وفيديو مستقل لكل غرفة</h3></div>
-      <p className="opal-cms-note">أسماء الغرف الحالية تصورات تصميمية حتى يتم اعتماد بيانات الفندق؛ ربط الصور لا يفعّل حجوزات أو أسعار.</p>
+      <div className="opal-cms-editor-head"><span>04 / ROOMS & PRODUCTS</span><h3>صور الغرف والتجارب</h3></div>
+      <p className="opal-cms-note">منتجات أوبال بولسايد مربوطة بمعرفات Laravel الثابتة. الصور فقط من هنا؛ الأسعار والتوافر من نظام الحجوزات. خانات الغرف القديمة محفوظة.</p>
       {roomConcepts.map(room=>{
         const mapping=visual.placements.rooms[room.slug];
         return <div key={room.slug} className="opal-media-room-map">
-          <h4>{room.name.ar} <small>{room.name.en}</small></h4>
+          <h4>{isPoolsideProductSlot(room.slug)&&<span>Poolside · </span>}{room.name.ar} <small>{room.name.en}</small></h4>{isPoolsideProductSlot(room.slug)&&<p className="opal-cms-help" dir="ltr">{room.slug}</p>}
           <div className="opal-media-mapping">
-            <span>صورة الغرفة الأساسية</span>
+            <span>الصورة الأساسية</span>
             <MediaPicker assets={assets} label={"غلاف "+room.name.ar} kind="image"
               value={mapping.cover} onChange={src=>edit(v=>{v.placements.rooms[room.slug].cover=src;})}/>
 
