@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PoolsideBooking } from "@/components/PoolsideBooking";
-import { apiOrigin } from "@/lib/opal-api";
+import { poolsideConfig } from "@/lib/poolside-config";
 import { BookingExperience } from "@/components/BookingExperience";
 import { bookingCopy, parsePreviewParams } from "@/lib/booking-preview";
 import { isLocale } from "@/lib/hotel-content";
@@ -35,16 +35,11 @@ export default async function BookingPage({params,searchParams}:PageProps){
   const query=await searchParams;
   const input=parsePreviewParams(query);
   const published=await readPublished();
-  if(process.env.OPAL_BOOKING_ENABLED==="true"){
-    const raw=process.env.OPAL_API_BASE_URL||process.env.NEXT_PUBLIC_OPAL_API_BASE_URL||"";
-    let origin="";
-    try{origin=apiOrigin(raw);}catch{}
-    const gateway=process.env.OPAL_PAYMENT_GATEWAY==="mock"?"mock":"paymob";
-    // Mock is deliberately restricted to a loopback backend.
-    const valid=origin&&(gateway!=="mock"||["localhost","127.0.0.1","[::1]"].includes(new URL(origin).hostname));
-    if(!valid)return <main className="opal-book-page"><h1>{locale==="ar"?"الحجز غير متاح مؤقتًا":"Booking temporarily unavailable"}</h1><a href={`/${locale}`}>{locale==="ar"?"الرئيسية":"Home"}</a></main>;
+  const {enabled,origin,gateway}=poolsideConfig();
+  if(enabled){
+    if(!origin)return <main className="opal-book-page"><h1>{locale==="ar"?"الحجز غير متاح مؤقتًا":"Booking temporarily unavailable"}</h1><a href={`/${locale}`}>{locale==="ar"?"الرئيسية":"Home"}</a></main>;
     const reference=typeof query.reference==="string"?query.reference:"";
-    return <CmsProvider value={published}><PoolsideBooking locale={locale} origin={origin} gateway={gateway} initial={input} reference={reference}/></CmsProvider>;
+    return <CmsProvider value={published}><PoolsideBooking locale={locale} origin={origin} gateway={gateway} initial={input} reference={reference} product={query.product==="day_use"?"day_use":"bubble_stay"} slug={typeof query.slug==="string"?query.slug.slice(0,160):""}/></CmsProvider>;
   }
   return <CmsProvider value={published}><BookingExperience locale={locale} initial={input}/></CmsProvider>;
 }
