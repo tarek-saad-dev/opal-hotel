@@ -52,6 +52,7 @@ async function handle(req:NextRequest,{params}:{params:Promise<{path:string[]}>}
    const common=["product_type","guests","guest_name","guest_email","guest_phone"];
    const allowed=new Set([...common,...(v.product_type==="day_use"?["visit_date","day_use_product_id"]:v.product_type==="bubble_stay"?["check_in","check_out","random_assignment","bubbles"]:[])]);
    if(!["day_use","bubble_stay"].includes(String(v.product_type))||Object.keys(v).some(k=>!allowed.has(k)))return fail(422);
+   if(v.product_type==="bubble_stay"&&(!Array.isArray(v.bubbles)||v.bubbles.length<1||v.bubbles.length>6||v.bubbles.some(u=>!u||typeof u!=="object"||Array.isArray(u)||Object.keys(u).some(k=>!["accommodation_type_id","bubble_id","guests"].includes(k)))))return fail(422);
   }
   if(endpoint.endsWith("/pay")){
    // Production gateway selection belongs to the server, never the client.
