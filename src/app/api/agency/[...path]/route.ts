@@ -5,6 +5,7 @@ const headers={"Cache-Control":"private, no-store","X-Content-Type-Options":"nos
 const reply=(data:unknown,status=200)=>NextResponse.json(data,{status,headers});
 const fail=(status:number)=>reply({success:false,message:"Agency request unavailable"},status);
 const safeReference=/^[A-Za-z0-9._~-]{1,256}$/;
+const referenceValid=(value:string)=>safeReference.test(value)&&value!=="."&&value!=="..";
 const slug=/^[a-z0-9][a-z0-9-]{0,159}$/;
 function route(path:string[],method:string){
  const [a,b,c]=path;
@@ -13,7 +14,7 @@ function route(path:string[],method:string){
   if(method==="GET"&&["me","day-use","accommodations","bookings"].includes(a))return a;
  }
  if(a==="accommodations"&&b&&slug.test(b)&&method==="GET"&&(path.length===2||path.length===3&&c==="availability"))return path.map(encodeURIComponent).join("/");
- if(a==="bookings"&&b&&safeReference.test(b)&&(path.length===2&&method==="GET"||path.length===3&&c==="pay"&&method==="POST"))return path.map(encodeURIComponent).join("/");
+ if(a==="bookings"&&b&&referenceValid(b)&&(path.length===2&&method==="GET"||path.length===3&&c==="pay"&&method==="POST"))return path.map(encodeURIComponent).join("/");
  return null;
 }
 async function handle(req:NextRequest,{params}:{params:Promise<{path:string[]}>}){
@@ -46,6 +47,12 @@ async function handle(req:NextRequest,{params}:{params:Promise<{path:string[]}>}
    if(typeof v.email!=="string"||typeof v.password!=="string"||v.email.length>254||v.password.length>512)return fail(422);
    body={email:v.email,password:v.password};
   }
+  if(endpoint==="bookings"){
+   const v=body as Record<string,unknown>;
+   const common=["product_type","guests","guest_name","guest_email","guest_phone"];
+   const allowed=new Set([...common,...(v.product_type==="day_use"?["visit_date","day_use_product_id"]:v.product_type==="bubble_stay"?["check_in","check_out","random_assignment","bubbles"]:[])]);
+   if(!["day_use","bubble_stay"].includes(String(v.product_type))||Object.keys(v).some(k=>!allowed.has(k)))return fail(422);
+  }
   if(endpoint.endsWith("/pay")){
    // Production gateway selection belongs to the server, never the client.
    const mock=process.env.OPAL_PAYMENT_GATEWAY==="mock"&&["localhost","127.0.0.1","[::1]"].includes(new URL(origin).hostname);
@@ -65,7 +72,7 @@ async function handle(req:NextRequest,{params}:{params:Promise<{path:string[]}>}
    res.cookies.set(cookie,issued,cookieOptions);return res;
   }
   return reply(data,upstream.status);
- }catch{return fail(502);}
+ }catch{return endpoint==="logout"?clear(fail(502)):fail(502);}
 }
 export const GET=handle;
 export const POST=handle;
