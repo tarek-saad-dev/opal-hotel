@@ -1,0 +1,39 @@
+name: Poolside Staging Preflight
+on:
+  workflow_dispatch:
+    inputs:
+      api_origin:
+        description: Actual Laravel staging HTTPS origin (no API path)
+        required: true
+        type: string
+      frontend_origin:
+        description: Actual staging Next.js HTTPS origin
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  read-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      API_ORIGIN: ${{ inputs.api_origin }}
+      FRONTEND_ORIGIN: ${{ inputs.frontend_origin }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Run contract and CORS checks (no writes)
+        shell: bash
+        run: |
+          mkdir -p artifacts/poolside-preflight
+          node scripts/poolside-preflight.mjs "$API_ORIGIN" "$FRONTEND_ORIGIN" | tee artifacts/poolside-preflight/report.json
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: poolside-preflight-${{ github.sha }}
+          path: artifacts/poolside-preflight/
+          retention-days: 14
+          if-no-files-found: warn
