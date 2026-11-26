@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import ts from "typescript";
 const source=readFileSync(new URL("../src/lib/opal-api.ts",import.meta.url),"utf8");
 const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
-const {apiOrigin,makeOpalApi,OpalApiError,paymentDestination,isConfirmed,shouldPoll}=await import("data:text/javascript;base64,"+Buffer.from(js).toString("base64"));
+const {apiOrigin,makeOpalApi,OpalApiError,paymentDestination,poolsideConnection,isConfirmed,shouldPoll}=await import("data:text/javascript;base64,"+Buffer.from(js).toString("base64"));
 const origin="http://127.0.0.1:8000";
 
 test("origin and payment URL restrictions",()=>{
@@ -50,4 +50,13 @@ test("error envelopes and rate limits remain distinguishable",async()=>{
     globalThis.fetch=async()=>Response.json({success:false});
     await assert.rejects(makeOpalApi(origin,"en").ping(),e=>e.status===502);
   }finally{globalThis.fetch=old;}
+});
+
+test("invalid gateway settings fail closed for both public and agency callers",()=>{
+ assert.deepEqual(poolsideConnection(origin,"mock"),{origin,gateway:"mock"});
+ assert.deepEqual(poolsideConnection("https://api.hotel.example.org","paymob"),{origin:"https://api.hotel.example.org",gateway:"paymob"});
+ assert.equal(poolsideConnection("https://api.hotel.example.org","mock").origin,"");
+ assert.equal(poolsideConnection("https://api.hotel.example.org","typo").origin,"");
+ assert.equal(poolsideConnection("https://YOUR-STAGING-HOST.example","paymob").origin,"");
+ assert.equal(poolsideConnection("http://api.hotel.example.org","paymob").origin,"");
 });
