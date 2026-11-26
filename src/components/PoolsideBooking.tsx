@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect,useMemo,useRef,useState,type FormEvent } from "react";
 import { useHotelMedia } from "@/components/CmsProvider";
 import "./poolside-booking.css";
+import { PoolsidePass } from "@/components/PoolsidePass";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { makeOpalApi,OpalApiError,isConfirmed,shouldPoll,paymentDestination,type Gateway,type DayUse,type Accommodation,type Availability,type Booking,type BookingInput,type Guest } from "@/lib/opal-api";
 import { allocations,validUnits,MAX_ONLINE_UNITS,type UnitSelection,type UnitAvailability } from "@/lib/poolside-allocation";
@@ -137,7 +138,7 @@ export function PoolsideBooking({locale,origin,gateway,initial,reference:initial
       try{
         const b=await api.booking(reference,controller.signal);
         if(controller.signal.aborted)return;
-        setBooking(b);setPollError("");attempts++;
+        setBooking(b);setPollError("");storeReference(reference);attempts++;
         if(shouldPoll(b.status)&&attempts<60)timer=setTimeout(poll,5000);
         else if(shouldPoll(b.status))setPollError(ar?"التحقق مستمر لدى الفندق. يمكنك تحديث الحالة.":"Verification is still pending. You can refresh the status.");
       }catch(e){
@@ -154,7 +155,7 @@ export function PoolsideBooking({locale,origin,gateway,initial,reference:initial
   },[api,ar,reference,pollVersion]);
   function openReference(value:string){
     const clean=value.trim();if(!referenceValid(clean))return;
-    setReference(clean);setBooking(null);setPollError("");storeReference(clean);
+    setReference(clean);setBooking(null);setPollError("");
     const url=new URL(window.location.href);url.searchParams.set("reference",clean);window.history.replaceState(null,"",url);
   }
   function reset(){
@@ -179,7 +180,7 @@ export function PoolsideBooking({locale,origin,gateway,initial,reference:initial
     try{
       const created=await api.create(input);
       if(!referenceValid(created.booking_reference))throw new Error("Missing reference");
-      openReference(created.booking_reference);setBooking(created);setGuest({guest_name:"",guest_email:"",guest_phone:""});
+      openReference(created.booking_reference);storeReference(created.booking_reference);setBooking(created);setGuest({guest_name:"",guest_email:"",guest_phone:""});
     }catch(e){
       setError(errorText(e,ar));if(e instanceof OpalApiError)setFields(e.fields);
       if(!(e instanceof OpalApiError)||e.status===0||e.status>=500)setUnknownCreate(true);
@@ -218,6 +219,7 @@ export function PoolsideBooking({locale,origin,gateway,initial,reference:initial
     </div></header>
     <main className="opal-book-page" id="booking-main">
       <div className="opal-book-introduction"><div className="opal-book-introduction-main"><span className="opal-book-eyebrow">OPAL POOLSIDE</span><h1>{reference?t("Your booking","حجزك"):t("Book your experience","احجز تجربتك")}</h1><p>{t("Choose your experience and complete secure payment.","اختر تجربتك وأكمل الدفع الآمن.")}</p></div></div>
+      <ol className="opal-pool-step" aria-label={t("Booking progress","مراحل الحجز")}><li aria-current={!reference?"step":undefined}>{t("1. Choose experience","١. اختيار التجربة")}</li><li aria-current={reference&&!isConfirmed(booking?.status??"pending_payment")?"step":undefined}>{t("2. Review & pay","٢. مراجعة ودفع")}</li><li aria-current={booking&&isConfirmed(booking.status)?"step":undefined}>{t("3. Booking pass","٣. بطاقة الحجز")}</li></ol>
       {reference?<div className="opal-book-workspace">
         <p className="opal-book-helper">{t("Booking reference","مرجع الحجز")}: <strong dir="ltr">{reference}</strong></p>
         {booking?<><h2 role="status">{statusNames[booking.status]?.[ar?1:0]??booking.status}</h2>
@@ -225,12 +227,12 @@ export function PoolsideBooking({locale,origin,gateway,initial,reference:initial
           {booking.status==="pending_payment"&&<><p>{remaining!==null?(expired?t("Payment window ended; refresh status.","انتهت مهلة الدفع؛ حدّث الحالة."):t("Payment time remaining: ","الوقت المتبقي للدفع: ")+Math.floor(remaining/60)+":"+String(remaining%60).padStart(2,"0")):t("Awaiting payment","في انتظار الدفع")}</p>
             <button className="opal-book-primary" type="button" disabled={busy||expired||!!pollError} onClick={()=>void pay()}>{busy?t("Opening payment…","جارٍ فتح الدفع…"):t("Continue to payment","المتابعة للدفع")}</button></>}
           {booking.status==="paid"&&<p>{t("Payment is being verified. Do not pay again.","الدفع قيد التحقق. لا تدفع مرة أخرى.")}</p>}
-          {isConfirmed(booking.status)&&<><p>{t("Show your booking code at arrival. The hotel sends the booking pass by email.","اعرض كود الحجز عند الوصول. يرسل الفندق بطاقة الحجز بالبريد الإلكتروني.")}</p>{booking.tickets?.map(ticket=><p key={ticket.ticket_code} dir="ltr">{ticket.ticket_code}</p>)}</>}
+          {isConfirmed(booking.status)&&<PoolsidePass booking={booking} origin={origin} locale={locale}/>}
         </>:<p role="status">{t("Checking booking status…","جارٍ التحقق من حالة الحجز…")}</p>}
         {pollError&&<p className="opal-book-error" role="alert">{pollError}</p>}{error&&<p className="opal-book-error" role="alert">{error}</p>}
         <div className="opal-book-actions"><button className="opal-book-back" type="button" disabled={busy} onClick={()=>setPollVersion(v=>v+1)}>{t("Refresh status","تحديث الحالة")}</button>{((booking&&!shouldPoll(booking.status))||(!booking&&!!pollError))&&<button className="opal-book-back" type="button" onClick={reset}>{t("New booking","حجز جديد")}</button>}</div>
       </div>:<>
-      <form className="opal-book-details" onSubmit={e=>{e.preventDefault();openReference(lookup);}}><label>{t("Already have a booking? Enter reference","عندك حجز؟ أدخل المرجع")}<input dir="ltr" value={lookup} onChange={e=>setLookup(e.target.value)} maxLength={256}/></label><button className="opal-book-back" type="submit" disabled={!referenceValid(lookup.trim())}>{t("Find booking","عرض الحجز")}</button></form>
+      <form className="opal-book-details opal-pool-recovery" onSubmit={e=>{e.preventDefault();openReference(lookup);}}><label>{t("Already have a booking? Enter reference","عندك حجز؟ أدخل المرجع")}<input dir="ltr" value={lookup} onChange={e=>setLookup(e.target.value)} maxLength={256}/></label><button className="opal-book-back" type="submit" disabled={!referenceValid(lookup.trim())}>{t("Find booking","عرض الحجز")}</button></form>
       {catalogLoading?<p role="status">{t("Loading experiences…","جارٍ تحميل التجارب…")}</p>:catalogError?<div role="alert"><p>{catalogError}</p><button className="opal-book-back" onClick={()=>setCatalogVersion(v=>v+1)}>{t("Retry","حاول مرة أخرى")}</button></div>:
       <div className="opal-book-layout"><form className="opal-book-workspace opal-book-details" onSubmit={create}>
         <fieldset disabled={busy||unknownCreate} style={{border:0,padding:0,margin:0,minWidth:0}}>
