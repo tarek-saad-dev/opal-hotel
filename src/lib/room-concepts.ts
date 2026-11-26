@@ -17,6 +17,16 @@ export type RoomConcept = {
   imageIndices: readonly number[];
 };
 
+// Stable backend product keys. These are editorial media slots, not inventory.
+export const poolsideProductSlots = [
+  {slug:"zalina-luxor-day-experience",name:{en:"Day Experience",ar:"التجربة النهارية"},imageIndices:[]},
+  {slug:"zalina-arabian-village-night-experience",name:{en:"Night Experience",ar:"التجربة المسائية"},imageIndices:[]},
+  {slug:"one-bed-bubble",name:{en:"One Bed Bubble",ar:"فقاعة سرير واحد"},imageIndices:[]},
+  {slug:"two-bed-bubble",name:{en:"Two Bed Bubble",ar:"فقاعة سريرين"},imageIndices:[]},
+  {slug:"three-bed-bubble",name:{en:"Three Bed Bubble",ar:"فقاعة ثلاثة أسرّة"},imageIndices:[]},
+] as const satisfies readonly RoomConcept[];
+export const isPoolsideProductSlot=(slug:string)=>poolsideProductSlots.some(p=>p.slug===slug);
+
 export const roomConcepts: readonly RoomConcept[] = [
   // General room photos (storage keys from earlier releases, kept so existing
   // published assignments stay valid). Shown in the Rooms section photo strip.
@@ -25,6 +35,7 @@ export const roomConcepts: readonly RoomConcept[] = [
   { slug: "slow-mornings", name: { en: "Room photos 3", ar: "صور الغرف 3" }, imageIndices: [3, 5, 2] },
   // One slot per real room type: cover + gallery shown on that room's card.
   ...roomTypes.map(room=>({ slug: room.slug, name: room.name, imageIndices: [2] as const })),
+  ...poolsideProductSlots,
 ];
 
 export const generalRoomSlots = ["light-and-stillness","quiet-comforts","slow-mornings"] as const;
