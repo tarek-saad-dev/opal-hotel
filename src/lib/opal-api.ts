@@ -20,6 +20,17 @@ export function apiOrigin(value:string):string {
   if(!["https:","http:"].includes(u.protocol)||u.username||u.password||u.pathname!=="/"||u.search||u.hash) throw new Error("OPAL API URL must be an HTTP(S) origin");
   return u.origin;
 }
+export function poolsideConnection(rawOrigin:string,rawGateway:string|undefined):{origin:string;gateway:Gateway}{
+  const gateway:Gateway=rawGateway==="mock"?"mock":"paymob";
+  if(rawGateway!==undefined&&rawGateway!==""&&rawGateway!=="mock"&&rawGateway!=="paymob")return {origin:"",gateway};
+  try{
+    const origin=apiOrigin(rawOrigin);
+    const hostname=new URL(origin).hostname;
+    const local=["localhost","127.0.0.1","[::1]"].includes(hostname);
+    if(hostname.endsWith(".example")||hostname==="example.com"||(!local&&(!origin.startsWith("https://")||gateway==="mock")))return {origin:"",gateway};
+    return {origin,gateway};
+  }catch{return {origin:"",gateway};}
+}
 export function paymentDestination(value:string,gateway:Gateway,origin:string):string {
   const url=new URL(value);
   if(url.username||url.password|| (gateway==="mock" ? url.origin!==apiOrigin(origin)||!["http:","https:"].includes(url.protocol) : url.protocol!=="https:")) throw new Error("Invalid payment URL");
