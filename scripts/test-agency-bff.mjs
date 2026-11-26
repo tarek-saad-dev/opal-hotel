@@ -4,7 +4,7 @@ const base=process.env.OPAL_TEST_FRONTEND||"http://127.0.0.1:3001";
 const upstream=process.env.OPAL_API_BASE_URL||"http://127.0.0.1:8000";
 assert.match(upstream,/^http:\/\/127\.0\.0\.1:\d+$/);
 const token="test-only-sanctum-token";
-let payCalls=0,logoutCalls=0;
+let payCalls=0,logoutCalls=0,createCalls=0;
 const identity={agency:{id:1,name:"Test agency",is_active:true},actor:{type:"agency",id:1,name:"Test owner"},capabilities:{}};
 const booking={booking_reference:"child-reference",booking_code:"OPL-TEST-CHLD",product_type:"day_use",status:"pending_payment",total:"200.00",currency:"EGP",guests:1,can_pay:false};
 const server=createServer(async(req,res)=>{
@@ -19,7 +19,18 @@ const server=createServer(async(req,res)=>{
  }
  if(req.headers.authorization!=="Bearer "+token)return send(401,{success:false});
  if(path==="/api/v1/agency/me")return ok(identity);
- if(path==="/api/v1/agency/bookings")return ok([booking]);
+ if(path==="/api/v1/agency/bookings"&&req.method==="POST"){
+  const chunks=[];for await(const chunk of req)chunks.push(chunk);
+  const body=JSON.parse(Buffer.concat(chunks).toString());
+  assert.equal(body.product_type,"bubble_stay");assert.equal(body.guests,3);
+  assert.deepEqual(body.bubbles,[{accommodation_type_id:1,bubble_id:10,guests:1},{accommodation_type_id:1,bubble_id:11,guests:2}]);
+  createCalls++;return ok({...booking,booking_reference:"own-reference",product_type:"bubble_stay",can_pay:true});
+ }
+ if(path==="/api/v1/agency/bookings"){
+  const page=Number(new URL(req.url,upstream).searchParams.get("page")||1);
+  return send(200,{success:true,data:[booking],meta:{current_page:page,last_page:2}});
+ }
+ if(path==="/api/v1/agency/bookings/child-reference")return ok(booking);
  if(path==="/api/v1/agency/bookings/child-reference/pay"){payCalls++;return send(403,{success:false});}
  if(path==="/api/v1/agency/logout"){logoutCalls++;return ok(null);}
  return send(404,{success:false});
@@ -40,6 +51,11 @@ try{
  const list=await request("bookings",{headers:{Cookie:session}});assert.equal((await list.json()).data[0].can_pay,false);
  assert.equal((await request("admin",{headers:{Cookie:session}})).status,404);
  assert.equal((await post("bookings",{product_type:"day_use",agency_id:123},session)).status,422);
+ const stay={product_type:"bubble_stay",guests:3,guest_name:"Test",guest_email:"test@example.invalid",guest_phone:"+201000000000",check_in:"2026-12-01",check_out:"2026-12-02",random_assignment:false,bubbles:[{accommodation_type_id:1,bubble_id:10,guests:1},{accommodation_type_id:1,bubble_id:11,guests:2}]};
+ assert.equal((await post("bookings",{...stay,bubbles:[{...stay.bubbles[0],agency_id:123}]},session)).status,422);
+ assert.equal((await post("bookings",stay,session)).status,200);assert.equal(createCalls,1);
+ const second=await request("bookings?page=2",{headers:{Cookie:session}});assert.equal((await second.json()).meta.current_page,2);
+ const child=await request("bookings/child-reference",{headers:{Cookie:session}});assert.equal((await child.json()).data.can_pay,false);
  assert.equal((await post("bookings/child-reference/pay",{},session)).status,403);assert.equal(payCalls,1);
  const logout=await post("logout",{},session);assert.equal(logout.status,200);assert.match(logout.headers.get("set-cookie"),/Max-Age=0/i);assert.equal(logoutCalls,1);
  console.log("Agency isolated BFF auth, origin, allowlist, creator scope and logout passed");
