@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
+import { mkdir } from "node:fs/promises";
 import { chromium } from "playwright";
 const base=process.env.OPAL_TEST_FRONTEND||"http://127.0.0.1:3001";
 const upstream=process.env.OPAL_API_BASE_URL||"http://127.0.0.1:8000";
 assert.match(upstream,/^http:\/\/127\.0\.0\.1:\d+$/);
 const token="test-only-sanctum-token";
-let payCalls=0,logoutCalls=0,createCalls=0;
+let payCalls=0,logoutCalls=0,createCalls=0,ownPays=0,ownStatus="pending_payment";
+const artifacts="artifacts/poolside-feature";await mkdir(artifacts,{recursive:true});
 const identity={agency:{id:1,name:"Test agency",is_active:true},actor:{type:"agency",id:1,name:"Test owner"},capabilities:{}};
 const booking={booking_reference:"child-reference",booking_code:"OPL-TEST-CHLD",product_type:"day_use",status:"pending_payment",total:"200.00",currency:"EGP",guests:1,can_pay:false};
 const server=createServer(async(req,res)=>{
@@ -18,6 +20,7 @@ const server=createServer(async(req,res)=>{
   if(body.email!=="agency@example.invalid"||body.password!=="isolated-test")return send(401,{success:false});
   return ok({...identity,token});
  }
+ if(path==="/mock-payment"){res.writeHead(200,{"Content-Type":"text/html"});res.end("<html><body>Mock payment</body></html>");return;}
  if(req.headers.authorization!=="Bearer "+token)return send(401,{success:false});
  if(path==="/api/v1/agency/me")return ok(identity);
  if(path==="/api/v1/agency/day-use")return ok([{id:1,slug:"day-test",name_en:"Day test",name_ar:"تجربة يومية",is_active:true,price_per_guest:"100.00",currency:"EGP"}]);
@@ -36,6 +39,12 @@ const server=createServer(async(req,res)=>{
   return send(200,{success:true,data:[booking],meta:{current_page:page,last_page:2}});
  }
  if(path==="/api/v1/agency/bookings/child-reference")return ok(booking);
+ if(path==="/api/v1/agency/bookings/own-reference")return ok({...booking,booking_reference:"own-reference",product_type:"bubble_stay",status:ownStatus,can_pay:true});
+ if(path==="/api/v1/agency/bookings/own-reference/pay"&&req.method==="POST"){
+  const chunks=[];for await(const chunk of req)chunks.push(chunk);
+  assert.deepEqual(JSON.parse(Buffer.concat(chunks).toString()),{gateway:"mock"});
+  ownPays++;ownStatus="paid";return ok({payment_url:upstream+"/mock-payment"});
+ }
  if(path==="/api/v1/agency/bookings/child-reference/pay"){payCalls++;return send(403,{success:false});}
  if(path==="/api/v1/agency/logout"){logoutCalls++;return ok(null);}
  return send(404,{success:false});
@@ -66,6 +75,7 @@ try{
  const browser=await chromium.launch({headless:true});
  try{
   for(const locale of ["en","ar"]){
+   ownStatus="pending_payment";
    const context=await browser.newContext({viewport:{width:390,height:844}});
    const page=await context.newPage();
    const t=(en,ar)=>locale==="ar"?ar:en;
@@ -77,6 +87,7 @@ try{
    assert.equal(await page.getByRole("button",{name:t("Continue to payment","المتابعة للدفع"),exact:true}).count(),0);
    await page.goto(base+"/"+locale+"/agency?reference=confirmed-reference");
    await page.locator(".opal-pool-pass svg").waitFor();
+   await page.screenshot({path:artifacts+"/agency-pass-"+locale+".png",fullPage:true,animations:"disabled"});
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
    await page.getByRole("button",{name:t("New booking","حجز جديد"),exact:true}).first().click();
    await page.getByLabel(t("Experience type","نوع التجربة"),{exact:true}).selectOption("bubble_stay");
@@ -91,9 +102,16 @@ try{
    await page.getByLabel(t("Guest phone","هاتف الضيف"),{exact:true}).fill("+201000000000");
    await page.getByRole("button",{name:t("Create and review total","إنشاء ومراجعة الإجمالي"),exact:true}).click();
    await page.getByRole("button",{name:t("Continue to payment","المتابعة للدفع"),exact:true}).waitFor();
+   await page.screenshot({path:artifacts+"/agency-review-"+locale+".png",fullPage:true,animations:"disabled"});
+   await page.getByRole("button",{name:t("Continue to payment","المتابعة للدفع"),exact:true}).click();
+   await page.waitForURL(upstream+"/mock-payment");
+   await page.goto(base+"/"+locale+"/agency?success=true&status=confirmed");
+   await page.getByRole("heading",{name:t("Payment verification","جارٍ التحقق من الدفع"),exact:true}).waitFor();
+   assert.equal(await page.locator(".opal-pool-pass").count(),0);
+   assert.equal(await page.getByRole("button",{name:t("Continue to payment","المتابعة للدفع"),exact:true}).count(),0);
    await context.close();
   }
-  assert.equal(createCalls,3);
+  assert.equal(createCalls,3);assert.equal(ownPays,2);
  }finally{await browser.close();}
  console.log("Agency isolated BFF and bilingual browser flows passed");
 }finally{await new Promise(resolve=>server.close(resolve));}
