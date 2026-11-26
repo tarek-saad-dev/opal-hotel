@@ -34,3 +34,16 @@ Use test guests and approved test inventory only. No production charges, no simu
 ## 5. Deploy and rollback plan (not executed)
 After acceptance, record frontend/backend SHAs and current service configuration; back up persistent CMS data and root-only configuration; verify media ownership; merge reviewed candidate; build a separate release and verify before service switch. Existing ops/deploy-vps.sh resets the live checkout to origin/main and restarts the live service, so it is not a staging deploy or an atomic rollback mechanism. Do not execute it until release is approved.
 For rollback, disable both feature flags in the actual service environment and restart; verify the legacy homepage and booking path, then restore the known-good frontend release if needed. Disabling UI flags does not cancel Laravel holds, payments or tickets: coordinate ongoing bookings with the backend operator. Keep evidence of the rollback and never delete live data.
+
+## 6. Release candidate preparation (Phase 8)
+The previously reviewed frontend commit `6070e373ac0bd22d3b4d9af4a9297a5b49840972` passed Frontend CI, Frontend Visual Preview and Poolside Feature Integration. These results are for that exact SHA; subsequent commits require their own checks.
+
+The read-only preflight now also checks all three stable accommodation detail and availability routes in EN/AR, using a one-night window beginning seven Cairo calendar days in the future. A sold-out response is valid when its schema is correct; the probe does not reserve inventory. A skipped check is a non-pass. The output is a JSON report containing no booking/customer/token data. The opt-in GitHub workflow `Poolside Staging Preflight` accepts actual staging origins; once the workflow is available on the default branch, use Actions → Run workflow and download the evidence artifact. Before that, run the CLI from the candidate checkout. No workflow execution is implied by creating this file.
+
+A separate build-only helper is available:
+```bash
+bash ops/prepare-poolside-release.sh <reviewed-40-character-commit-sha> /path/to/new/release-directory
+```
+Run from a trusted local Opal repository as an unprivileged dedicated deployment user. It requires an existing parent directory and an unused destination outside the source checkout, live app and CMS data directories. It exports the exact tracked commit, clears the known Opal runtime configuration from the build environment, disables both booking features during the build, installs dependencies, runs tests/typecheck/build, and records the SHA. It does not switch services or deploy. The repository does not currently commit a package-lock.json; npm install is used when no lockfile exists, so dependency resolution is not fully reproducible. Supply runtime configuration separately and verify the final staging build and service with the actual environment before any switch.
+
+Public and agency configuration now share fail-closed validation: unknown gateways, placeholder origins, non-HTTPS remote origins and remote mock configurations are rejected rather than silently switching agency payment to Paymob. The approved Paymob sandbox credentials and callback configuration still belong to Laravel. All release gates remain open until real environment evidence is collected.
