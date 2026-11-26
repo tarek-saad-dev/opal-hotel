@@ -8,11 +8,12 @@ import type { HotelContent, Locale } from "@/lib/hotel-content";
 import { responsivePhotoSrcSet } from "@/lib/gallery";
 import { useCmsSite,useCmsContent,useHotelMedia,useVisibleSections } from "@/components/CmsProvider";
 import type { CmsSectionId } from "@/lib/cms-schema";
+import { PoolsideCatalog } from "@/components/PoolsideCatalog";
 import { PremiumMasthead } from "@/components/PremiumMasthead";
 import { PremiumStory, PremiumFacilities, PremiumLocation, PremiumRooms, PremiumGallery } from "@/components/PremiumSections";
 import { PremiumReviews, PremiumContact, PremiumFooter } from "@/components/PremiumClosing";
 
-type Props={locale:Locale;content:HotelContent};
+type Props={locale:Locale;content:HotelContent;poolside?:{enabled:boolean;origin:string}};
 function handleImageError(event:SyntheticEvent<HTMLImageElement>) {
   const img=event.currentTarget;
   if(img.dataset.placeholder==="true") return;
@@ -21,7 +22,7 @@ function handleImageError(event:SyntheticEvent<HTMLImageElement>) {
   img.removeAttribute("srcset");
   img.src="/media/photo-placeholder.svg";
 }
-export function HotelExperience({locale,content:baseContent}:Props) {
+export function HotelExperience({locale,content:baseContent,poolside}:Props) {
   const router=useRouter();
   const {startNavigation}=useRouteLoading();
   const c=useCmsContent(locale);
@@ -118,7 +119,7 @@ export function HotelExperience({locale,content:baseContent}:Props) {
 
   return (
     <>
-      <PremiumMasthead locale={locale} content={c}
+      <PremiumMasthead locale={locale} content={c} poolside={poolside?.enabled}
         onOpenGallery={() => { if(realPhotos.length)openPhoto(realPhotos[0]); }}
         onAvailability={({checkin,checkout,adults,children}) => {
           const params=new URLSearchParams({
@@ -140,8 +141,8 @@ export function HotelExperience({locale,content:baseContent}:Props) {
           if(id==="location")return <section key={id} className="opal-stage-section opal-stage-location" id="location" aria-label={c.labels.locationTitle}>
             <PremiumLocation locale={locale} content={c}/>
           </section>;
-          if(id==="rooms")return <section key={id} className="opal-stage-section opal-stage-rooms" id="rooms" aria-label={c.labels.roomsTitle}>
-            <PremiumRooms locale={locale} content={c} onOpenPhoto={openPhoto}/>
+          if(id==="rooms")return <section key={id} className="opal-stage-section opal-stage-rooms" id="rooms" aria-label={poolside?.enabled?(locale==="ar"?"التجارب والإقامة":"Experiences and stays"):c.labels.roomsTitle}>
+            {poolside?.enabled?<PoolsideCatalog locale={locale} origin={poolside.origin} onOpenPhoto={openPhoto}/>:<PremiumRooms locale={locale} content={c} onOpenPhoto={openPhoto}/>}
           </section>;
           if(id==="gallery")return <section key={id} className="opal-stage-section opal-stage-gallery" id="gallery" aria-label={c.nav.gallery}>
             <PremiumGallery locale={locale} content={c} onOpenPhoto={openPhoto}/>
