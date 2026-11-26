@@ -7,7 +7,7 @@ import { DateRangePicker } from "@/components/DateRangePicker";
 import { makeOpalApi,OpalApiError,isConfirmed,shouldPoll,paymentDestination,type Gateway,type DayUse,type Accommodation,type Availability,type Booking,type BookingInput,type Guest } from "@/lib/opal-api";
 import { nextDay,parseDateStamp,type BookingPreviewInput } from "@/lib/booking-preview";
 
-type Props={locale:"en"|"ar";origin:string;gateway:Gateway;initial:BookingPreviewInput;reference:string};
+type Props={locale:"en"|"ar";origin:string;gateway:Gateway;initial:BookingPreviewInput;reference:string;product?:"day_use"|"bubble_stay";slug?:string};
 const sessionKey="opal.active-booking-reference";
 const referenceValid=(value:string)=>value.length>0&&value.length<=256&&!/[\x00-\x20\x7f/]/.test(value);
 function storeReference(reference:string){try{sessionStorage.setItem(sessionKey,reference);}catch{}}
@@ -28,11 +28,11 @@ function money(value:string,currency:string,ar:boolean){
   // Preserve the API decimal string rather than converting money to floating point.
   return ar?value+" "+currency:currency+" "+value;
 }
-export function PoolsideBooking({locale,origin,gateway,initial,reference:initialRef}:Props){
+export function PoolsideBooking({locale,origin,gateway,initial,reference:initialRef,product="bubble_stay",slug=""}:Props){
   const ar=locale==="ar", t=(en:string,arabic:string)=>ar?arabic:en;
   const media=useHotelMedia();
   const api=useMemo(()=>makeOpalApi(origin,locale),[origin,locale]);
-  const [mode,setMode]=useState<"day_use"|"bubble_stay">("bubble_stay");
+  const [mode,setMode]=useState<"day_use"|"bubble_stay">(product);
   const [days,setDays]=useState<DayUse[]>([]);
   const [stays,setStays]=useState<Accommodation[]>([]);
   const [catalogLoading,setCatalogLoading]=useState(true);
@@ -40,6 +40,8 @@ export function PoolsideBooking({locale,origin,gateway,initial,reference:initial
   const [catalogVersion,setCatalogVersion]=useState(0);
   const [dayId,setDayId]=useState<number|null>(null);
   const [typeId,setTypeId]=useState<number|null>(null);
+  const [selectionNotice,setSelectionNotice]=useState("");
+  const initialSelection=useRef(true);
   const [today,setToday]=useState("");
   const [checkIn,setCheckIn]=useState(initial.checkin);
   const [checkOut,setCheckOut]=useState(initial.checkout);
@@ -85,11 +87,18 @@ export function PoolsideBooking({locale,origin,gateway,initial,reference:initial
       if(controller.signal.aborted)return;
       if(!Array.isArray(d)||!Array.isArray(s))throw new Error("Invalid catalog");
       setDays(d.filter(p=>p.is_active));setStays(s.filter(p=>p.is_active));
-      setDayId(old=>d.some(p=>p.id===old&&p.is_active)?old:d.find(p=>p.is_active)?.id??null);
-      setTypeId(old=>s.some(p=>p.id===old&&p.is_active)?old:s.find(p=>p.is_active)?.id??null);
+      const requested=initialSelection.current;
+      initialSelection.current=false;
+      const selectedDay=requested&&product==="day_use"&&slug?d.find(p=>p.slug===slug&&p.is_active):undefined;
+      const selectedStay=requested&&product==="bubble_stay"&&slug?s.find(p=>p.slug_en===slug&&p.is_active):undefined;
+      const missingDay=requested&&product==="day_use"&&!!slug&&!selectedDay;
+      const missingStay=requested&&product==="bubble_stay"&&!!slug&&!selectedStay;
+      if(missingDay||missingStay)setSelectionNotice(ar?"التجربة المختارة غير متاحة حاليًا. اختر تجربة أخرى.":"The selected experience is unavailable. Please choose another.");
+      setDayId(old=>missingDay?null:selectedDay?.id??(d.some(p=>p.id===old&&p.is_active)?old:d.find(p=>p.is_active)?.id??null));
+      setTypeId(old=>missingStay?null:selectedStay?.id??(s.some(p=>p.id===old&&p.is_active)?old:s.find(p=>p.is_active)?.id??null));
     }).catch(e=>{if(!controller.signal.aborted)setCatalogError(errorText(e,ar));}).finally(()=>{if(!controller.signal.aborted)setCatalogLoading(false);});
     return()=>controller.abort();
-  },[api,ar,reference,catalogVersion]);
+  },[api,ar,reference,catalogVersion,product,slug]);
   useEffect(()=>{
     setAvailability(null);setAvailabilityKey("");setBubble(null);setAvailabilityLoading(false);
     if(reference||mode!=="bubble_stay"||!stay||!validStay)return;
@@ -180,6 +189,10 @@ export function PoolsideBooking({locale,origin,gateway,initial,reference:initial
   };
   const fieldLabels:Record<string,string>={guest_name:t("Full name","الاسم الكامل"),guest_email:t("Email","البريد الإلكتروني"),guest_phone:t("Phone","رقم الهاتف")};
   const langQuery=new URLSearchParams(); if(reference)langQuery.set("reference",reference);
+  else {langQuery.set("product",mode);const selectedSlug=mode==="day_use"?day?.slug:stay?.slug_en;if(selectedSlug)langQuery.set("slug",selectedSlug);langQuery.set("checkin",mode==="day_use"?visit:checkIn);langQuery.set("checkout",checkOut);langQuery.set("adults",String(guests));}
+  const selectedSlug=mode==="day_use"?day?.slug:stay?.slug_en;
+  const productMedia=selectedSlug?media.roomMedia[selectedSlug]:undefined;
+  const cover=productMedia?[productMedia.cover,...productMedia.gallery].find(i=>media.isReal(i)):undefined;
   return <>
     <header className="opal-book-header"><div className="opal-book-header-inner">
       <Link href={`/${locale}`} className="opal-book-brand">{media.logoSrc?<img src={media.logoSrc} alt="" width={43} height={43}/>:<span className="opal-book-mark">O</span>}<strong>OPAL POOLSIDE</strong><small>LUXOR · EGYPT</small></Link>
@@ -204,9 +217,10 @@ export function PoolsideBooking({locale,origin,gateway,initial,reference:initial
       <div className="opal-book-layout"><form className="opal-book-workspace opal-book-details" onSubmit={create}>
         <fieldset disabled={busy||unknownCreate} style={{border:0,padding:0,margin:0,minWidth:0}}>
         <div className="opal-book-actions"><button className="opal-book-back" aria-pressed={mode==="day_use"} type="button" onClick={()=>{setMode("day_use");setError("");setFields({});}}>{t("Day Use","استخدام يومي")}</button><button className="opal-book-back" aria-pressed={mode==="bubble_stay"} type="button" onClick={()=>{setMode("bubble_stay");setError("");setFields({});}}>{t("Overnight Stay","إقامة ليلية")}</button></div>
+        {selectionNotice&&<p role="alert" className="opal-book-error">{selectionNotice}</p>}
         <div className="opal-book-field-grid">
-          {mode==="day_use"?<><label>{t("Experience","التجربة")}<select value={dayId??""} onChange={e=>setDayId(Number(e.target.value))}>{days.map(p=><option value={p.id} key={p.id}>{ar?p.name_ar:p.name_en}</option>)}</select></label><label>{t("Visit date","تاريخ الزيارة")}<input type="date" min={today} required value={visit} onChange={e=>setVisit(e.target.value)}/></label></>:
-          <><label>{t("Accommodation","نوع الإقامة")}<select value={typeId??""} onChange={e=>setTypeId(Number(e.target.value))}>{stays.map(p=><option key={p.id} value={p.id}>{ar?p.name_ar:p.name_en}</option>)}</select></label></>}
+          {mode==="day_use"?<><label>{t("Experience","التجربة")}<select value={dayId??""} onChange={e=>{setDayId(e.target.value?Number(e.target.value):null);setSelectionNotice("");}}><option value="">{t("Choose experience","اختر التجربة")}</option>{days.map(p=><option value={p.id} key={p.id}>{ar?p.name_ar:p.name_en}</option>)}</select></label><label>{t("Visit date","تاريخ الزيارة")}<input type="date" min={today} required value={visit} onChange={e=>setVisit(e.target.value)}/></label></>:
+          <><label>{t("Accommodation","نوع الإقامة")}<select value={typeId??""} onChange={e=>{setTypeId(e.target.value?Number(e.target.value):null);setSelectionNotice("");}}><option value="">{t("Choose accommodation","اختر نوع الإقامة")}</option>{stays.map(p=><option key={p.id} value={p.id}>{ar?p.name_ar:p.name_en}</option>)}</select></label></>}
           <label>{t("Guests","عدد الضيوف")}<input type="number" min={1} max={mode==="bubble_stay"?stay?.max_guests:undefined} step={1} required value={guests} onChange={e=>setGuests(Number(e.target.value))}/></label>
         </div>
         {mode==="bubble_stay"&&<><DateRangePicker variant="page" locale={locale} checkin={checkIn} checkout={checkOut} min={today} labels={{checkin:t("Check-in","الوصول"),checkout:t("Check-out","المغادرة")}} onChange={r=>{setCheckIn(r.checkin);setCheckOut(r.checkout);}}/>
@@ -219,6 +233,7 @@ export function PoolsideBooking({locale,origin,gateway,initial,reference:initial
         {unknownCreate&&<p role="alert">{t("The booking result is uncertain. Do not submit again; contact the hotel to verify.","نتيجة إنشاء الحجز غير مؤكدة. لا تكرر الطلب؛ تواصل مع الفندق للتحقق.")}</p>}
         <button className="opal-book-primary" type="submit" disabled={busy||unknownCreate||!today||guests<1||!Number.isInteger(guests)||(mode==="day_use"?(!day||parseDateStamp(visit)===null||visit<today):(!validStay||!availabilityCurrent))}>{busy?t("Creating booking…","جارٍ إنشاء الحجز…"):t("Create booking & review total","إنشاء الحجز ومراجعة الإجمالي")}</button>
       </form><aside className="opal-book-summary"><div className="opal-book-summary-top"><span className="opal-book-eyebrow">{t("Your experience","تجربتك")}</span></div>
+        {cover!==undefined&&<div className="opal-book-summary-image"><img className="opal-book-photo" src={media.images[cover].src} alt={ar?media.images[cover].altAr:media.images[cover].alt} width={640} height={400} onError={e=>{e.currentTarget.hidden=true;}}/></div>}
         <h2>{mode==="day_use"?(ar?day?.name_ar:day?.name_en):(ar?stay?.name_ar:stay?.name_en)}</h2>
         <p>{mode==="day_use"?(ar?day?.description_ar:day?.description_en):(ar?stay?.description_ar:stay?.description_en)}</p>
         <div className="opal-book-summary-rows">{mode==="day_use"&&day?<div><span>{t("Per guest","للفرد")}</span><strong dir="ltr">{money(day.price_per_guest,day.currency,ar)}</strong></div>:stay?<div><span>{t("Per night","لليلة")}</span><strong dir="ltr">{money(stay.price_per_night,stay.currency,ar)}</strong></div>:null}
