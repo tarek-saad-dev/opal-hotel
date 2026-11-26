@@ -13,6 +13,9 @@ test("origin and payment URL restrictions",()=>{
   assert.throws(()=>apiOrigin("https://user:pass@example.com"));
   assert.throws(()=>paymentDestination("javascript:alert(1)","paymob",origin));
   assert.throws(()=>paymentDestination("http://example.com/pay","mock",origin));
+  assert.throws(()=>paymentDestination("https://example.com/pay","mock",origin));
+  assert.throws(()=>paymentDestination("http://example.com/pay","paymob",origin));
+  assert.throws(()=>paymentDestination("https://user:pass@example.com/pay","paymob",origin));
   assert.equal(paymentDestination(origin+"/mock-pay?txn=test","mock",origin),origin+"/mock-pay?txn=test");
 });
 test("payment status is not confirmation",()=>{
