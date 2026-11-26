@@ -22,7 +22,7 @@ export function apiOrigin(value:string):string {
 }
 export function paymentDestination(value:string,gateway:Gateway,origin:string):string {
   const url=new URL(value);
-  if(url.username||url.password|| (url.protocol!=="https:" && !(gateway==="mock" && url.protocol==="http:" && url.origin===apiOrigin(origin)))) throw new Error("Invalid payment URL");
+  if(url.username||url.password|| (gateway==="mock" ? url.origin!==apiOrigin(origin)||!["http:","https:"].includes(url.protocol) : url.protocol!=="https:")) throw new Error("Invalid payment URL");
   return url.href;
 }
 export const confirmedStatuses:readonly BookingStatus[]=["confirmed","checked_in","pending_check_out","checked_out","completed"];
