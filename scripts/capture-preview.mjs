@@ -208,6 +208,12 @@ for(const lang of langs)for(const screen of screens){
       const pickerPanel=page.locator('.opal-dp-panel');
       await pickerPanel.waitFor({state:'visible',timeout:5000});
       const pickable=pickerPanel.locator('[data-day]:not([disabled])');
+      // On compact calendars the current month may have fewer than eight future days.
+      // Advance to the next month instead of assuming the test runs early in a month.
+      for(let i=0;i<2&&(await pickable.count())<8;i++){
+        await pickerPanel.locator('.opal-dp-nav.is-next').click();
+      }
+      if((await pickable.count())<8)throw new Error('Calendar has fewer than eight selectable dates after advancing');
       const pickIn=await pickable.nth(3).getAttribute('data-day');
       const pickOut=await pickable.nth(7).getAttribute('data-day');
       await pickable.nth(3).click();
