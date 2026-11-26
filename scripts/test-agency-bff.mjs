@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
+import { chromium } from "playwright";
 const base=process.env.OPAL_TEST_FRONTEND||"http://127.0.0.1:3001";
 const upstream=process.env.OPAL_API_BASE_URL||"http://127.0.0.1:8000";
 assert.match(upstream,/^http:\/\/127\.0\.0\.1:\d+$/);
@@ -19,6 +20,10 @@ const server=createServer(async(req,res)=>{
  }
  if(req.headers.authorization!=="Bearer "+token)return send(401,{success:false});
  if(path==="/api/v1/agency/me")return ok(identity);
+ if(path==="/api/v1/agency/day-use")return ok([{id:1,slug:"day-test",name_en:"Day test",name_ar:"تجربة يومية",is_active:true,price_per_guest:"100.00",currency:"EGP"}]);
+ if(path==="/api/v1/agency/accommodations")return ok([{id:1,slug_en:"one-bed-bubble",name_en:"One Bed Bubble",name_ar:"فقاعة سرير واحد",is_active:true,max_guests:2,price_per_night:"200.00",currency:"EGP"}]);
+ if(path==="/api/v1/agency/accommodations/one-bed-bubble/availability")return ok({availability:true,available_bubbles:2,price_per_night:"200.00",total_estimate:"200.00",currency:"EGP",bubbles:[10,11].map(id=>({id,code:"B"+id,accommodation_type_id:1,status:"available"}))});
+ if(path==="/api/v1/agency/bookings/confirmed-reference")return ok({...booking,booking_reference:"confirmed-reference",booking_code:"OPL-TEST-1234",status:"confirmed",tickets:[{ticket_code:"TICKET-TEST",type:"day_use",title:"Day",valid_from:"2026-12-01",valid_to:"2026-12-01"}]});
  if(path==="/api/v1/agency/bookings"&&req.method==="POST"){
   const chunks=[];for await(const chunk of req)chunks.push(chunk);
   const body=JSON.parse(Buffer.concat(chunks).toString());
@@ -58,5 +63,37 @@ try{
  const child=await request("bookings/child-reference",{headers:{Cookie:session}});assert.equal((await child.json()).data.can_pay,false);
  assert.equal((await post("bookings/child-reference/pay",{},session)).status,403);assert.equal(payCalls,1);
  const logout=await post("logout",{},session);assert.equal(logout.status,200);assert.match(logout.headers.get("set-cookie"),/Max-Age=0/i);assert.equal(logoutCalls,1);
- console.log("Agency isolated BFF auth, origin, allowlist, creator scope and logout passed");
+ const browser=await chromium.launch({headless:true});
+ try{
+  for(const locale of ["en","ar"]){
+   const context=await browser.newContext({viewport:{width:390,height:844}});
+   const page=await context.newPage();
+   const t=(en,ar)=>locale==="ar"?ar:en;
+   await page.goto(base+"/"+locale+"/agency?reference=child-reference&success=true");
+   await page.getByLabel(t("Email","البريد الإلكتروني"),{exact:true}).fill("agency@example.invalid");
+   await page.getByLabel(t("Password","كلمة المرور"),{exact:true}).fill("isolated-test");
+   await page.getByRole("button",{name:t("Sign in","دخول"),exact:true}).click();
+   await page.getByRole("heading",{name:t("Complete your payment","أكمل الدفع"),exact:true}).waitFor();
+   assert.equal(await page.getByRole("button",{name:t("Continue to payment","المتابعة للدفع"),exact:true}).count(),0);
+   await page.goto(base+"/"+locale+"/agency?reference=confirmed-reference");
+   await page.locator(".opal-pool-pass svg").waitFor();
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+   await page.getByRole("button",{name:t("New booking","حجز جديد"),exact:true}).first().click();
+   await page.getByLabel(t("Experience type","نوع التجربة"),{exact:true}).selectOption("bubble_stay");
+   await page.getByLabel(t("Accommodation","نوع الإقامة"),{exact:true}).selectOption("1");
+   await page.getByRole("button",{name:t("+ Add unit","+ إضافة وحدة"),exact:true}).click();
+   await page.getByLabel(t("Guests in unit","ضيوف الوحدة"),{exact:true}).nth(1).fill("2");
+   await page.getByLabel(t("Automatically assign all units","تخصيص كل الوحدات تلقائيًا")).uncheck();
+   await page.getByLabel(t("Physical unit","الوحدة الفعلية"),{exact:true}).first().selectOption("10");
+   await page.getByLabel(t("Physical unit","الوحدة الفعلية"),{exact:true}).nth(1).selectOption("11");
+   await page.getByLabel(t("Guest name","اسم الضيف"),{exact:true}).fill("Test");
+   await page.getByLabel(t("Guest email","بريد الضيف"),{exact:true}).fill("test@example.invalid");
+   await page.getByLabel(t("Guest phone","هاتف الضيف"),{exact:true}).fill("+201000000000");
+   await page.getByRole("button",{name:t("Create and review total","إنشاء ومراجعة الإجمالي"),exact:true}).click();
+   await page.getByRole("button",{name:t("Continue to payment","المتابعة للدفع"),exact:true}).waitFor();
+   await context.close();
+  }
+  assert.equal(createCalls,3);
+ }finally{await browser.close();}
+ console.log("Agency isolated BFF and bilingual browser flows passed");
 }finally{await new Promise(resolve=>server.close(resolve));}
