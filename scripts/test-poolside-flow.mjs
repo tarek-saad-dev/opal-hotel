@@ -43,7 +43,10 @@ try{
   await page.locator('.opal-pool-status[data-tone="waiting"]').waitFor();
   await page.getByRole("button",{name:locale==="ar"?"المتابعة للدفع":"Continue to payment"}).waitFor();
   status="paid";
-  await page.getByRole("button",{name:locale==="ar"?"تحديث الحالة":"Refresh status"}).click();
+  // A forged provider success query must never grant a pass. The return route
+  // uses the session reference and asks the booking API again.
+  await page.goto(base+"/"+locale+"/booking/return?success=true&status=confirmed");
+  await page.waitForURL("**/booking?reference=*");
   await page.getByRole("heading",{name:locale==="ar"?"جارٍ التحقق من الدفع":"Payment verification"}).waitFor();
   assert.equal(await page.locator(".opal-pool-pass").count(),0);
   status="confirmed";
