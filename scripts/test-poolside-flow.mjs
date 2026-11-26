@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
+import { mkdir } from "node:fs/promises";
 import { chromium } from "playwright";
 const base=process.env.OPAL_TEST_FRONTEND||"http://127.0.0.1:3001";
 const api=process.env.OPAL_API_BASE_URL||"http://127.0.0.1:8000";
 assert.match(api,/^http:\/\/127\.0\.0\.1:\d+$/,"Only an isolated loopback API may be mocked");
 const browser=await chromium.launch({headless:true});
+const artifacts="artifacts/poolside-feature";await mkdir(artifacts,{recursive:true});
 const day={id:1,slug:"zalina-luxor-day-experience",name_en:"Day Experience",name_ar:"التجربة النهارية",description_en:"Day visit",description_ar:"زيارة يومية",price_per_guest:"250.00",currency:"EGP",is_active:true};
 const stay={id:2,slug_en:"one-bed-bubble",slug_ar:"فقاعة",name_en:"One Bed Bubble",name_ar:"فقاعة سرير واحد",description_en:"Stay overnight",description_ar:"إقامة ليلية",max_guests:2,price_per_night:"700.00",currency:"EGP",is_active:true};
 const reference="isolated-test-reference";
@@ -14,6 +16,7 @@ try{
   status="pending_payment";
   const context=await browser.newContext({viewport:{width:390,height:844}});
   const page=await context.newPage();
+  await page.route(api+"/mock-payment",route=>route.fulfill({status:302,headers:{location:base+"/"+locale+"/booking/return?success=true&status=confirmed"}}));
   await page.route(api+"/api/v1/**",async route=>{
     const req=route.request(),url=new URL(req.url());
     const headers={"access-control-allow-origin":"*","access-control-allow-headers":"content-type,accept,accept-language","access-control-allow-methods":"GET,POST,OPTIONS"};
@@ -26,12 +29,15 @@ try{
       const body=req.postDataJSON();
       assert.equal(body.product_type,"day_use");assert.equal(body.day_use_product_id,1);assert.equal(body.guests,2);creates++;data=booking();
     }else if(url.pathname==="/api/v1/bookings/"+reference)data=booking();
-    else if(url.pathname.endsWith("/pay")){pays++;data={payment_url:api+"/mock-payment"};}
+    else if(url.pathname==="/api/v1/bookings/"+reference+"/pay"&&req.method()==="POST"){assert.deepEqual(req.postDataJSON(),{gateway:"mock"});pays++;status="paid";data={payment_url:api+"/mock-payment"};}
     else {await route.fulfill({status:404,headers,json:{success:false,message:"not found"}});return;}
     await route.fulfill({status:200,headers,json:{success:true,message:"ok",data}});
   });
+  await page.goto(base+"/"+locale);
+  await page.getByRole("link",{name:locale==="ar"?"بوابة شركات السياحة":"Travel agency portal",exact:true}).waitFor();
   await page.goto(base+"/"+locale+"/experiences/day-use/"+day.slug);
   await page.getByRole("heading",{name:locale==="ar"?day.name_ar:day.name_en,exact:true}).waitFor();
+  await page.screenshot({path:artifacts+"/product-"+locale+".png",fullPage:true,animations:"disabled"});
   await page.getByRole("link",{name:locale==="ar"?"احجز التجربة":"Book this experience"}).click();
   await page.waitForURL("**/booking?*");
   await page.locator('select').filter({has:page.locator('option[value="1"]')}).waitFor();
@@ -42,10 +48,10 @@ try{
   await page.getByRole("button",{name:locale==="ar"?"إنشاء الحجز ومراجعة الإجمالي":"Create booking & review total"}).click();
   await page.locator('.opal-pool-status[data-tone="waiting"]').waitFor();
   await page.getByRole("button",{name:locale==="ar"?"المتابعة للدفع":"Continue to payment"}).waitFor();
-  status="paid";
-  // A forged provider success query must never grant a pass. The return route
-  // uses the session reference and asks the booking API again.
-  await page.goto(base+"/"+locale+"/booking/return?success=true&status=confirmed");
+  // Exercise the payment POST and external navigation. The isolated gateway
+  // returns a forged confirmed flag, but API state is still paid.
+  await page.screenshot({path:artifacts+"/payment-pending-"+locale+".png",fullPage:true,animations:"disabled"});
+  await page.getByRole("button",{name:locale==="ar"?"المتابعة للدفع":"Continue to payment"}).click();
   await page.waitForURL("**/booking?reference=*");
   await page.getByRole("heading",{name:locale==="ar"?"جارٍ التحقق من الدفع":"Payment verification"}).waitFor();
   assert.equal(await page.locator(".opal-pool-pass").count(),0);
@@ -53,6 +59,7 @@ try{
   await page.getByRole("button",{name:locale==="ar"?"تحديث الحالة":"Refresh status"}).click();
   await page.locator(".opal-pool-pass svg").waitFor();
   assert.equal(await page.locator(".opal-pool-pass").count(),1);
+  await page.screenshot({path:artifacts+"/booking-pass-"+locale+".png",fullPage:true,animations:"disabled"});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   await page.reload();
   await page.locator(".opal-pool-pass svg").waitFor();
@@ -62,6 +69,6 @@ try{
   assert.equal(await page.locator(".opal-pool-pass").count(),0);
   await context.close();
  }
- assert.equal(creates,2);assert.equal(pays,0);
+ assert.equal(creates,2);assert.equal(pays,2);
  console.log("Poolside isolated bilingual detail / booking / status flow passed");
 }finally{await browser.close();}
