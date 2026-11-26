@@ -42,7 +42,7 @@ export function AgencyPortal({locale,origin,gateway}:{locale:"en"|"ar";origin:st
  useEffect(()=>{
   const d=new Intl.DateTimeFormat("en-CA",{timeZone:"Africa/Cairo",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());setToday(d);setDate(d);setOut(nextDay(d));
   let active=true;
-  api.me().then(v=>{if(active)setIdentity(v);}).catch(()=>{}).finally(()=>{if(active)setLoading(false);});
+  api.me().then(v=>{if(active)setIdentity(v);}).catch(e=>{if(active&&(!(e instanceof AgencyError)||e.status!==401))report(e);}).finally(()=>{if(active)setLoading(false);});
   return()=>{active=false;};
  },[api]);
  useEffect(()=>{
@@ -69,8 +69,10 @@ export function AgencyPortal({locale,origin,gateway}:{locale:"en"|"ar";origin:st
  useEffect(()=>{
   if(!identity||!selectedRef||!selectedStatus||!shouldPoll(selectedStatus))return;
   let active=true;
-  const timer=setInterval(()=>api.booking(selectedRef).then(b=>{if(active)setSelected(b);}).catch(e=>{if(active)report(e);}),5000);
-  return()=>{active=false;clearInterval(timer);};
+  let timer:ReturnType<typeof setTimeout>;let attempts=0;
+  const poll=async()=>{try{const b=await api.booking(selectedRef);if(active)setSelected(b);}catch(e){if(active)report(e);}finally{if(active&&++attempts<60)timer=setTimeout(poll,5000);}};
+  timer=setTimeout(poll,5000);
+  return()=>{active=false;clearTimeout(timer);};
  },[api,identity,selectedRef,selectedStatus]);
  async function action(fn:()=>Promise<void>){
   if(lock.current)return;lock.current=true;setBusy(true);setError("");
