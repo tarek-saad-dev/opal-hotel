@@ -13,7 +13,7 @@ import { PremiumMasthead } from "@/components/PremiumMasthead";
 import { PremiumStory, PremiumFacilities, PremiumLocation, PremiumRooms, PremiumGallery } from "@/components/PremiumSections";
 import { PremiumReviews, PremiumContact, PremiumFooter } from "@/components/PremiumClosing";
 
-type Props={locale:Locale;content:HotelContent;poolside?:{enabled:boolean;origin:string}};
+type Props={locale:Locale;content:HotelContent;poolside?:{enabled:boolean;origin:string};agencyEnabled?:boolean};
 function handleImageError(event:SyntheticEvent<HTMLImageElement>) {
   const img=event.currentTarget;
   if(img.dataset.placeholder==="true") return;
@@ -22,7 +22,7 @@ function handleImageError(event:SyntheticEvent<HTMLImageElement>) {
   img.removeAttribute("srcset");
   img.src="/media/photo-placeholder.svg";
 }
-export function HotelExperience({locale,content:baseContent,poolside}:Props) {
+export function HotelExperience({locale,content:baseContent,poolside,agencyEnabled}:Props) {
   const router=useRouter();
   const {startNavigation}=useRouteLoading();
   const c=useCmsContent(locale);
@@ -157,7 +157,7 @@ export function HotelExperience({locale,content:baseContent,poolside}:Props) {
       </main>
 
       <footer className="opal-end-footer">
-        <PremiumFooter locale={locale} content={c}/>
+        <PremiumFooter locale={locale} content={c} poolside={poolside?.enabled} agencyEnabled={agencyEnabled}/>
       </footer>
 
       {photo!==null&&<div className="lightbox" ref={lightboxRef} role="dialog" aria-modal="true" aria-label={c.nav.gallery} onClick={()=>setPhoto(null)}>
