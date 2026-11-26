@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect,useMemo,useRef,useState,type FormEvent } from "react";
 import { useHotelMedia } from "@/components/CmsProvider";
 import "./poolside-booking.css";
+import { validBookingReference as referenceValid,bookingSessionKey as sessionKey } from "@/lib/poolside-recovery";
 import { bookingStatusCopy } from "@/lib/poolside-status";
 import { PoolsidePass } from "@/components/PoolsidePass";
 import { DateRangePicker } from "@/components/DateRangePicker";
@@ -12,8 +13,6 @@ import { allocations,validUnits,MAX_ONLINE_UNITS,type UnitSelection,type UnitAva
 import { nextDay,parseDateStamp,type BookingPreviewInput } from "@/lib/booking-preview";
 
 type Props={locale:"en"|"ar";origin:string;gateway:Gateway;initial:BookingPreviewInput;reference:string;product?:"day_use"|"bubble_stay";slug?:string};
-const sessionKey="opal.active-booking-reference";
-const referenceValid=(value:string)=>value.length>0&&value.length<=256&&!/[\x00-\x20\x7f/]/.test(value);
 function storeReference(reference:string){try{sessionStorage.setItem(sessionKey,reference);}catch{}}
 function savedReference(){try{return sessionStorage.getItem(sessionKey)||"";}catch{return "";}}
 function errorText(error:unknown,ar:boolean){
