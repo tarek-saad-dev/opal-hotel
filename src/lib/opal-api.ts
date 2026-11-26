@@ -61,7 +61,7 @@ export function makeOpalApi(origin:string,locale:OpalLocale) {
     ping:()=>request<unknown>("/ping"),
     dayUse:(signal?:AbortSignal)=>request<DayUse[]>("/day-use",{signal}),
     accommodations:(signal?:AbortSignal)=>request<Accommodation[]>("/accommodations",{signal}),
-    accommodation:(slug:string)=>request<Accommodation>("/accommodations/"+esc(slug)),
+    accommodation:(slug:string,signal?:AbortSignal)=>request<Accommodation>("/accommodations/"+esc(slug),{signal}),
     availability:(slug:string,checkIn:string,checkOut:string,guests:number,signal?:AbortSignal)=>request<Availability>("/accommodations/"+esc(slug)+"/availability?"+new URLSearchParams({check_in:checkIn,check_out:checkOut,guests:String(guests)}),{signal}),
     create:(body:BookingInput)=>request<Booking>("/bookings",{method:"POST",body}),
     booking:(reference:string,signal?:AbortSignal)=>request<Booking>("/bookings/"+esc(reference),{signal}),
