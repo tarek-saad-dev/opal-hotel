@@ -1,5 +1,5 @@
 import { NextRequest,NextResponse } from "next/server";
-import { apiOrigin } from "@/lib/opal-api";
+import { apiOrigin,poolsideConnection } from "@/lib/opal-api";
 const cookie="opal_agency_session";
 const headers={"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"};
 const reply=(data:unknown,status=200)=>NextResponse.json(data,{status,headers});
@@ -22,12 +22,12 @@ async function handle(req:NextRequest,{params}:{params:Promise<{path:string[]}>}
  const {path}=await params,method=req.method;
  const endpoint=route(path,method);
  if(!endpoint)return fail(404);
- let origin:string,publicOrigin:string;
+ const connection=poolsideConnection(process.env.OPAL_API_BASE_URL||"",process.env.OPAL_PAYMENT_GATEWAY);
+ if(!connection.origin)return fail(503);
+ const origin=connection.origin;
+ let publicOrigin:string;
  try{
-  origin=apiOrigin(process.env.OPAL_API_BASE_URL||"");
   publicOrigin=apiOrigin(process.env.OPAL_AGENCY_PUBLIC_ORIGIN||"");
-  const local=["127.0.0.1","localhost","[::1]"].includes(new URL(origin).hostname);
-  if(!local&&!origin.startsWith("https://"))throw Error();
   if(!publicOrigin.startsWith("https://")&&!["127.0.0.1","localhost","[::1]"].includes(new URL(publicOrigin).hostname))throw Error();
  }catch{return fail(503);}
  if(method==="POST"&&req.headers.get("origin")!==publicOrigin)return fail(403);
@@ -56,8 +56,7 @@ async function handle(req:NextRequest,{params}:{params:Promise<{path:string[]}>}
   }
   if(endpoint.endsWith("/pay")){
    // Production gateway selection belongs to the server, never the client.
-   const mock=process.env.OPAL_PAYMENT_GATEWAY==="mock"&&["localhost","127.0.0.1","[::1]"].includes(new URL(origin).hostname);
-   body={gateway:mock?"mock":"paymob"};
+   body={gateway:connection.gateway};
   }
  }
  try{
