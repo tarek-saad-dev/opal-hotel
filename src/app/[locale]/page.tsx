@@ -20,5 +20,5 @@ export default async function HotelPage({params}: {params: Promise<{locale:strin
   const {locale} = await params;
   if (!isLocale(locale)) notFound();
   const published=await readPublished();
-  return <CmsProvider value={published}><HotelExperience locale={locale} content={getContent(locale)} poolside={poolsideConfig()} /></CmsProvider>;
+  return <CmsProvider value={published}><HotelExperience locale={locale} content={getContent(locale)} poolside={poolsideConfig()} agencyEnabled={process.env.OPAL_AGENCY_ENABLED==="true"} /></CmsProvider>;
 }
