@@ -37,6 +37,7 @@ export function PoolsideCatalog({locale,origin,onOpenPhoto}:Props){
           const mapping=media.roomMedia[slug];
           const gallery=mapping?Array.from(new Set([mapping.cover,...mapping.gallery])).filter(i=>media.isReal(i)):[];
           const cover=gallery[0];
+          const movie=mapping?.video;
           const title=ar?p.name_ar:p.name_en;
           const price="price_per_guest" in p?p.price_per_guest:p.price_per_night;
           const href=`/${locale}/booking?`+new URLSearchParams({product:kind,slug});
@@ -50,6 +51,7 @@ export function PoolsideCatalog({locale,origin,onOpenPhoto}:Props){
               <p>{ar?p.description_ar:p.description_en}</p>
               {"max_guests" in p&&<p className={styles.capacity}>{t("Up to","حتى")} <b dir="ltr">{p.max_guests}</b> {t("guests per unit","ضيوف لكل وحدة")}</p>}
               {gallery.length>1&&<div className={styles.thumbs}>{gallery.slice(1,5).map(i=><button type="button" key={i} onClick={()=>onOpenPhoto(i)} aria-label={t("View photo","عرض الصورة")}><img loading="lazy" src={media.images[i].src} alt={ar?media.images[i].altAr:media.images[i].alt}/></button>)}</div>}
+              {movie&&<video className={styles.video} src={movie.src} controls playsInline preload="none" aria-label={t("Experience video: ","فيديو التجربة: ")+title}/>}
               <div className={styles.bottom}><div><strong dir="ltr">{p.currency} {price}</strong><small>{day?t("per guest","للفرد"):t("per night","لليلة")}</small></div>
               <Link href={href} className={styles.cta}>{t("Book now","احجز الآن")} <span aria-hidden="true">↗</span></Link></div>
             </div>
