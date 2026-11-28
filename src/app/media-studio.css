@@ -1,4 +1,4 @@
-/* Opal Legacy — Media-First CMS V2 */
+/* Opal Poolside — Media-First CMS V2 */
 .opal-media-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:20px 0}
 .opal-media-stats strong{padding:17px 15px;background:#f0f2ec;display:flex;align-items:baseline;gap:6px;color:#2c4d38;font:500 26px Georgia,serif}
 .opal-media-stats small{font:600 11px "Cairo",sans-serif;color:#718071}

@@ -1,4 +1,4 @@
-/* OPAL LEGACY — Mobile navigation rebuild
+/* OPAL POOLSIDE — Mobile navigation rebuild
    The menu is mounted in a React portal under <body>. A backdrop-filter on
    the sticky header otherwise turns fixed descendants into header-bound
    elements on mobile. This panel always occupies the actual viewport.

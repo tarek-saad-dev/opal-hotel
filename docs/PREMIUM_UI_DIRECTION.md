@@ -1,9 +1,9 @@
-# OPAL LEGACY — Premium Frontend Direction
+# OPAL POOLSIDE — Premium Frontend Direction
 **Approved:** 17 November 2026
 **Stage:** Visual-first UI development / no production launch
 
 ## Design decision
-- The former Opal Legacy listing is **inspiration for the hotel's visual identity and content structure**, not a pixel-perfect source to clone.
+- The former hotel listing is **inspiration for the hotel's visual identity and content structure**, not a pixel-perfect source to clone.
 - The intended look is **Heritage Luxury × Modern Editorial**: warm Egyptian architectural character, generous whitespace, refined serif typography, mineral/earthy colors and restrained movement.
 - Deliver a highly polished **desktop AND mobile** first. Heavy business content, booking inventory, payment, reviews management, customer accounts and backend features are **deferred**.
 - Existing pages and interactive demos must not imply functional checkout or successful submission.
@@ -32,7 +32,7 @@ These are **creative proposal tokens**, not measured original CSS. Use CSS custo
 5. Continue to show the established overview, facilities, gallery, location, rooms and forms below the masthead, with refined typography/surfaces. Refinement of those sections is a later pass.
 
 ## Images
-- Current hero and gallery photos from Unsplash are **illustrative concept photography — not Opal Legacy photos**.
+- Current hero and gallery photos from Unsplash are **illustrative concept photography — not Opal Poolside photos**.
 - The live UI explicitly displays an illustrative photo disclaimer.
 - Do **not** confuse third-party booking pages with hotel ownership, redistribute their material or present illustrative room images as actual inventory.
 - Before publication, replace with licensed/owner-approved, locally served hotel photos and the official logo.

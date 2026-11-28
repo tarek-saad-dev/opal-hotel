@@ -1,4 +1,4 @@
-# Opal Legacy — Dynamic Owner CMS (V1)
+# Opal Poolside — Dynamic Owner CMS (V1)
 
 ## Purpose
 The owner manages bilingual website text, galleries and section visibility from **`https://opal.drvotech.com/admin`**. Changes appear on the public site immediately after clicking **Publish**, without editing GitHub or redeploying. The draft preview is private.

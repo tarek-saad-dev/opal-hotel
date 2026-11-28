@@ -1,6 +1,6 @@
-# Opal Legacy Hotel — Frontend
+# Opal Poolside Hotel — Frontend
 
-A premium, visual-first Next.js frontend concept for Opal Legacy Luxor Hotel.
+A premium, visual-first Next.js frontend concept for Opal Poolside Luxor Hotel.
 
 > **Approved design direction (updated 2026-11-17):** Heritage Luxury × Modern Editorial, inspired by the original hotel's atmosphere, with substantial UI refinement. This is a frontend concept, not a live booking system.
 
@@ -44,7 +44,7 @@ GitHub Actions runs the checks on `main` and pull requests. Build results must b
 
 ## Important: not live / not production ready
 - **Bookings, prices, room availability, contacts and review submissions are not connected to a server.**
-- **Current design photos are illustrative Unsplash placeholders, not Opal Legacy's actual photographs.** Replace with owner-authorized, locally hosted hotel photos before production.
+- **Current design photos are illustrative Unsplash placeholders, not Opal Poolside's actual photographs.** Replace with owner-authorized, locally hosted hotel photos before production.
 - Photos, hotel facts, currency support, services and check-in policies need hotel verification.
 - Current CSS values are **provisional**; complete visual lock requires real browser capture.
 - Search-engine indexing is disabled in this prototype.

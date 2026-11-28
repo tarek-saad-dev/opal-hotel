@@ -1,4 +1,4 @@
-/* OPAL LEGACY / quiet luxury interlude.
+/* OPAL POOLSIDE / quiet luxury interlude.
  * No decorative spinner, gradients, motion loops on the wordmark, or external assets.
  * Brand sits within generous whitespace like the hotel's editorial pages. */
 .opal-route-loading{
@@ -66,13 +66,13 @@
 }
 @media(max-width:600px){
   .opal-loader-content{padding:44px 16px 56px}
-  .opal-loader-wordmark{font-size:clamp(31px,8vw,43px);letter-spacing:.055em}
+  .opal-loader-wordmark{font-size:clamp(27px,7.5vw,43px);letter-spacing:.055em}
   .opal-loader-place{font-size:8px;letter-spacing:.26em;margin-top:12px}
   .opal-loader-progress{margin-top:31px;width:92px}
   .opal-route-loading .opal-loader-message{font-size:11px}
 }
 @media(max-width:350px){
-  .opal-loader-wordmark{font-size:29px;letter-spacing:.025em}
+  .opal-loader-wordmark{font-size:26px;letter-spacing:.025em}
 }
 @media(prefers-reduced-motion:reduce){
   .opal-route-loading.is-overlay,
