@@ -13,6 +13,8 @@ test("Media library is backwards-compatible, bounded and only permits managed me
   assert.match(media,/visualVideoPath/);
   assert.match(media,/Duplicate asset/);
   assert.match(media,/Unknown room media key/);
+  assert.match(media,/keys\.filter\(isLiveProductMediaKey\)\.length>100/);
+  assert.match(media,/mediaConcepts\(keys\)/);
   assert.match(media,/approvedAsset\(visual,src\)/);
   assert.match(media,/approvedPublishedPaths/);
 });
@@ -47,9 +49,11 @@ test("Owner studio allows bulk optimized uploads and safe order/room management"
   const studio=read("src/components/MediaStudio.tsx");
   const admin=read("src/components/AdminCms.tsx");
   for(const term of ["optimizeMediaPhoto","createImageBitmap","toBlob","multiple","approved",
-    "onDragStart","onDrop","removeRefs","roomConcepts","visual.placements"])
+    "onDragStart","onDrop","removeRefs","mediaConcepts","visual.placements"])
     assert.ok(studio.includes(term),term);
   assert.match(admin,/tab==="visual"&&<MediaStudio/);
+  assert.match(studio,/mediaConcepts\(Object\.keys\(visual\.placements\.rooms\)\)/);
+  assert.match(studio,/\/api\/admin\/cms\/products/);
   assert.match(admin,/async function uploadLibrary/);
   assert.match(admin,/"\/api\/admin\/cms\/upload-video"/);
   assert.match(admin,/"\/api\/admin\/cms\/upload"/);
