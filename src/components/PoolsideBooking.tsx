@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect,useMemo,useRef,useState,type FormEvent } from "react";
+import { resolvePoolsideMedia } from "@/lib/room-concepts";
 import { useHotelMedia } from "@/components/CmsProvider";
 import "./poolside-booking.css";
 import { validBookingReference as referenceValid,bookingSessionKey as sessionKey } from "@/lib/poolside-recovery";
@@ -206,7 +207,7 @@ export function PoolsideBooking({locale,origin,gateway,initial,reference:initial
   const langQuery=new URLSearchParams(); if(reference)langQuery.set("reference",reference);
   else {langQuery.set("product",mode);const selectedSlug=mode==="day_use"?day?.slug:stay?.slug_en;if(selectedSlug)langQuery.set("slug",selectedSlug);langQuery.set("checkin",mode==="day_use"?visit:checkIn);langQuery.set("checkout",checkOut);langQuery.set("adults",String(mode==="day_use"?guests:units[0]?.guests??1));}
   const selectedSlug=mode==="day_use"?day?.slug:stay?.slug_en;
-  const productMedia=selectedSlug?media.roomMedia[selectedSlug]:undefined;
+  const productMedia=selectedSlug?resolvePoolsideMedia(media.roomMedia,mode,selectedSlug):undefined;
   const cover=productMedia?[productMedia.cover,...productMedia.gallery].find(i=>media.isReal(i)):undefined;
   return <>
     <header className="opal-book-header"><div className="opal-book-header-inner">
