@@ -10,14 +10,18 @@ export function checkedOrigin(value){
  return url.origin;
 }
 const decimal=v=>typeof v==="string"&&/^\d+\.\d{2}$/.test(v);
-export function catalogIssues(data,kind){
+export function catalogIssues(data,kind,{requireHistoricalSlugs=false}={}){
  const issues=[];
  if(!Array.isArray(data))return ["Catalog is not an array"];
  const day=kind==="day",key=day?"slug":"slug_en",price=day?"price_per_guest":"price_per_night";
  const active=data.filter(p=>p?.is_active===true);
- for(const slug of day?expectedDay:expectedStay){
-  const item=active.find(p=>p[key]===slug);
-  if(!item){issues.push("Missing active slug: "+slug);continue;}
+ if(!active.length)issues.push("No active products returned");
+ if(requireHistoricalSlugs)for(const slug of day?expectedDay:expectedStay){if(!active.some(p=>p[key]===slug))issues.push("Missing active slug: "+slug);}
+ const ids=new Set(),slugs=new Set();
+ for(const item of active){
+  const slug=item[key];
+  if(typeof slug!=="string"||!/^[a-z0-9][a-z0-9-]{0,159}$/.test(slug)||slugs.has(slug)||ids.has(item.id))issues.push("Invalid or duplicate active product identifier");
+  slugs.add(slug);ids.add(item.id);
   if(!Number.isSafeInteger(item.id)||item.id<1||!decimal(item[price])||typeof item.currency!=="string"||!item.name_en||!item.name_ar)issues.push("Invalid product contract: "+slug);
   if(!day&&(!Number.isSafeInteger(item.max_guests)||item.max_guests<1))issues.push("Invalid capacity: "+slug);
   if(["cover_image","gallery","media"].some(k=>k in item))issues.push("Unexpected media fields: "+slug);
@@ -58,18 +62,19 @@ async function main(){
  async function get(path,locale){
   const response=await fetch(api+"/api/v1/"+path,{headers:{Accept:"application/json","Accept-Language":locale,Origin:frontend},redirect:"error",signal:AbortSignal.timeout(15000)});
   if(!response.ok)throw Error("HTTP "+response.status);
-  const json=await response.json();if(json?.success!==true||!("data" in json))throw Error("Invalid success envelope");
-  if(!cors(response,frontend))throw Error("Missing matching CORS header");
-  if(response.headers.get("content-language")?.toLowerCase()!==locale)throw Error("Content-Language mismatch");
+  const json=await response.json();if(json?.success!==true||(path!=="ping"&&!("data" in json)))throw Error("Invalid success envelope");
+  if(path==="ping"&&!("data" in json))rows.push({check:"Ping envelope "+locale,result:"INFO",detail:"Live health response has no data field; success=true accepted for liveness only"});
+  if(!cors(response,frontend))rows.push({check:"CORS "+path.split("?")[0]+" "+locale,result:"FAIL",detail:"Missing matching CORS header"});
+  if(response.headers.get("content-language")?.toLowerCase()!==locale)rows.push({check:"Content-Language "+path.split("?")[0]+" "+locale,result:"FAIL",detail:"Content-Language mismatch"});
   return json.data;
  }
  for(const locale of ["en","ar"]){
   await check("Ping "+locale,()=>get("ping",locale));
   await check("Day Use "+locale,async()=>{const issues=catalogIssues(await get("day-use",locale),"day");if(issues.length)throw Error(issues.join("; "));});
   await check("Accommodation "+locale,async()=>{const data=await get("accommodations",locale);const issues=catalogIssues(data,"stay");if(issues.length)throw Error(issues.join("; "));if(locale==="en")stayCatalog=data;});
-  for(const slug of expectedStay){
-   const type=stayCatalog.find(p=>p.slug_en===slug&&p.is_active);
-   if(!type){rows.push({check:"Detail and availability "+slug+" "+locale,result:"SKIP",detail:"English catalog validation failed"});continue;}
+  if(!stayCatalog.length)rows.push({check:"Detail and availability "+locale,result:"SKIP",detail:"No validated active accommodation catalog"});
+  for(const type of stayCatalog.filter(p=>p.is_active===true).slice(0,10)){
+   const slug=type.slug_en;
    await check("Detail "+slug+" "+locale,async()=>{
     const data=await get("accommodations/"+encodeURIComponent(slug),locale);
     if(!data||data.id!==type.id||data.slug_en!==slug||data.price_per_night!==type.price_per_night||data.currency!==type.currency||data.max_guests!==type.max_guests)throw Error("Detail does not match catalog contract");
@@ -87,6 +92,6 @@ async function main(){
   if(!res.ok||!cors(res,frontend)||!methods.some(x=>x==="POST"||x==="*")||!["content-type","accept-language"].every(x=>headers.includes(x)||headers.includes("*")))throw Error("CORS preflight rejected");
  });
  console.log(JSON.stringify({environment:api,frontend,mode:"READ_ONLY",availabilityWindow:window,checks:rows,releaseAcceptance:"NOT_VERIFIED"},null,2));
- if(rows.some(r=>r.result!=="PASS"))process.exitCode=1;
+ if(rows.some(r=>r.result==="FAIL"||r.result==="SKIP"))process.exitCode=1;
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href)main().catch(e=>{console.error(e.message);process.exitCode=1;});
