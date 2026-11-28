@@ -17,7 +17,7 @@ export type RoomConcept = {
   imageIndices: readonly number[];
 };
 
-// Stable backend product keys. These are editorial media slots, not inventory.
+// Historical handoff keys retained for existing CMS snapshots only. They do not define the live catalog.
 export const poolsideProductSlots = [
   {slug:"zalina-luxor-day-experience",name:{en:"Day Experience",ar:"التجربة النهارية"},imageIndices:[]},
   {slug:"zalina-arabian-village-night-experience",name:{en:"Night Experience",ar:"التجربة المسائية"},imageIndices:[]},
@@ -39,3 +39,23 @@ export const roomConcepts: readonly RoomConcept[] = [
 ];
 
 export const generalRoomSlots = ["light-and-stillness","quiet-comforts","slow-mornings"] as const;
+
+export type PoolsideMediaKind="day_use"|"bubble_stay";
+export const validLiveProductSlug=(slug:string)=>/^[a-z0-9][a-z0-9-]{0,159}$/.test(slug);
+export function poolsideMediaKey(kind:PoolsideMediaKind,slug:string):string{
+  if(!validLiveProductSlug(slug)||!(kind==="day_use"||kind==="bubble_stay"))throw new Error("Invalid product media key");
+  return "poolside:"+kind+":"+slug;
+}
+export const isLiveProductMediaKey=(key:string)=>/^poolside:(day_use|bubble_stay):[a-z0-9][a-z0-9-]{0,159}$/.test(key);
+export function mediaConcepts(keys:string[]):readonly RoomConcept[]{
+  return [...roomConcepts,...keys.filter(isLiveProductMediaKey).map(key=>({slug:key,name:{en:key.split(":")[2],ar:key.split(":")[2]},imageIndices:[]}))];
+}
+// Exact historical fallback only. Never reuse a legacy hotel room's media.
+export function resolvePoolsideMedia<T>(media:Record<string,T>,kind:PoolsideMediaKind,slug:string):T|undefined{
+  if(!validLiveProductSlug(slug))return undefined;
+  const key=poolsideMediaKey(kind,slug);
+  if(Object.hasOwn(media,key))return media[key];
+  const historical=poolsideProductSlots.find(p=>p.slug===slug);
+  const historicalKind=slug.startsWith("zalina-")?"day_use":"bubble_stay";
+  return historical&&historicalKind===kind&&Object.hasOwn(media,slug)?media[slug]:undefined;
+}
