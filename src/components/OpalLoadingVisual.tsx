@@ -12,7 +12,7 @@ export function OpalLoadingVisual({locale,overlay=false}:Props){
     aria-label={ar?"جاري فتح الصفحة":"Opening your page"}
     lang={ar?"ar":"en"} dir={ar?"rtl":"ltr"}>
     <div className="opal-loader-content">
-      <div className="opal-loader-wordmark" aria-hidden="true" dir="ltr">OPAL LEGACY</div>
+      <div className="opal-loader-wordmark" aria-hidden="true" dir="ltr">OPAL POOLSIDE</div>
       <div className="opal-loader-place" aria-hidden="true" dir="ltr">LUXOR <span>·</span> EGYPT</div>
       <div className="opal-loader-progress" aria-hidden="true"><span/></div>
       <p className="opal-loader-message" aria-hidden="true">

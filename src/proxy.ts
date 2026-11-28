@@ -29,7 +29,7 @@ export function proxy(request:NextRequest){
   const book=ar?"احجز إقامتك":"Book your stay";
   const doc=`<!doctype html><html lang="${locale}" dir="${ar?"rtl":"ltr"}">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow"><title>404 · OPAL LEGACY</title>
+<meta name="robots" content="noindex,nofollow"><title>404 · OPAL POOLSIDE</title>
 <style>
 *{box-sizing:border-box}body{margin:0;min-height:100svh;background:#19392b;color:#faf5e9;
 font-family:Arial,Tahoma,sans-serif}.opal-recovery{min-height:100svh;display:flex;flex-direction:column}
@@ -54,13 +54,13 @@ color:#cbd7c9;font-size:12px}html[dir=rtl] h1{font-family:Tahoma,Arial,sans-seri
 @media(max-width:600px){.opal-recovery-actions{width:100%;flex-direction:column}
 .opal-recovery-actions a{width:100%;justify-content:center}}
 </style></head><body><main class="opal-recovery">
-<header class="opal-recovery-top"><strong class="opal-recovery-brand">OPAL LEGACY</strong><small>LUXOR · EGYPT</small></header>
+<header class="opal-recovery-top"><strong class="opal-recovery-brand">OPAL POOLSIDE</strong><small>LUXOR · EGYPT</small></header>
 <div class="opal-recovery-body"><p class="opal-recovery-index">404 / ${title}</p>
 <h1>${headline}</h1><p>${message}</p>
 <nav class="opal-recovery-actions" aria-label="${title}">
 <a href="/${locale}">${home}</a>
 <a href="/${locale}/booking" class="is-secondary">${book}</a></nav></div>
-<footer class="opal-recovery-foot">OPAL LEGACY · LUXOR</footer></main></body></html>`;
+<footer class="opal-recovery-foot">OPAL POOLSIDE · LUXOR</footer></main></body></html>`;
   return new NextResponse(doc,{status:404,headers:{
     "Content-Type":"text/html; charset=utf-8",
     "Cache-Control":"public, max-age=120",

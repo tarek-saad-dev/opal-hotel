@@ -15,8 +15,8 @@ import "./route-loading-motion.css";
 import { RouteLoadingProvider } from "@/components/RouteLoadingProvider";
 
 export const metadata: Metadata = {
-  title: { default: "Opal Legacy Luxor Hotel", template: "%s | Opal Legacy" },
-  description: "Explore Opal Legacy Luxor Hotel, its amenities, location, and photographs.",
+  title: { default: "Opal Poolside", template: "%s | Opal Poolside" },
+  description: "Explore Opal Poolside, its amenities, location, and photographs.",
   robots: { index: false, follow: false }, // Turn on only after content, ownership and booking verification.
 };
 

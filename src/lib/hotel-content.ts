@@ -29,15 +29,15 @@ export const hotelGeo = { lat: 25.660151, lng: 32.625835 } as const;
 export const hotelMapUrl = `https://www.google.com/maps/place/${hotelGeo.lat},${hotelGeo.lng}/@${hotelGeo.lat},${hotelGeo.lng},17z`;
 
 const en: HotelContent = {
-  hotelName: "Hotel Opal Legacy Luxor",
-  metaDescription: "Opal Legacy Luxor Hotel on Luxor's East Bank: 40 air-conditioned rooms with garden views, the Opal restaurant, outdoor bar, horseback riding, free parking and airport shuttle.",
+  hotelName: "Opal Poolside",
+  metaDescription: "Opal Poolside on Luxor's East Bank: 40 air-conditioned rooms with garden views, the Opal restaurant, outdoor bar, horseback riding, free parking and airport shuttle.",
   address: "Rd Lead To Esna, Luxor, Egypt",
   nav: { overview:"Overview",facilities:"Facilities",location:"Location",rooms:"Rooms",
     gallery:"Gallery",reviews:"Write a review",contact:"Contact Us" },
   labels: {
     menu:"Menu",close:"Close",map:"Map",bookingTitle:"Online Reservation",checkin:"Check-in date",
     checkout:"Check-out date",availability:"Check availability",galleryView:"View photo",
-    viewAll:"View all photos",overviewTitle:"Opal Legacy Luxor Hotel",
+    viewAll:"View all photos",overviewTitle:"Opal Poolside",
     facilitiesTitle:"Facilities",important:"Important information",checkinPolicy:"Check-in: from 08:00 until 12:00",
     checkoutPolicy:"Check-out: until 10:00",locationTitle:"Location",nearby:"Local attractions",
     roomsTitle:"Rooms",noDates:"Please, select dates to see available rooms.",
@@ -47,10 +47,10 @@ const en: HotelContent = {
     pros:"Pros",cons:"Cons",submitReview:"Submit review",contactTitle:"Contact Us",subject:"Subject",
     message:"Message",send:"Send message",noBackend:"We couldn't send this right now. Please try again in a moment.",
     currency:"Currency",previous:"Previous photo",next:"Next photo",image:"Hotel photo",
-    footerNote:"Opal Legacy Luxor Hotel · Rd Lead To Esna, Luxor, Egypt"
+    footerNote:"Opal Poolside · Rd Lead To Esna, Luxor, Egypt"
   },
   overview: [
-    "Opal Legacy Luxor Hotel sits on the road to Esna on Luxor's East Bank, with air-conditioned rooms, garden views and an à la carte restaurant.",
+    "Opal Poolside sits on the road to Esna on Luxor's East Bank, with air-conditioned rooms, garden views and an à la carte restaurant.",
     "The hotel's 40 rooms come in six types, from a single room to a family suite. Rooms have a terrace and seating area, climate control, a flat-screen TV with satellite channels, a desk, a minibar and tea and coffee facilities; bathrooms have a shower and bidet, and some add a hairdryer and bathrobes.",
     "The Opal restaurant serves international cuisine alongside an outdoor bar. Spend the day on the sun terrace or in the picnic area, the evening at the nightclub, or ask the team to arrange horseback-riding tours and cycling.",
     "Luxor Temple and the Temple of Karnak are on the same bank: Luxor Temple is about 4.6 km away, the city centre 4 km and the Corniche 4.8 km. Abu Haggag Mosque is about 10 minutes by car, the Colossi of Memnon around 15 minutes, and Luxor International Airport about 15 minutes. Nady Land amusement park and zoo is within walking distance.",
@@ -90,15 +90,15 @@ const en: HotelContent = {
   }
 };
 const ar: HotelContent = {
-  hotelName:"فندق Opal Legacy Luxor",
-  metaDescription:"فندق أوبال ليجاسي الأقصر على البر الشرقي: 40 غرفة مكيفة بإطلالة على الحديقة، مطعم أوبال، بار خارجي، ركوب الخيل، موقف سيارات مجاني وخدمة نقل من المطار.",
+  hotelName:"فندق أوبال بول سايد",
+  metaDescription:"فندق أوبال بول سايد الأقصر على البر الشرقي: 40 غرفة مكيفة بإطلالة على الحديقة، مطعم أوبال، بار خارجي، ركوب الخيل، موقف سيارات مجاني وخدمة نقل من المطار.",
   address:"Rd Lead To Esna، الأقصر، مصر",
   nav:{overview:"نظرة عامة",facilities:"مرافق الفندق",location:"الموقع",rooms:"الغرف",
     gallery:"معرض الصور",reviews:"اكتب تعليق",contact:"اتصل بنا"},
   labels:{
     menu:"القائمة",close:"إغلاق",map:"خريطة",bookingTitle:"الحجز عبر الإنترنت",checkin:"تاريخ الوصول",
     checkout:"تاريخ المغادرة",availability:"تحقق من الأماكن المتوفرة",galleryView:"عرض الصورة",
-    viewAll:"عرض كل الصور",overviewTitle:"فندق Opal Legacy Luxor",facilitiesTitle:"مرافق الفندق",
+    viewAll:"عرض كل الصور",overviewTitle:"فندق أوبال بول سايد",facilitiesTitle:"مرافق الفندق",
     important:"المعلومات الهامة",checkinPolicy:"تسجيل الوصول: من 08:00 حتى 12:00",
     checkoutPolicy:"تسجيل المغادرة: حتى 10:00",locationTitle:"الموقع",nearby:"المعالم السياحية",
     roomsTitle:"الغرف",noDates:"من فضلك، أدخل تواريخ الإقامة للتحقق من الغرف المتوفرة.",
@@ -109,10 +109,10 @@ const ar: HotelContent = {
     submitReview:"إرسال التقييم",contactTitle:"اتصل بنا",subject:"الموضوع",message:"الرسالة",
     send:"إرسال الرسالة",noBackend:"تعذّر الإرسال الآن. يُرجى المحاولة مرة أخرى بعد قليل.",
     currency:"العملة",previous:"الصورة السابقة",next:"الصورة التالية",image:"صورة الفندق",
-    footerNote:"فندق أوبال ليجاسي الأقصر · طريق إسنا، الأقصر، مصر"
+    footerNote:"فندق أوبال بول سايد الأقصر · طريق إسنا، الأقصر، مصر"
   },
   overview:[
-    "يقع فندق أوبال ليجاسي على طريق إسنا بالبر الشرقي في الأقصر، ويضم غرفًا مكيفة بإطلالات على الحديقة ومطعمًا يقدّم قائمة طعام متنوعة.",
+    "يقع فندق أوبال بول سايد على طريق إسنا بالبر الشرقي في الأقصر، ويضم غرفًا مكيفة بإطلالات على الحديقة ومطعمًا يقدّم قائمة طعام متنوعة.",
     "تنقسم غرف الفندق الأربعون إلى ستة أنواع، من الغرفة المفردة إلى الجناح العائلي. في الغرف تراس ومنطقة جلوس وتحكم في درجة الحرارة وتلفزيون بشاشة مسطحة وقنوات فضائية ومكتب وميني بار ومستلزمات الشاي والقهوة؛ والحمام به دش وشطّاف، وتتوفر في بعض الغرف مجففات شعر وأرواب حمام.",
     "يقدّم مطعم أوبال المأكولات العالمية إلى جانب بار خارجي. استمتع بيومك على تراس التشمس أو في منطقة النزهات، وبأمسيتك في الملهى الليلي، ويمكن ترتيب جولات ركوب الخيل وركوب الدراجات.",
     "معبد الأقصر ومعبد الكرنك على نفس البر: يبعد معبد الأقصر نحو 4.6 كم، ووسط المدينة 4 كم، والكورنيش 4.8 كم. ويبعد مسجد أبي الحجاج نحو 10 دقائق بالسيارة، وتمثالا ممنون ومطار الأقصر الدولي نحو 15 دقيقة. وملاهي وحديقة حيوان الندي لاند على مسافة قريبة سيرًا.",

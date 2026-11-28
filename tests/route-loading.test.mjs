@@ -10,7 +10,7 @@ test("Route suspense and guest navigation share the same quiet Opal identity",()
   const provider=read("src/components/RouteLoadingProvider.tsx");
   const root=read("src/app/layout.tsx");
   const page=read("src/components/HotelExperience.tsx");
-  for(const term of ["OPAL LEGACY","opal-loader-wordmark","opal-loader-place",
+  for(const term of ["OPAL POOLSIDE","opal-loader-wordmark","opal-loader-place",
     "opal-loader-progress",'role="status"','aria-live="polite"','aria-busy="true"'])
     assert.ok(visual.includes(term),term);
   assert.ok(!visual.includes("opal-loader-emblem"),"No rotating monogram in editorial loader");

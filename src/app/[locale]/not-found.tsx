@@ -8,7 +8,7 @@ export default function LocaleNotFound() {
   const locale=path?.startsWith("/ar")?"ar":"en";
   const ar=locale==="ar";
   return <main className="opal-recovery" id="recovery-main" dir={ar?"rtl":"ltr"} lang={locale}>
-    <div className="opal-recovery-top"><span className="opal-recovery-brand">OPAL LEGACY</span><small>LUXOR · EGYPT</small></div>
+    <div className="opal-recovery-top"><span className="opal-recovery-brand">OPAL POOLSIDE</span><small>LUXOR · EGYPT</small></div>
     <div className="opal-recovery-body">
       <p className="opal-recovery-index">404 / {ar?"الصفحة غير موجودة":"PAGE NOT FOUND"}</p>
       <h1>{ar?"المكان ده":"This page"} <em>{ar?"مش موجود.":"isn't here."}</em></h1>
@@ -18,6 +18,6 @@ export default function LocaleNotFound() {
         <Link href={`/${locale}/booking`} className="is-secondary">{ar?"احجز إقامتك":"Book your stay"} <span aria-hidden="true">↗</span></Link>
       </div>
     </div>
-    <div className="opal-recovery-foot">OPAL LEGACY · LUXOR</div>
+    <div className="opal-recovery-foot">OPAL POOLSIDE · LUXOR</div>
   </main>;
 }

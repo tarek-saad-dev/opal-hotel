@@ -452,11 +452,11 @@ export function AdminCms(){
     }catch(e){setError(e instanceof Error?e.message:"فشل الاسترجاع");}
     finally{setBusy("");}
   }
-  if(loading)return <main className="opal-cms-loading" role="status">OPAL LEGACY — جاري فتح لوحة الإدارة…</main>;
+  if(loading)return <main className="opal-cms-loading" role="status">OPAL POOLSIDE — جاري فتح لوحة الإدارة…</main>;
   if(!logged)return <main className="opal-cms-login">
     <div className="opal-cms-login-card">
       <span className="opal-cms-monogram">O</span>
-      <p className="opal-cms-eyebrow">OPAL LEGACY / OWNER PORTAL</p>
+      <p className="opal-cms-eyebrow">OPAL POOLSIDE / OWNER PORTAL</p>
       <h1>إدارة محتوى الفندق</h1>
       <p>مكان واحد للتحكم في النصوص والصور والأقسام من غير تعديل الكود.</p>
       {!configured?<div role="alert" className="opal-cms-alert">لازم يتم تفعيل بيانات دخول المالك على الـVPS أولًا. راجع خطوات الإعداد في ملف CMS_SETUP.md.</div>:
@@ -473,7 +473,7 @@ export function AdminCms(){
   return <div className="opal-cms-dashboard" lang="ar" dir="rtl">
     <aside className="opal-cms-sidebar">
       <div className="opal-cms-sidebar-brand"><span className="opal-cms-monogram">O</span>
-        <div><strong>OPAL LEGACY</strong><small>CONTENT STUDIO</small></div></div>
+        <div><strong>OPAL POOLSIDE</strong><small>CONTENT STUDIO</small></div></div>
       <p className="opal-cms-sidebar-eyebrow">MANAGEMENT</p>
       <nav aria-label="أقسام لوحة الإدارة">
         {([{id:"content",name:"المحتوى والنصوص",icon:"✎"},{id:"sections",name:"الأقسام والترتيب",icon:"▦"},
@@ -529,7 +529,7 @@ export function AdminCms(){
             <button type="button" disabled={Boolean(busy)||dirty} onClick={()=>void restore(item.revision)}>استرجاع كمسودة ↶</button>
           </div>)}
       </div>}
-      <footer className="opal-cms-bottom">Opal Legacy CMS · التغييرات المنشورة فقط هي اللي تظهر للزوار. الحجوزات والتقييمات ما زالت في وضع المعاينة.</footer>
+      <footer className="opal-cms-bottom">Opal Poolside CMS · التغييرات المنشورة فقط هي اللي تظهر للزوار. الحجوزات والتقييمات ما زالت في وضع المعاينة.</footer>
     </main>
   </div>;
 }

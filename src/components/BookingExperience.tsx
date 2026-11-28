@@ -171,7 +171,7 @@ export function BookingExperience({locale,initial}:Props) {
             // eslint-disable-next-line @next/next/no-img-element
             ? <img src={logoSrc} alt="" width={43} height={43}/>
             : <span className="opal-book-mark" aria-hidden="true">O</span>}
-          <strong>OPAL LEGACY</strong>
+          <strong>OPAL POOLSIDE</strong>
           <small>LUXOR · EGYPT</small>
         </Link>
         <nav className="opal-book-header-links" aria-label={t.breadcrumb}>
@@ -315,7 +315,7 @@ export function BookingExperience({locale,initial}:Props) {
             <span className="opal-book-summary-ornament" aria-hidden="true">✳</span>
           </div>
           <div className="opal-book-summary-image"><SummaryPhoto locale={locale}/></div>
-          <h2>{getRoomType(roomType)?.name[locale]??"Opal Legacy Luxor"}</h2>
+          <h2>{getRoomType(roomType)?.name[locale]??"Opal Poolside Luxor"}</h2>
           <div className="opal-book-summary-rows">
             <div><span>{t.checkin}</span><strong>{validDates?formatDate(checkin):"—"}</strong></div>
             <div><span>{t.checkout}</span><strong>{validDates?formatDate(checkout):"—"}</strong></div>
@@ -332,7 +332,7 @@ export function BookingExperience({locale,initial}:Props) {
       </>}
     </main>
     <footer className="opal-book-footer">
-      <strong>OPAL LEGACY</strong>
+      <strong>OPAL POOLSIDE</strong>
       <p>Rd Lead To Esna, Luxor, Egypt</p>
       <Link href={`/${locale}`}>{t.home}<span aria-hidden="true">→</span></Link>
     </footer>

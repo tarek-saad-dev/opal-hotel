@@ -102,7 +102,7 @@ export function photoAlt(index:number,locale:"en"|"ar"):string {
  */
 const previewBrand = {
   officialLogoSrc: null as string | null,
-  wordmark: "OPAL LEGACY",
+  wordmark: "OPAL POOLSIDE",
   tagline: "LUXOR · EGYPT",
 };
 export const hotelBrand = {

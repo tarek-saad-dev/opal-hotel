@@ -6,7 +6,7 @@ import { isLocale,getContent } from "@/lib/hotel-content";
 import { CmsProvider } from "@/components/CmsProvider";
 import { HotelExperience } from "@/components/HotelExperience";
 export const dynamic="force-dynamic";
-export const metadata:Metadata={title:"Private CMS Preview | Opal Legacy",robots:{index:false,follow:false}};
+export const metadata:Metadata={title:"Private CMS Preview | Opal Poolside",robots:{index:false,follow:false}};
 export default async function PrivateCmsPreview({params}:{params:Promise<{locale:string}>}){
   const {locale}=await params;
   if(!isLocale(locale)||!await isCmsAuthenticated())notFound();
