@@ -15,7 +15,7 @@ function load(path){
   new Function("require","module","exports",js)(name=>name.startsWith("@/")?load(name.slice(2)):nativeRequire(name),module,module.exports);
   return module.exports;
 }
-const {poolsideProductSlots}=load("lib/room-concepts");
+const {poolsideProductSlots,poolsideMediaKey,resolvePoolsideMedia}=load("lib/room-concepts");
 const {defaultVisualLibrary,normalizeVisualLibrary,approvedPublishedPaths,approveAssignedVisualMedia}=load("lib/cms-media");
 const slugs=["zalina-luxor-day-experience","zalina-arabian-village-night-experience","one-bed-bubble","two-bed-bubble","three-bed-bubble"];
 const photo="/api/cms/media/"+"a".repeat(32)+".jpg";
@@ -46,4 +46,20 @@ test("assigned product media is private until approved and validated",()=>{
   assert.equal(approvedPublishedPaths(published).has(photo),true);
   visual.placements.rooms[slugs[1]].cover="/untrusted.jpg";
   assert.throws(()=>normalizeVisualLibrary(visual));
+});
+
+test("live product mapping survives normalization, approval and separates kinds",()=>{
+ const visual=defaultVisualLibrary();visual.assets.push(makeAsset());
+ const day=poolsideMediaKey("day_use","opal-experience"),stay=poolsideMediaKey("bubble_stay","opal-experience");
+ visual.placements.rooms[day]={cover:photo,gallery:[],video:""};
+ visual.placements.rooms[stay]={cover:"",gallery:[],video:""};
+ const normalized=normalizeVisualLibrary(visual);
+ assert.equal(resolvePoolsideMedia(normalized.placements.rooms,"day_use","opal-experience").cover,photo);
+ assert.equal(resolvePoolsideMedia(normalized.placements.rooms,"bubble_stay","opal-experience").cover,"");
+ assert.equal(approvedPublishedPaths(normalized).has(photo),false);
+ assert.equal(approvedPublishedPaths(approveAssignedVisualMedia(normalized)).has(photo),true);
+ assert.equal(resolvePoolsideMedia(normalized.placements.rooms,"day_use","light-and-stillness"),undefined);
+ assert.throws(()=>poolsideMediaKey("day_use","../bad"));
+ normalized.placements.rooms["poolside:day_use:../bad"]={cover:"",gallery:[],video:""};
+ assert.throws(()=>normalizeVisualLibrary(normalized));
 });
