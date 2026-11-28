@@ -12,7 +12,10 @@ test("checks stable slugs and decimal money without inventing media",()=>{
  const stays=expectedStay.map((slug_en,i)=>({id:i+1,slug_en,is_active:true,name_en:"Stay",name_ar:"إقامة",price_per_night:"700.00",max_guests:2,currency:"EGP"}));
  assert.deepEqual(catalogIssues(day,"day"),[]);
  assert.deepEqual(catalogIssues(stays,"stay"),[]);
- assert.ok(catalogIssues(day.slice(1),"day").length);
+ assert.ok(catalogIssues(day.slice(1),"day",{requireHistoricalSlugs:true}).length);
+ assert.deepEqual(catalogIssues([{...day[0],slug:"opal-day-experience"}],"day"),[]);
+ assert.ok(catalogIssues([],"day").length);
+ assert.ok(catalogIssues([day[0],day[0]],"day").length);
  assert.ok(catalogIssues([{...day[0],price_per_guest:250},day[1]],"day").length);
  assert.ok(catalogIssues([{...stays[0],media:[]},...stays.slice(1)],"stay").length);
 });
