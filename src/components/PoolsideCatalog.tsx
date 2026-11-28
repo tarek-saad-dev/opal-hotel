@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect,useState } from "react";
+import { resolvePoolsideMedia } from "@/lib/room-concepts";
 import { useHotelMedia } from "@/components/CmsProvider";
 import { makeOpalApi,type DayUse,type Accommodation } from "@/lib/opal-api";
 import type { Locale } from "@/lib/hotel-content";
@@ -35,7 +36,7 @@ export function PoolsideCatalog({locale,origin,onOpenPhoto}:Props){
       {!products.length?<p>{t("No experiences available right now.","لا توجد تجارب متاحة حاليًا.")}</p>:<div className={styles.grid}>
         {products.map(p=>{
           const slug="slug" in p?p.slug:p.slug_en;
-          const mapping=media.roomMedia[slug];
+          const mapping=resolvePoolsideMedia(media.roomMedia,kind,slug);
           const gallery=mapping?Array.from(new Set([mapping.cover,...mapping.gallery])).filter(i=>media.isReal(i)):[];
           const cover=gallery[0];
           const movie=mapping?.video;
