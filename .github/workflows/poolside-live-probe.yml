@@ -1,0 +1,36 @@
+name: Poolside Live API Read-only Probe
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/poolside-live-probe.yml'
+permissions:
+  contents: read
+jobs:
+  public-contract:
+    if: github.head_ref == 'feat/opal-poolside-booking-integration' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Probe public DNS and TLS/API
+        shell: bash
+        run: |
+          mkdir -p artifacts/live-probe
+          getent ahostsv4 api.opalpoolside.com | tee artifacts/live-probe/dns.txt || true
+          curl --silent --show-error --connect-timeout 8 --max-time 20 --header 'Accept: application/json' --header 'Accept-Language: en' --header 'Origin: https://opalpoolside.com' --output /dev/null --write-out 'HTTP %{http_code}\n' 'https://api.opalpoolside.com/api/v1/ping' | tee artifacts/live-probe/ping.txt || true
+      - name: Read-only public contract check
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/poolside-preflight.mjs https://api.opalpoolside.com https://opalpoolside.com | tee artifacts/live-probe/report.json
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: poolside-live-probe-${{ github.sha }}
+          path: artifacts/live-probe/
+          retention-days: 7
