@@ -31,6 +31,7 @@ jobs:
         run: |
           bash -n ops/deploy-vps.sh
           bash -n ops/prepare-poolside-release.sh
+          bash -n ops/prepare-poolside-runtime.sh
       - name: Official media integrity (preview-safe)
         run: npm run media:check
       - name: TypeScript
