@@ -1,4 +1,4 @@
-import { roomConcepts } from "@/lib/room-concepts";
+import { roomConcepts,mediaConcepts,isLiveProductMediaKey } from "@/lib/room-concepts";
 
 /** Published images/videos must be explicitly assigned, approved and stored
  * under generated CMS paths. A draft upload by itself is never public. */
@@ -104,9 +104,11 @@ export function normalizeVisualLibrary(raw:unknown):CmsVisualLibrary{
     throw new Error("Invalid room media mapping");
   const rm=roomMap as Record<string,unknown>;
   const validSlugs=new Set(roomConcepts.map(x=>x.slug));
-  if(Object.keys(rm).some(x=>!validSlugs.has(x)))throw new Error("Unknown room media key");
+  const keys=Object.keys(rm);
+  if(keys.some(x=>!validSlugs.has(x)&&!isLiveProductMediaKey(x)))throw new Error("Unknown room media key");
+  if(keys.filter(isLiveProductMediaKey).length>100)throw new Error("Too many live product media keys");
   const rooms:Record<string,VisualRoom>={};
-  for(const concept of roomConcepts){
+  for(const concept of mediaConcepts(keys)){
     const raw=rm[concept.slug]??{cover:"",gallery:[],video:""};
     if(!raw||typeof raw!=="object")throw new Error("Invalid room media");
     const entry=raw as Record<string,unknown>;

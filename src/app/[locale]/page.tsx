@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { poolsideConfig } from "@/lib/poolside-config";
 import { HotelExperience } from "@/components/HotelExperience";
 import { getContent, isLocale } from "@/lib/hotel-content";
 import { readPublished } from "@/lib/cms-store";
@@ -19,5 +20,5 @@ export default async function HotelPage({params}: {params: Promise<{locale:strin
   const {locale} = await params;
   if (!isLocale(locale)) notFound();
   const published=await readPublished();
-  return <CmsProvider value={published}><HotelExperience locale={locale} content={getContent(locale)} /></CmsProvider>;
+  return <CmsProvider value={published}><HotelExperience locale={locale} content={getContent(locale)} poolside={poolsideConfig()} agencyEnabled={process.env.OPAL_AGENCY_ENABLED==="true"} /></CmsProvider>;
 }

@@ -9,6 +9,8 @@ import { NextResponse,type NextRequest } from "next/server";
  * This proxy does not fetch CMS data or intercept owner/admin requests.
  */
 const knownPath=/^\/(en|ar)\/(booking|preview)\/?$/;
+const poolsidePath=/^\/(en|ar)\/(booking\/return|experiences\/(day-use|overnight)\/[a-z0-9][a-z0-9-]{0,159})\/?$/;
+const agencyPath=/^\/(en|ar)\/agency\/?$/;
 const retiredRooms=/^\/(en|ar)\/rooms(\/[^/]+)?\/?$/;
 export function proxy(request:NextRequest){
   // Retired room concept pages: a real HTTP redirect (the page-level
@@ -16,7 +18,7 @@ export function proxy(request:NextRequest){
   const rooms=request.nextUrl.pathname.match(retiredRooms);
   if(rooms)return NextResponse.redirect(new URL(`/${rooms[1]}#rooms`,request.url),308);
   const match=request.nextUrl.pathname.match(/^\/(en|ar)\/.+$/);
-  if(!match||knownPath.test(request.nextUrl.pathname))return NextResponse.next();
+  if(!match||knownPath.test(request.nextUrl.pathname)||(process.env.OPAL_BOOKING_ENABLED==="true"&&poolsidePath.test(request.nextUrl.pathname))||(process.env.OPAL_AGENCY_ENABLED==="true"&&agencyPath.test(request.nextUrl.pathname)))return NextResponse.next();
   const locale=match[1];
   const ar=locale==="ar";
   const title=ar?"الصفحة غير موجودة":"Page not found";

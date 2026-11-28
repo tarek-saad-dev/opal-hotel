@@ -4,7 +4,7 @@ import { createContext,useContext,useMemo,type ReactNode } from "react";
 import { defaultCmsSite,hasApprovedCmsLogo,hasCompleteCmsMedia,mediaRoles,type CmsSite } from "@/lib/cms-schema";
 import { galleryImages,hotelBrand,officialMediaActive,type HotelImage } from "@/lib/gallery";
 import { approvedAsset,visualAssetAlt } from "@/lib/cms-media";
-import { roomConcepts } from "@/lib/room-concepts";
+import { mediaConcepts } from "@/lib/room-concepts";
 import { getContent,type HotelContent,type Locale } from "@/lib/hotel-content";
 
 const CmsContext=createContext<CmsSite|null>(null);
@@ -70,10 +70,10 @@ export function useHotelMedia(){
       poster:(overviewMovie.poster&&lookup(overviewMovie.poster)?.kind==="image")
         ?overviewMovie.poster:images[resolve(placed.overviewMain,4)]?.src||""
     }:null;
-    const roomMedia=Object.fromEntries(roomConcepts.map(room=>{
+    const roomMedia=Object.fromEntries(mediaConcepts(Object.keys(placed.rooms)).map(room=>{
       const assigned=placed.rooms[room.slug];
       const overrides=assigned?.gallery.map(indexOf).filter((n):n is number=>n!==null)??[];
-      const cover=resolve(assigned?.cover||"",room.imageIndices[0]);
+      const cover=resolve(assigned?.cover||"",room.imageIndices[0]??-1);
       const gallery=overrides.length?Array.from(new Set([cover,...overrides])):[...room.imageIndices];
       const movie=lookup(assigned?.video||"");
       return [room.slug,{cover,gallery,video:movie?.kind==="video"?movie:undefined}];

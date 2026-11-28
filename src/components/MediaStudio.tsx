@@ -3,7 +3,7 @@
 import { useMemo,useState,type ChangeEvent,type DragEvent } from "react";
 import type { CmsSite } from "@/lib/cms-schema";
 import { approvedAsset,visualCategories,type VisualAsset,type CmsVisualLibrary } from "@/lib/cms-media";
-import { roomConcepts } from "@/lib/room-concepts";
+import { mediaConcepts, isPoolsideProductSlot,isLiveProductMediaKey,resolvePoolsideMedia } from "@/lib/room-concepts";
 import { MediaPicker } from "@/components/MediaPicker";
 
 const labels:Record<string,string>={
@@ -59,6 +59,10 @@ export async function optimizeMediaPhoto(file:File):Promise<File>{
   }finally{bitmap.close();}
 }
 export function MediaStudio({draft,published,change,upload,uploading}:Props){
+  const [products,setProducts]=useState<{key:string;slug:string;kind:"day_use"|"bubble_stay";nameEn:string;nameAr:string}[]>([]);
+  const [catalogState,setCatalogState]=useState<"idle"|"loading"|"ready"|"error">("idle");
+  const [productKey,setProductKey]=useState("");
+  async function loadProducts(){setCatalogState("loading");try{const res=await fetch("/api/admin/cms/products",{cache:"no-store"});const body=await res.json();if(!res.ok||!Array.isArray(body.products))throw Error();setProducts(body.products);setProductKey("");setCatalogState("ready");}catch{setCatalogState("error");}}
   const [query,setQuery]=useState("");
   const [category,setCategory]=useState("all");
   const [selected,setSelected]=useState("");
@@ -303,14 +307,21 @@ export function MediaStudio({draft,published,change,upload,uploading}:Props){
       {renderOrder("gallery")}
     </section>
     <section className="opal-cms-editor-card">
-      <div className="opal-cms-editor-head"><span>04 / ROOMS</span><h3>صور وفيديو مستقل لكل غرفة</h3></div>
-      <p className="opal-cms-note">أسماء الغرف الحالية تصورات تصميمية حتى يتم اعتماد بيانات الفندق؛ ربط الصور لا يفعّل حجوزات أو أسعار.</p>
-      {roomConcepts.map(room=>{
+      <div className="opal-cms-editor-head"><span>04 / ROOMS & PRODUCTS</span><h3>صور الغرف والتجارب</h3></div>
+      <p className="opal-cms-note">اربط صور منتجات أوبال بولسايد الفعلية من Laravel. الأسعار والتوافر من نظام الحجوزات فقط. خانات الصور السابقة محفوظة.</p>
+      <button type="button" disabled={catalogState==="loading"} onClick={()=>void loadProducts()}>{catalogState==="loading"?"جارٍ تحميل المنتجات…":"تحميل منتجات أوبال من نظام الحجوزات"}</button>
+      {catalogState==="error"&&<p role="alert">تعذر تحميل المنتجات. تحقق من إعدادات الاتصال بالـ Backend.</p>}
+      {catalogState==="ready"&&!products.length&&<p role="status">لا توجد منتجات نشطة في Laravel حاليًا. أضفها أو فعّلها من نظام إدارة الفندق.</p>}
+      {catalogState==="ready"&&products.length>0&&<div className="opal-media-mapping"><label>المنتج<select value={productKey} onChange={e=>setProductKey(e.target.value)}><option value="">اختر المنتج</option>{products.map(p=><option key={p.key} value={p.key} disabled={Object.hasOwn(visual.placements.rooms,p.key)}>{p.nameAr} · {p.kind==="day_use"?"استخدام يومي":"إقامة ليلية"} · {p.slug}</option>)}</select></label><button type="button" disabled={!productKey||Object.keys(visual.placements.rooms).filter(isLiveProductMediaKey).length>=100} onClick={()=>{const p=products.find(item=>item.key===productKey);if(!p)return;edit(v=>{if(!Object.hasOwn(v.placements.rooms,p.key)){const previous=resolvePoolsideMedia(v.placements.rooms,p.kind,p.slug);v.placements.rooms[p.key]=previous?{cover:previous.cover,gallery:[...previous.gallery],video:previous.video}:{cover:"",gallery:[],video:""};}});setProductKey("");}}>ربط صور المنتج</button></div>}
+      {mediaConcepts(Object.keys(visual.placements.rooms)).map(room=>{
+        const live=products.find(p=>p.key===room.slug);
+        if(live)room={...room,name:{ar:live.nameAr,en:live.nameEn}};
+        const productSlot=isPoolsideProductSlot(room.slug)||isLiveProductMediaKey(room.slug);
         const mapping=visual.placements.rooms[room.slug];
         return <div key={room.slug} className="opal-media-room-map">
-          <h4>{room.name.ar} <small>{room.name.en}</small></h4>
+          <h4>{productSlot&&<span>Poolside · </span>}{room.name.ar} <small>{room.name.en}</small></h4>{productSlot&&<p className="opal-cms-help" dir="ltr">{room.slug}</p>}
           <div className="opal-media-mapping">
-            <span>صورة الغرفة الأساسية</span>
+            <span>الصورة الأساسية</span>
             <MediaPicker assets={assets} label={"غلاف "+room.name.ar} kind="image"
               value={mapping.cover} onChange={src=>edit(v=>{v.placements.rooms[room.slug].cover=src;})}/>
 

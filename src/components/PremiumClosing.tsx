@@ -261,7 +261,7 @@ export function PremiumContact({locale,content:c}:Props) {
   </div>;
 }
 
-export function PremiumFooter({locale,content:c}:Props) {
+export function PremiumFooter({locale,content:c,poolside,agencyEnabled}:Props&{poolside?:boolean;agencyEnabled?:boolean}) {
   const media=useHotelMedia();
   const logoSrc=media.logoSrc??hotelBrand.officialLogoSrc;
   const ar=locale==="ar";
@@ -298,17 +298,18 @@ export function PremiumFooter({locale,content:c}:Props) {
         {logoSrc
           ? <img src={logoSrc} className="opal-end-brand-official" alt="" width={54} height={54} loading="lazy"/>
           : <span className="opal-end-brand-emblem" aria-hidden="true">O</span>}
-        <strong>OPAL LEGACY</strong>
+        <strong>{poolside?"OPAL POOLSIDE":"OPAL LEGACY"}</strong>
         <span>L U X O R &nbsp; · &nbsp; E G Y P T</span>
         <p>{c.address}</p>
       </div>
       <nav aria-label={t.discover}>
         <h3>{t.discover}</h3>
-        {explore.map(key=><a href={`#${key}`} key={key}>{c.nav[key]}</a>)}
+        {explore.map(key=><a href={`#${key}`} key={key}>{poolside&&key==="rooms"?(ar?"التجارب":"Experiences"):c.nav[key]}</a>)}
       </nav>
       <nav aria-label={t.connect}>
         <h3>{t.connect}</h3>
         {other.map(key=><a href={`#${key}`} key={key}>{c.nav[key]}</a>)}
+        {agencyEnabled&&<a href={`/${locale}/agency`}>{ar?"بوابة شركات السياحة":"Travel agency portal"}</a>}
       </nav>
       <div className="opal-end-footer-last">
         <span>{t.next}</span>
@@ -318,7 +319,7 @@ export function PremiumFooter({locale,content:c}:Props) {
       </div>
     </div>
     <div className="opal-end-footer-bottom">
-      <span suppressHydrationWarning>© {new Date().getFullYear()} OPAL LEGACY · LUXOR</span><p>{t.demo}</p><span>{t.credits}</span>
+      <span suppressHydrationWarning>© {new Date().getFullYear()} {poolside?"OPAL POOLSIDE":"OPAL LEGACY"} · LUXOR</span><p>{t.demo}</p><span>{t.credits}</span>
     </div>
   </div>;
 }
