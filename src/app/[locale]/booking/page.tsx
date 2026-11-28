@@ -36,6 +36,8 @@ export default async function BookingPage({params,searchParams}:PageProps){
   const input=parsePreviewParams(query);
   const published=await readPublished();
   const {enabled,origin,gateway}=poolsideConfig();
+  // Production cutover must not fall through to the retired booking-request API.
+  if(process.env.OPAL_BOOKING_MAINTENANCE==="true")return <main className="opal-book-page"><div className="opal-book-summary"><span className="opal-book-eyebrow">OPAL POOLSIDE</span><h1>{locale==="ar"?"الحجز الإلكتروني غير متاح حاليًا":"Online booking is temporarily unavailable"}</h1><p>{locale==="ar"?"نعمل على تجهيز تجربة الحجز. يمكنك الرجوع للموقع والتواصل مع الفندق.":"We are preparing our online booking experience. Return to the website to contact the hotel."}</p><a className="opal-book-primary" href={`/${locale}#contact`}>{locale==="ar"?"تواصل مع الفندق":"Contact the hotel"}</a><a className="opal-book-back" href={`/${locale}`}>{locale==="ar"?"العودة للرئيسية":"Back to homepage"}</a></div></main>;
   if(enabled){
     if(!origin)return <main className="opal-book-page"><h1>{locale==="ar"?"الحجز غير متاح مؤقتًا":"Booking temporarily unavailable"}</h1><a href={`/${locale}`}>{locale==="ar"?"الرئيسية":"Home"}</a></main>;
     const reference=typeof query.reference==="string"?query.reference:"";
