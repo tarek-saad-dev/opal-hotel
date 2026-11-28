@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect,useState } from "react";
+import { resolvePoolsideMedia } from "@/lib/room-concepts";
 import { useHotelMedia } from "@/components/CmsProvider";
 import { makeOpalApi,OpalApiError } from "@/lib/opal-api";
 import { bookingPath,productPath,productSlug,type ProductKind,type PoolsideProduct } from "@/lib/poolside-products";
@@ -28,7 +29,7 @@ export function PoolsideProductDetail({locale,kind,slug,origin}:{locale:"ar"|"en
     }).catch(e=>{if(!controller.signal.aborted)setState(e instanceof OpalApiError&&e.status===404?"missing":"error");});
     return()=>controller.abort();
   },[locale,kind,slug,origin,retry]);
-  const mapping=media.roomMedia[slug];
+  const mapping=resolvePoolsideMedia(media.roomMedia,kind,slug);
   const gallery=mapping?Array.from(new Set([mapping.cover,...mapping.gallery])).filter(i=>media.isReal(i)):[];
   const selected=gallery[active]??gallery[0];
   const day=kind==="day_use";
