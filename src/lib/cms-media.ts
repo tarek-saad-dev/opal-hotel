@@ -105,7 +105,8 @@ export function normalizeVisualLibrary(raw:unknown):CmsVisualLibrary{
   const rm=roomMap as Record<string,unknown>;
   const validSlugs=new Set(roomConcepts.map(x=>x.slug));
   const keys=Object.keys(rm);
-  if(keys.filter(isLiveProductMediaKey).length>100||keys.some(x=>!validSlugs.has(x)&&!isLiveProductMediaKey(x)))throw new Error("Unknown or excessive room media key");
+  if(keys.some(x=>!validSlugs.has(x)&&!isLiveProductMediaKey(x)))throw new Error("Unknown room media key");
+  if(keys.filter(isLiveProductMediaKey).length>100)throw new Error("Too many live product media keys");
   const rooms:Record<string,VisualRoom>={};
   for(const concept of mediaConcepts(keys)){
     const raw=rm[concept.slug]??{cover:"",gallery:[],video:""};
