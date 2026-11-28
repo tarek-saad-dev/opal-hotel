@@ -62,3 +62,7 @@ OPAL_BOOKING_ENABLED=false
 OPAL_AGENCY_ENABLED=false
 OPAL_PAYMENT_GATEWAY=paymob
 No production configuration change or deployment was performed. Keep both flags disabled until the actual active catalog, CORS, mapping and controlled payment acceptance are verified. A Paymob sandbox must not be assumed merely because the API is deployed on production.
+
+## 9. Closed frontend cutover preparation
+The latest production read-only probe confirmed both catalog arrays are empty and CORS is still not configured. Fixture feature/visual tests passed at 640d1c9c08342a4cf0d601ad09612c78ae864fa2; two legacy CMS source-integrity assertions required updating for the dynamic media concepts, without relaxing validation. Re-run all code checks on the final SHA.
+For a closed frontend rollout, `ops/prepare-poolside-runtime.sh` creates a separate root-only `/etc/opal-hotel/poolside-runtime.env` and `90-poolside-runtime.conf` for an existing managed Opal systemd service. It refuses existing files, never changes CMS credentials, never changes Nginx, and never restarts or deploys. This is only for the frontend VPS. The new `OPAL_BOOKING_MAINTENANCE=true` prevents falling back to the retired booking-request form during cutover; both new booking flags are false. This mode is not a public booking release. Do not run daemon-reload/restart until the reviewed frontend release is ready. Verify the existing vhost and CMS origin separately before switching domains; the original deployment script refuses a mismatched domain, and no domain migration is assumed.
