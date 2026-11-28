@@ -118,7 +118,7 @@ export function MediaPicker({assets,label,kind="image",value="",selected=[],mult
           aria-modal="true" aria-labelledby={titleId} dir="rtl">
           <header className="opal-picker-header">
             <div>
-              <small>OPAL LEGACY / MEDIA SELECTOR</small>
+              <small>OPAL POOLSIDE / MEDIA SELECTOR</small>
               <h2 id={titleId}>{label}</h2>
               <p>{multiple?"اختار صور أو فيديوهات، وبعدها أكد الإضافة":"اتفرج على الصورة قبل ما تختارها للسكشن"}</p>
             </div>

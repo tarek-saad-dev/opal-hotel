@@ -412,7 +412,7 @@ for(const lang of langs)for(const screen of screens){
     } catch(err) {
       errors.push({type:'route-recovery',message:String(err.message).slice(0,320)});
     }
-    const validHeadings=audit.headings.some(h=>/opal legacy/i.test(h||''));
+    const validHeadings=audit.headings.some(h=>/opal poolside/i.test(h||''));
     const validAnchors=Object.values(audit.anchors).every(Boolean);
     const overflow=audit.document.width > screen.width+2;
     const provenancePhotos=audit.images.filter(i=>i.origin!==null);

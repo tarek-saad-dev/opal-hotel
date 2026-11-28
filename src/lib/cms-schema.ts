@@ -107,9 +107,14 @@ export function hasCompleteCmsMedia(doc:CmsSite):boolean{
 export function isManagedImagePath(src:string):boolean {
   return /^\/api\/cms\/media\/[0-9a-f]{32}\.(?:webp|png|jpe?g)$/.test(src);
 }
+/** Correct the retired brand in owner-authored text without resetting CMS content or media URLs. */
+export function normalizeHotelBrandText(value:string):string {
+  return value.replace(/\bOpal\s+Legacy\b/gi,match=>match===match.toUpperCase()?"OPAL POOLSIDE":"Opal Poolside")
+    .replace(/(?:أوبال|اوبال|أُوبال)\s+(?:ليجاسي|ليغاسي|ليجاسى|ليغاسى)/g,"أوبال بول سايد");
+}
 function cleanText(value:unknown,name:string,max:number,allowEmpty=false):string {
   if(typeof value!=="string")throw new Error(name+": expected text");
-  const out=value.trim();
+  const out=normalizeHotelBrandText(value.trim());
   if(out.length>max||(!allowEmpty&&!out))throw new Error(name+": text length is invalid");
   if(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(out))throw new Error(name+": unsupported characters");
   return out;
@@ -215,7 +220,7 @@ export function validateCmsSite(input:unknown):CmsSite{
     locales:cleaned,sections,media:{logo,logoApproved:media.logoApproved as boolean,photos,video,visual}};
 }
 
-const sameJson=(a:unknown,b:unknown)=>JSON.stringify(a)===JSON.stringify(b);
+const sameJson=(a:unknown,b:unknown)=>normalizeHotelBrandText(JSON.stringify(a))===normalizeHotelBrandText(JSON.stringify(b));
 /** Replace untouched legacy defaults (preview wording, old facts) with the
  * current defaults. Owner-edited values are never changed. */
 export function upgradeLegacyDefaults(site:CmsSite):CmsSite{

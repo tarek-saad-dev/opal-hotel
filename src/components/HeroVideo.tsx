@@ -110,9 +110,9 @@ export function FullHotelFilm({src,locale,onClose}:{src:string;locale:Locale;onC
     return ()=>{document.body.style.overflow=previous;window.removeEventListener("keydown",onKey);};
   },[onClose]);
   return createPortal(<div id="opal-hotel-film-dialog" className="opal-film-backdrop"
-    role="dialog" aria-modal="true" aria-label={ar?"فيلم أوبال ليجاسي":"Opal Legacy hotel film"}>
+    role="dialog" aria-modal="true" aria-label={ar?"فيلم أوبال بول سايد":"Opal Poolside hotel film"}>
     <div className="opal-film-panel">
-      <div className="opal-film-top"><strong>{ar?"فيلم أوبال ليجاسي":"THE OPAL LEGACY FILM"}</strong>
+      <div className="opal-film-top"><strong>{ar?"فيلم أوبال بول سايد":"THE OPAL POOLSIDE FILM"}</strong>
         <button type="button" ref={closeRef} onClick={onClose} aria-label={ar?"إغلاق الفيلم":"Close film"}>×</button>
       </div>
       <video src={src} controls playsInline preload="none" autoPlay

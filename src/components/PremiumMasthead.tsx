@@ -337,7 +337,7 @@ export function PremiumMasthead({ locale, content: c, onAvailability, onOpenGall
               {logoSrc
                 ? <img className="premium-mark-official" src={logoSrc} alt="" width={48} height={48}/>
                 : <span className="premium-menu-brand-symbol" aria-hidden="true">O</span>}
-              <span className="premium-menu-brand-wordmark"><strong>OPAL LEGACY</strong><small>LUXOR · EGYPT</small></span>
+              <span className="premium-menu-brand-wordmark"><strong>{hotelBrand.wordmark}</strong><small>LUXOR · EGYPT</small></span>
             </span>
             <div className="premium-menu-top-controls">
               <a href={ar ? "/en" : "/ar"} className="premium-menu-lang" lang={ar ? "en" : "ar"}

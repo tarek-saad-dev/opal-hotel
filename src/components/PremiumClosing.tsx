@@ -269,7 +269,7 @@ export function PremiumFooter({locale,content:c,poolside,agencyEnabled}:Props&{p
     top:"ارجع لبداية الحكاية",
     kicker:"اكتشف الأقصر بطريقة مختلفة",
     title:"الحكايات الجميلة", accent:"بتبدأ من هنا.",
-    pre:"فندق أوبال ليجاسي", discover:"اكتشف", connect:"روابط سريعة",
+    pre:"فندق أوبال بول سايد", discover:"اكتشف", connect:"روابط سريعة",
     next:"مستعد تكتشف أكثر؟", plan:"خطط لإقامتك", map:"شوف الموقع", language:"English",
     demo:"جميع الحقوق محفوظة",
     credits:"صُمم بهدوء ليبقى في الذاكرة",
@@ -277,7 +277,7 @@ export function PremiumFooter({locale,content:c,poolside,agencyEnabled}:Props&{p
     top:"BACK TO THE TOP",
     kicker:"A NEW WAY TO FEEL LUXOR",
     title:"Beautiful stories", accent:"begin here.",
-    pre:"Opal Legacy Hotel", discover:"EXPLORE", connect:"DISCOVER",
+    pre:"Opal Poolside Hotel", discover:"EXPLORE", connect:"DISCOVER",
     next:"READY FOR YOUR NEXT STORY?", plan:"PLAN YOUR STAY", map:"FIND US ON THE MAP", language:"العربية",
     demo:"All rights reserved",
     credits:"CONSIDERED DETAILS. LASTING FEELINGS.",
@@ -298,7 +298,7 @@ export function PremiumFooter({locale,content:c,poolside,agencyEnabled}:Props&{p
         {logoSrc
           ? <img src={logoSrc} className="opal-end-brand-official" alt="" width={54} height={54} loading="lazy"/>
           : <span className="opal-end-brand-emblem" aria-hidden="true">O</span>}
-        <strong>{poolside?"OPAL POOLSIDE":"OPAL LEGACY"}</strong>
+        <strong>{hotelBrand.wordmark}</strong>
         <span>L U X O R &nbsp; · &nbsp; E G Y P T</span>
         <p>{c.address}</p>
       </div>
@@ -319,7 +319,7 @@ export function PremiumFooter({locale,content:c,poolside,agencyEnabled}:Props&{p
       </div>
     </div>
     <div className="opal-end-footer-bottom">
-      <span suppressHydrationWarning>© {new Date().getFullYear()} {poolside?"OPAL POOLSIDE":"OPAL LEGACY"} · LUXOR</span><p>{t.demo}</p><span>{t.credits}</span>
+      <span suppressHydrationWarning>© {new Date().getFullYear()} {hotelBrand.wordmark} · LUXOR</span><p>{t.demo}</p><span>{t.credits}</span>
     </div>
   </div>;
 }

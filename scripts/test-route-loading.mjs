@@ -47,7 +47,7 @@ try{
         await overlay.waitFor({state:"visible",timeout:3500});
         if(!delayed)throw new Error("Booking navigation was not delayed by browser fixture");
         const letters=(await overlay.locator(".opal-loader-wordmark").innerText()).replace(/\s/g,"");
-        if(letters!=="OPALLEGACY")throw new Error("Hotel name missing: "+letters);
+        if(letters!=="OPALPOOLSIDE")throw new Error("Hotel name missing: "+letters);
         const expectedLabel=locale==="ar"?"جاري فتح الصفحة":"Opening your page";
         if(await overlay.getAttribute("aria-label")!==expectedLabel)
           throw new Error("Missing localized accessible loading status");

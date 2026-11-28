@@ -192,7 +192,7 @@ export function PremiumLocation({ locale, content: c }: SharedProps) {
   const ar = locale === "ar";
   const t = ar ? {
     kicker: "الموقع", title: "في قلب", italic: "الحكاية.",
-    subtitle: "الأقصر، مصر", intro: "كل رحلة لها مكان تبدأ منه. اكتشف موقع Opal Legacy وما حوله من معالم.",
+    subtitle: "الأقصر، مصر", intro: "كل رحلة لها مكان تبدأ منه. اكتشف موقع Opal Poolside وما حوله من معالم.",
     explore: "افتح الموقع على خرائط Google", nearby: "بالقرب منك",
     notice: "المسافات تقريبية.",
   } : {
